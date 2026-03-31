@@ -143,9 +143,11 @@ export default function MainPage() {
                 </div>
 
                 <div className="mb-6 flex-1">
-                  {/* [NEW] 방 제목 옆에 비공개(자물쇠) 아이콘 표시 */}
+                  {/* 방 제목 옆에 공개(🌐)/비공개(🔒) 아이콘 표시 */}
                   <div className="flex items-start space-x-2">
-                    {room.isPrivate && <span className="text-sm mt-0.5" title="비공개 방">🔒</span>}
+                    <span className="text-sm mt-0.5" title={room.isPrivate ? "비공개 방" : "공개 방"}>
+                      {room.isPrivate ? "🔒" : "🌐"}
+                    </span>
                     <h3 className="text-lg font-black text-gray-900 line-clamp-2 group-hover:text-green-700 transition">{room.title}</h3>
                   </div>
                   
@@ -220,7 +222,7 @@ export default function MainPage() {
                   <input type="text" placeholder="현재 읽을 책의 제목을 입력하세요" value={newRoomData.currentBook} onChange={(e) => setNewRoomData({...newRoomData, currentBook: e.target.value})} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-green-500 focus:bg-white transition" />
                 </div>
                 
-                {/* 3. [NEW] 공개/비공개 설정 토글 */}
+                {/* 3. 공개/비공개 설정 토글 */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">공개 설정</label>
                   <div className="flex space-x-2">
@@ -241,7 +243,7 @@ export default function MainPage() {
                   </div>
                 </div>
 
-                {/* 4. [NEW] 비밀번호 입력칸 (비공개 선택 시에만 스르륵 나타남) */}
+                {/* 4. 비밀번호 입력칸 (비공개 선택 시에만 스르륵 나타남) */}
                 {newRoomData.isPrivate && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <label className="block text-sm font-bold text-gray-700 mb-1.5 text-orange-600">비밀번호 입력</label>
@@ -273,7 +275,7 @@ export default function MainPage() {
               </form>
             )}
 
-            {/* 기존 방 참여하기 폼 (이전과 동일) */}
+            {/* 기존 방 참여하기 폼 */}
             {modalType === 'join' && (
               <form onSubmit={handleJoinRoom} className="p-6 space-y-5">
                 <div>
