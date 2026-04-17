@@ -6,268 +6,310 @@ import { useRouter } from 'next/navigation';
 
 export default function MainPage() {
   const router = useRouter();
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
 
-  // [NEW] 글쓰기 모달 상태 관리
-  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
-  const [writeTab, setWriteTab] = useState<'transcribe' | 'review'>('transcribe');
+  // ==========================================
+  // 💡 자바스크립트 로직은 반드시 return 위에 작성해야 합니다!
+  // ==========================================
 
+  // 1. 배너 데이터
+  const banners = [
+    {
+      id: 1,
+      image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=2000",
+      tag: "EVENT & EXHIBITION",
+      title: "문장으로 잇는\n우리들의 독서 기록 展",
+      desc: "서촌 한옥 서점 '무목적' (4.15 - 4.25)"
+    },
+    {
+      id: 2,
+      image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=2000",
+      tag: "BOOK TALK",
+      title: "양귀자 작가와 함께하는\n'모순' 북토크",
+      desc: "4월 20일 저녁 7시, 온/오프라인 동시 진행"
+    },
+    {
+      id: 3,
+      image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000",
+      tag: "NOTICE",
+      title: "텍스트힙 수집가라면?\n앱 리뷰 이벤트 참여!",
+      desc: "참가자 전원에게 전용 폰트 증정"
+    }
+  ];
+
+  // 2. 캐러셀 상태 및 기능
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  const prevBanner = () => {
+    setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+  
+  const nextBanner = () => {
+    setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+  };
+
+  // 3. 페이지 로드 시 실행되는 기능들 (로그인 체크 & 배너 오토플레이)
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedName = localStorage.getItem('userName');
-    
-    if (token && storedName) {
+    if (token && storedName && storedName !== 'undefined') {
       setIsLoggedIn(true);
       setUserName(storedName);
     }
-    
-    setTimeout(() => setIsLoading(false), 500);
-  }, []);
 
+    // 배너 5초 자동 넘김
+    const timer = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000); 
+
+    return () => clearInterval(timer);
+  }, [banners.length]);
+
+  // 메인화면용 로그아웃 함수 추가!
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    setIsLoggedIn(false);
-    setUserName('');
-    alert("로그아웃 되었습니다.");
+    if (window.confirm("로그아웃 하시겠습니까?")) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userName');
+      setIsLoggedIn(false);
+      setUserName('');
+      alert("로그아웃 되었습니다.");
+    }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 border-4 border-gray-800 border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-bold text-gray-500 tracking-widest">TEXT HIP PORTAL</p>
-      </div>
-    );
-  }
-
+  // ==========================================
+  // 화면을 그리는 부분 (여기부터 HTML/JSX 시작)
+  // ==========================================
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans relative">
+    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
       
-      {/* 상단 네비게이션 바 */}
-      <header className="bg-white px-8 py-5 shadow-sm sticky top-0 z-30 border-b border-gray-200">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <h1 className="text-2xl font-black tracking-tighter text-gray-900">
-              교환<span className="text-gray-400">독서</span>
-            </h1>
-          </Link>
-          
-          <div className="flex items-center space-x-6 text-gray-800">
+      {/* 1. 최상단 헤더: 검색, 알림, 마이페이지 */}
+      <header className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
+        <Link href="/" className="flex items-center space-x-2">
+          <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
+        </Link>
+        
+        <div className="flex items-center space-x-6 flex-1 justify-end">
+          {/* 검색창 */}
+          <div className="relative hidden md:block w-72">
+            <input 
+              type="text" 
+              placeholder="도서, 모임, 전시 검색" 
+              className="w-full bg-gray-100 border-none rounded-full py-2.5 pl-5 pr-12 text-xs focus:ring-2 focus:ring-black transition"
+            />
+            <button className="absolute right-4 top-2.5 text-gray-400 hover:text-black">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+          </div>
+
+          {/* 알림 및 유저 메뉴 */}
+          <div className="flex items-center space-x-5">
             {isLoggedIn ? (
               <>
-                <span className="text-sm font-bold bg-gray-100 px-3 py-1 rounded-full">{userName}님</span>
-                <Link href="/mypage" className="text-sm font-bold hover:text-gray-500 transition">마이페이지</Link>
-                <button onClick={handleLogout} className="text-sm font-bold text-gray-400 hover:text-gray-900 transition">로그아웃</button>
+                <button className="text-gray-400 hover:text-black transition relative">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+                <Link href="/mypage" className="flex items-center space-x-2 group">
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] text-white font-bold group-hover:bg-gray-700 transition">MY</div>
+                  <span className="text-sm font-bold hidden sm:inline-block">마이페이지</span>
+                </Link>
+                <button onClick={handleLogout} className="text-xs font-bold text-gray-400 hover:text-gray-900 transition ml-2">로그아웃</button>
               </>
             ) : (
               <>
-                <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-gray-900 transition">로그인</Link>
-                <Link href="/register" className="text-sm font-bold text-white bg-gray-900 hover:bg-gray-700 px-5 py-2 rounded-full transition shadow-sm">시작하기</Link>
+                <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-black transition">로그인</Link>
+                <Link href="/register" className="text-sm font-bold bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition">회원가입</Link>
               </>
             )}
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 md:px-8 mt-8 space-y-12">
-        
-        {/* 1. 메인 히어로 배너 */}
-        <section className="relative w-full h-[320px] md:h-[400px] bg-gray-900 rounded-3xl overflow-hidden shadow-xl group cursor-pointer">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:opacity-50 transition duration-500"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full">
-            <span className="inline-block px-3 py-1 bg-white text-gray-900 text-xs font-black rounded-full mb-4">이달의 독서 전시</span>
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-3 tracking-tight leading-tight">
-              당신의 밑줄이<br/>예술이 되는 공간
-            </h2>
-            <p className="text-gray-300 text-sm md:text-base font-medium mb-6">서촌 팝업 갤러리 '문장 수집가들' 展 (4.15 ~ 4.30)</p>
-            <button className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-6 py-2.5 rounded-full text-sm font-bold transition border border-white/30">
-              자세히 보기 →
-            </button>
-          </div>
-        </section>
-
-        {/* 2. 포털 그리드 레이아웃 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* 2. 캐러셀형 메인 배너 영역 */}
+      <section className="px-6 py-8 mx-auto max-w-7xl relative group">
+        <div className="relative h-[300px] md:h-[400px] bg-black rounded-3xl overflow-hidden shadow-xl">
           
-          {/* 왼쪽 영역: 텍스트힙 필사 갤러리 */}
-          <section className="lg:col-span-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-black text-gray-900 tracking-tight">✍️ 오늘의 필사</h3>
-              <Link href="#" className="text-sm font-bold text-gray-500 hover:text-gray-900">더보기</Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 hover:border-gray-400 transition cursor-pointer group">
-                <div className="h-40 bg-gray-100 rounded-2xl mb-4 flex items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center relative overflow-hidden">
-                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition"></div>
-                </div>
-                <h4 className="font-serif text-lg font-bold text-gray-800 mb-2 leading-snug">"다정한 것이 살아남는다."</h4>
-                <p className="text-sm text-gray-500 mb-4">브라이언 헤어 | 다정한 것이 살아남는다</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-200"></div>
-                    <span className="text-xs font-bold text-gray-600">만년필러버</span>
-                  </div>
-                  <span className="text-xs font-bold text-gray-400">♥ 342</span>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200 hover:border-gray-400 transition cursor-pointer group">
-                <div className="h-40 bg-gray-50 rounded-2xl mb-4 flex items-center justify-center p-4 border border-gray-100">
-                  <p className="font-serif text-xl text-center text-gray-700 leading-relaxed italic">
-                    "우리는 모두 별빛으로<br/>만들어진 존재들이다."
-                  </p>
-                </div>
-                <h4 className="font-serif text-lg font-bold text-gray-800 mb-2 leading-snug">코스모스</h4>
-                <p className="text-sm text-gray-500 mb-4">칼 세이건</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-200"></div>
-                    <span className="text-xs font-bold text-gray-600">밤하늘</span>
-                  </div>
-                  <span className="text-xs font-bold text-gray-400">♥ 128</span>
-                </div>
+          {/* 배너 이미지 및 내용 렌더링 */}
+          {banners.map((banner, index) => (
+            <div 
+              key={banner.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            >
+              <div 
+                className="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-1000 group-hover:scale-105"
+                style={{ backgroundImage: `url(${banner.image})` }}
+              ></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+              <div className="absolute bottom-10 left-10 text-white z-20">
+                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest mb-4">
+                  {banner.tag}
+                </span>
+                <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight whitespace-pre-line">
+                  {banner.title}
+                </h2>
+                <p className="text-gray-300 text-sm font-medium">
+                  {banner.desc}
+                </p>
               </div>
             </div>
+          ))}
+
+          {/* 좌우 네비게이션 버튼 (그룹 호버 시 노출) */}
+          <button 
+            onClick={prevBanner}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button 
+            onClick={nextBanner}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
+
+          {/* 하단 페이징 도트 (현재 위치 표시) */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
+            {banners.map((_, index) => (
+              <button 
+                key={index}
+                onClick={() => setCurrentBannerIndex(index)}
+                className={`w-2.5 h-2.5 rounded-full transition-colors ${index === currentBannerIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/70'}`}
+              ></button>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* 3. 필사 전시 레이아웃 (가로 스크롤형) */}
+      <section className="px-6 py-10 mx-auto max-w-7xl border-b border-gray-100">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h3 className="text-2xl font-black tracking-tighter">필사 전시회</h3>
+            <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">오늘의 영감을 준 문장들</p>
+          </div>
+          <button className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 transition">VIEW ALL</button>
+        </div>
+        <div className="flex space-x-6 overflow-x-auto pb-6 no-scrollbar">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="min-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors">
+              <div className="h-40 bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
+                <div className="absolute inset-0 bg-gray-200 group-hover:scale-110 transition-transform duration-500"></div>
+                <div className="absolute inset-0 bg-black/10"></div>
+              </div>
+              <p className="font-serif italic text-gray-800 text-sm leading-relaxed mb-4">"우리는 모두 별빛으로 만들어진 존재들이다."</p>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Cosmos | Carl Sagan</span>
+                <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center text-[8px] text-white">ID</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. 메인 콘텐츠 포털 레이아웃: 모임방 & 랭킹 */}
+      <main className="px-6 py-12 mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        {/* 왼쪽 영역: 모임방 리스트 */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-black">🤝 참여를 기다리는 모임방</h3>
+            <div className="flex space-x-2">
+              <button className="px-3 py-1 bg-black text-white text-[10px] font-bold rounded-full">전체</button>
+              <button className="px-3 py-1 bg-gray-100 text-gray-400 text-[10px] font-bold rounded-full hover:bg-gray-200 transition">온라인</button>
+              <button className="px-3 py-1 bg-gray-100 text-gray-400 text-[10px] font-bold rounded-full hover:bg-gray-200 transition">오프라인</button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              { title: "헤르만 헤세 읽는 밤", desc: "데미안을 함께 읽고 각자의 성장에 대해 나눕니다.", members: 5, maxMembers: 8, type: "오프라인", tags: ["인문학", "소설"] },
+              { title: "React Deep Dive", desc: "리액트 공식 문서를 한 장씩 파헤치며 토론해요.", members: 8, maxMembers: 8, type: "온라인", tags: ["개발", "IT"] },
+              { title: "텍스트힙 수집가들", desc: "서촌 북카페 투어를 하며 각자의 인생 문장을 교환합니다.", members: 4, maxMembers: 6, type: "오프라인", tags: ["필사", "친목"] },
+              { title: "미라클 독서", desc: "매일 아침 7시, 줌에서 만나 30분간 조용히 독서합니다.", members: 12, maxMembers: 20, type: "온라인", tags: ["자기계발", "습관"] },
+            ].map((room, idx) => {
+              const isFull = room.members >= room.maxMembers;
+              
+              return (
+                <div key={idx} className="bg-white p-7 rounded-3xl border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                  
+                  {isFull && (
+                    <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
+                      모집 마감
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-start mb-4">
+                    <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>
+                      {room.type}
+                    </span>
+                    
+                    <span className={`text-[10px] font-bold flex items-center ${isFull ? 'text-red-500' : 'text-gray-400'}`}>
+                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
+                      {room.members} / {room.maxMembers}명
+                    </span>
+                  </div>
+                  
+                  <h4 className="text-lg font-black mb-2 group-hover:text-gray-600 transition-colors">{room.title}</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2">{room.desc}</p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {room.tags.map((tag, i) => (
+                      <span key={i} className="px-2 py-1 bg-gray-50 text-[10px] font-bold text-gray-400 rounded-md">#{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 오른쪽 영역: 책 추천 랭킹 */}
+        <aside className="lg:col-span-4 space-y-10">
+          <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+            <h3 className="text-xs font-black tracking-[0.3em] text-gray-400 mb-8 uppercase">Book Ranking</h3>
+            <div className="space-y-6">
+              {[
+                { title: "모순", author: "양귀자", trend: "up" },
+                { title: "다정한 것이 살아남는다", author: "브라이언 헤어", trend: "up" },
+                { title: "클린 코드", author: "로버트 C. 마틴", trend: "down" },
+                { title: "코스모스", author: "칼 세이건", trend: "stable" },
+                { title: "사피엔스", author: "유발 하라리", trend: "up" },
+              ].map((book, idx) => (
+                <div key={idx} className="flex items-center group cursor-pointer">
+                  <span className="text-xl font-serif italic text-gray-200 group-hover:text-black transition-colors w-8">{idx + 1}</span>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold leading-none mb-1">{book.title}</h4>
+                    <p className="text-[10px] text-gray-400 font-bold">{book.author}</p>
+                  </div>
+                  {book.trend === 'up' && <span className="text-[10px] text-red-500 font-black">▲</span>}
+                  {book.trend === 'down' && <span className="text-[10px] text-blue-500 font-black">▼</span>}
+                </div>
+              ))}
+            </div>
+            <button className="w-full mt-10 py-3 bg-gray-50 text-[10px] font-black tracking-widest text-gray-400 hover:bg-black hover:text-white transition rounded-xl">더보기</button>
           </section>
 
-          {/* 오른쪽 영역: 사이드바 */}
-          <aside className="lg:col-span-4 space-y-8">
-            <section className="bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-black text-gray-900">💬 실시간 독서 기록</h3>
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-              </div>
-              <div className="space-y-4">
-                <div className="border-b border-gray-100 pb-4">
-                  <p className="text-sm text-gray-700 mb-2 line-clamp-2 hover:underline cursor-pointer">
-                    결국 남는 건 사랑뿐이라는 걸, 이 책을 덮고 나서야 깨달았다. 새벽 감성에 읽기 딱 좋은 소설.
-                  </p>
-                  <p className="text-xs text-gray-400 font-bold">@독서광 · 쇼코의 미소</p>
-                </div>
-                <div className="border-b border-gray-100 pb-4">
-                  <p className="text-sm text-gray-700 mb-2 line-clamp-2 hover:underline cursor-pointer">
-                    개발자라면 무조건 읽어야 할 바이블. 챕터 3까지만 읽었는데도 내 코드가 얼마나 부끄러운지 알게 됨...
-                  </p>
-                  <p className="text-xs text-gray-400 font-bold">@코딩노예 · 클린 코드</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-700 mb-2 line-clamp-2 hover:underline cursor-pointer">
-                    매일 아침 10분씩 읽고 있는데, 하루를 시작하는 마음가짐이 달라진다.
-                  </p>
-                  <p className="text-xs text-gray-400 font-bold">@미라클모닝 · 명상록</p>
-                </div>
-              </div>
-            </section>
-
-            <section className="bg-gray-50 p-6 rounded-3xl border border-gray-200">
-              <h3 className="text-lg font-black text-gray-900 mb-4">📍 텍스트힙 스팟</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-xl transition -ml-2">
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 bg-[url('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=200&auto=format&fit=crop')] bg-cover"></div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-900">최인아 책방</h4>
-                    <p className="text-xs text-gray-500">강남구 역삼동 · 북토크 진행중</p>
-                  </div>
-                </li>
-                <li className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded-xl transition -ml-2">
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 bg-[url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=200&auto=format&fit=crop')] bg-cover"></div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-900">소전서림</h4>
-                    <p className="text-xs text-gray-500">강남구 청담동 · 문학 프라이빗 도서관</p>
-                  </div>
-                </li>
-              </ul>
-            </section>
-          </aside>
-        </div>
+          {/* 알림 배너 등 추가 공간 */}
+          <div className="bg-gray-900 text-white p-8 rounded-3xl relative overflow-hidden">
+             <div className="relative z-10">
+               <h4 className="text-lg font-black mb-2 italic">Text Hip Archive</h4>
+               <p className="text-xs text-gray-400 leading-relaxed font-light">당신이 수집한 문장이 누군가의 내일을 바꿀 수 있습니다.</p>
+             </div>
+             <div className="absolute -bottom-4 -right-4 text-white/5 font-serif text-8xl italic font-black select-none">"</div>
+          </div>
+        </aside>
       </main>
 
       {/* 우측 하단 플로팅 글쓰기 버튼 */}
       <button 
-        onClick={() => {
-          if(!isLoggedIn) { alert("기록을 남기려면 로그인이 필요합니다."); router.push('/login'); return; }
-          setIsWriteModalOpen(true); // 모달 열기!
-        }}
-        className="fixed bottom-10 right-10 z-40 flex items-center justify-center w-14 h-14 bg-gray-900 text-white rounded-full shadow-2xl hover:bg-gray-700 transition-all transform hover:scale-110"
+        onClick={() => setIsLoggedIn(true)} 
+        className="fixed bottom-10 right-10 z-50 w-16 h-16 bg-black text-white rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
       </button>
-
-      {/* [NEW] 글쓰기 모달창 UI */}
-      {isWriteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            
-            {/* 모달 헤더 (탭 선택) */}
-            <div className="flex items-center justify-between px-8 pt-8 pb-4 border-b border-gray-100">
-              <div className="flex space-x-6">
-                <button 
-                  onClick={() => setWriteTab('transcribe')} 
-                  className={`text-lg font-black transition-colors ${writeTab === 'transcribe' ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}
-                >
-                  필사 올리기
-                </button>
-                <button 
-                  onClick={() => setWriteTab('review')} 
-                  className={`text-lg font-black transition-colors ${writeTab === 'review' ? 'text-gray-900' : 'text-gray-300 hover:text-gray-500'}`}
-                >
-                  기록 남기기
-                </button>
-              </div>
-              <button onClick={() => setIsWriteModalOpen(false)} className="text-gray-400 hover:text-gray-900 transition bg-gray-50 hover:bg-gray-100 p-2 rounded-full">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-
-            {/* 모달 본문 */}
-            <div className="p-8">
-              {writeTab === 'transcribe' ? (
-                <div className="space-y-5">
-                  <div className="w-full h-40 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 hover:border-gray-300 transition cursor-pointer group">
-                    <svg className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-                    <span className="text-sm font-bold">필사한 노트를 촬영해 올려주세요</span>
-                  </div>
-                  <div>
-                    <input type="text" placeholder="어떤 책의 문장인가요? (책 제목)" className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 transition" />
-                  </div>
-                  <div>
-                    <textarea placeholder="마음에 남은 문장을 텍스트로도 적어주세요." rows={3} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 transition resize-none"></textarea>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  <div>
-                    <input type="text" placeholder="다 읽은 책의 제목을 적어주세요." className="w-full border-b-2 border-gray-100 px-2 py-3 text-lg font-bold focus:outline-none focus:border-gray-900 transition placeholder:font-normal" />
-                  </div>
-                  <div>
-                    <textarea placeholder="이 책은 당신에게 어떤 의미를 남겼나요? 자유롭게 기록해주세요." rows={6} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 transition resize-none leading-relaxed"></textarea>
-                  </div>
-                </div>
-              )}
-
-              {/* 하단 버튼 */}
-              <button 
-                onClick={() => {
-                  alert("서버 연결 전입니다! 예쁘게 디자인된 UI를 확인해 주세요.");
-                  setIsWriteModalOpen(false);
-                }}
-                className="w-full mt-8 bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition shadow-lg shadow-gray-200"
-              >
-                기록 남기기
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

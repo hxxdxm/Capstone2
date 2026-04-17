@@ -1,176 +1,241 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function MyPage() {
-  // 1. 내 프로필 및 독서 통계 데이터
-  const user = {
-    name: "독서왕 홍길동",
-    email: "gildong@example.com",
-    profileImg: "📚", 
-    bio: "안녕하세요! 소설과 인문학을 사랑하는 직장인입니다. 주로 주말 오전에 책을 읽어요.",
-    stats: {
-      temperature: 36.5, // 독서 온도 (활동량)
-      activeRooms: 2,    // 현재 참여 중인 모임
-      finishedBooks: 14, // 완독한 책 수
+  const router = useRouter();
+  const [userName, setUserName] = useState('독서가');
+  
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState({ text: '', book: '', author: '' });
+
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    if (storedName && storedName !== 'undefined') {
+      setUserName(storedName);
+    }
+  }, []);
+
+  const openExportModal = (text: string, book: string, author: string) => {
+    setSelectedQuote({ text, book, author });
+    setIsExportModalOpen(true);
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("로그아웃 하시겠습니까?")) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userName');
+      alert("성공적으로 로그아웃 되었습니다.");
+      router.push('/');
     }
   };
 
-  // 2. 내가 참여 중인 독서 방 (진도율 포함)
-  const myActiveRooms = [
-    { id: 2, title: "퇴근 후 심리학 탐구", currentBook: "미움받을 용기", progress: 65, totalPages: 320, currentPages: 208 },
-    { id: 4, title: "프론트엔드 취준생 전공서적 스터디", currentBook: "모던 자바스크립트 Deep Dive", progress: 30, totalPages: 900, currentPages: 270 },
-  ];
-
-  // 3. 다 읽은 책 (독서 기록)
-  const readingHistory = [
-    { id: 101, title: "나미야 잡화점의 기적", author: "히가시노 게이고", date: "2024.03.15", rating: "⭐⭐⭐⭐⭐" },
-    { id: 102, title: "불편한 편의점", author: "김호연", date: "2024.02.28", rating: "⭐⭐⭐⭐" },
-    { id: 103, title: "사피엔스", author: "유발 하라리", date: "2024.01.10", rating: "⭐⭐⭐⭐⭐" },
-  ];
-
-  // 탭 상태 (참여 중인 모임 vs 독서 기록)
-  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const handleWithdraw = () => {
+    if (window.confirm("정말 탈퇴하시겠습니까? 기록된 모든 독서 데이터가 삭제되며 복구할 수 없습니다.")) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userName');
+      alert("그동안 교환독서를 이용해주셔서 감사합니다. 탈퇴 처리되었습니다.");
+      router.push('/');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24">
+    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans relative">
       
-      {/* --- [상단 네비게이션 바 (메인 페이지와 동일)] --- */}
-      <header className="bg-white px-8 py-6 shadow-sm sticky top-0 z-30">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-green-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3L1 9L4 10.636V17.294C4 18.069 4.436 18.775 5.127 19.121L12 22.558L18.873 19.121C19.564 18.775 20 18.069 20 17.294V10.636L23 9L12 3ZM12 5.279L18.748 8.941L12 12.603L5.252 8.941L12 5.279Z" />
-            </svg>
-            <h1 className="text-2xl font-black tracking-tight">
-              <span className="text-green-600">교환</span>
-              <span className="text-orange-500">독서</span>
-            </h1>
+      {/* 상단 헤더 */}
+      <header className="bg-white px-6 py-4 flex items-center justify-between border-b border-gray-100 sticky top-0 z-30">
+        <div className="flex items-center space-x-4">
+          <Link href="/" className="text-gray-400 hover:text-gray-900 transition">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </Link>
-          <div className="flex items-center space-x-6 text-gray-800">
-            <button className="hover:text-green-600 transition">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-            </button>
-            <Link href="/messages" className="hover:text-green-600 transition">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-            </Link>
-            <Link href="/mypage" className="text-green-600 transition">
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z"/></svg>
-            </Link>
-          </div>
+          <h1 className="text-xl font-black tracking-tighter">내 서재</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-8 mt-10">
+      <main className="mx-auto max-w-5xl px-6 mt-8 space-y-10">
         
-        {/* --- [섹션 1: 프로필 및 독서 통계 카드] --- */}
-        <section className="bg-white rounded-3xl p-8 shadow-sm ring-1 ring-gray-100 flex flex-col md:flex-row items-center md:items-start gap-8">
-          <div className="w-32 h-32 shrink-0 rounded-full bg-green-50 flex items-center justify-center text-6xl shadow-inner border-4 border-white ring-4 ring-green-100">
-            {user.profileImg}
+        {/* 1. 프로필 & 요약 섹션 (버튼 제거하고 깔끔하게 복구) */}
+        <section className="flex items-center justify-between bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex items-center space-x-6">
+            <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center text-white text-2xl font-black shadow-md">
+              {userName[0]}
+            </div>
+            <div>
+              <h2 className="text-2xl font-black mb-1">{userName}님,</h2>
+              <p className="text-gray-500">이번 달은 총 <span className="text-gray-900 font-bold">3권</span>의 책과 만났어요.</p>
+            </div>
           </div>
           
-          <div className="flex-1 text-center md:text-left w-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
-              <h2 className="text-2xl font-black text-gray-900">{user.name}</h2>
-              <button className="text-sm font-bold text-gray-400 hover:text-green-600 transition mt-2 md:mt-0">프로필 수정</button>
+          <div className="hidden md:flex space-x-8 text-center">
+            <div>
+              <p className="text-3xl font-black text-gray-900">12</p>
+              <p className="text-xs text-gray-400 font-bold mt-1">남긴 기록</p>
             </div>
-            <p className="text-sm text-gray-500 mb-4">{user.email}</p>
-            <p className="text-gray-700 leading-relaxed font-medium bg-gray-50 p-4 rounded-2xl">{user.bio}</p>
-            
-            {/* 통계 지표 */}
-            <div className="mt-6 grid grid-cols-3 gap-4">
-              <div className="bg-orange-50 px-4 py-3 rounded-2xl flex flex-col items-center md:items-start">
-                <span className="text-[11px] text-orange-600 font-bold uppercase tracking-wider mb-1">독서 온도</span>
-                <p className="text-xl font-black text-orange-700">{user.stats.temperature}°C</p>
-              </div>
-              <div className="bg-green-50 px-4 py-3 rounded-2xl flex flex-col items-center md:items-start">
-                <span className="text-[11px] text-green-600 font-bold uppercase tracking-wider mb-1">참여 중인 모임</span>
-                <p className="text-xl font-black text-green-700">{user.stats.activeRooms}개</p>
-              </div>
-              <div className="bg-blue-50 px-4 py-3 rounded-2xl flex flex-col items-center md:items-start">
-                <span className="text-[11px] text-blue-600 font-bold uppercase tracking-wider mb-1">완독한 책</span>
-                <p className="text-xl font-black text-blue-700">{user.stats.finishedBooks}권</p>
-              </div>
+            <div>
+              <p className="text-3xl font-black text-gray-900">4</p>
+              <p className="text-xs text-gray-400 font-bold mt-1">완독한 책</p>
             </div>
           </div>
         </section>
 
-        {/* --- [섹션 2: 하단 탭 (진행 중인 독서 / 독서 기록)] --- */}
-        <section className="mt-12">
-          <div className="flex space-x-8 border-b border-gray-200 mb-8">
-            <button 
-              onClick={() => setActiveTab('active')}
-              className={`pb-4 text-lg font-bold transition-all relative ${activeTab === 'active' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              현재 읽고 있는 책
-              {activeTab === 'active' && <span className="absolute bottom-0 left-0 w-full h-1 bg-green-500 rounded-t-md"></span>}
-            </button>
-            <button 
-              onClick={() => setActiveTab('history')}
-              className={`pb-4 text-lg font-bold transition-all relative ${activeTab === 'history' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              나의 독서 기록
-              {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-1 bg-blue-500 rounded-t-md"></span>}
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* 2. 독서 캘린더 */}
+          <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-black">📅 4월의 독서 기록</h3>
+              <div className="flex space-x-2 text-xs font-bold text-gray-400">
+                <span className="flex items-center"><div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>완독</span>
+                <span className="flex items-center"><div className="w-2 h-2 bg-orange-400 rounded-full mr-1"></div>필사</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-2 text-center">
+              {['일', '월', '화', '수', '목', '금', '토'].map(day => (
+                <div key={day} className="text-xs font-bold text-gray-400 pb-2">{day}</div>
+              ))}
+              {Array.from({ length: 3 }).map((_, i) => <div key={`empty-${i}`} className="p-2"></div>)}
+              {Array.from({ length: 30 }).map((_, i) => {
+                const day = i + 1;
+                const hasBookCover = day === 5 || day === 15;
+                const hasQuote = day === 12 || day === 16 || day === 22;
+                
+                return (
+                  <div key={day} className="aspect-square relative flex items-center justify-center rounded-xl hover:bg-gray-50 cursor-pointer transition">
+                    <span className={`text-sm font-bold ${hasBookCover || hasQuote ? 'text-gray-900 z-10' : 'text-gray-500'}`}>{day}</span>
+                    {hasBookCover && (
+                       <div className="absolute inset-1 bg-gray-200 rounded-lg opacity-40 bg-[url('https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=100&auto=format&fit=crop')] bg-cover"></div>
+                    )}
+                    {hasQuote && !hasBookCover && (
+                      <div className="absolute bottom-1 w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 3. 독서 통계 막대그래프 */}
+          <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+            <h3 className="text-lg font-black mb-1">📊 주간 독서량</h3>
+            <p className="text-xs text-gray-400 font-bold mb-8">단위: 페이지 (Page)</p>
+            
+            <div className="flex-1 flex items-end justify-between gap-2 h-40 mt-auto">
+              {[
+                { day: '월', value: 40 },
+                { day: '화', value: 85, isToday: false },
+                { day: '수', value: 20 },
+                { day: '목', value: 120, isToday: false },
+                { day: '금', value: 0 },
+                { day: '토', value: 60, isToday: true },
+                { day: '일', value: 0 },
+              ].map((data, idx) => (
+                <div key={idx} className="flex flex-col items-center w-full group cursor-pointer">
+                  <div className="relative w-full flex justify-center">
+                    <span className="absolute -top-8 bg-gray-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none">
+                      {data.value}p
+                    </span>
+                    <div 
+                      className={`w-full max-w-[32px] rounded-t-md transition-all duration-500 ${data.isToday ? 'bg-green-500' : 'bg-gray-200 group-hover:bg-gray-300'}`}
+                      style={{ height: `${data.value}%`, minHeight: '4px' }}
+                    ></div>
+                  </div>
+                  <span className={`text-xs mt-3 font-bold ${data.isToday ? 'text-gray-900' : 'text-gray-400'}`}>{data.day}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* 4. 내 기록 보관함 */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-black">나의 문장 수집</h3>
           </div>
-
-          {/* 탭 내용 1: 현재 읽고 있는 책 (프로그레스 바 포함) */}
-          {activeTab === 'active' && (
-            <div className="space-y-4">
-              {myActiveRooms.map((room) => (
-                <div key={room.id} className="bg-white p-6 rounded-3xl shadow-sm ring-1 ring-gray-100 hover:shadow-md transition group">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-md">{room.title}</span>
-                      </div>
-                      <h4 className="text-xl font-black text-gray-900 group-hover:text-green-700 transition">{room.currentBook}</h4>
-                    </div>
-                    
-                    <Link href={`/room/${room.id}`} className="shrink-0 bg-green-50 text-green-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-green-500 hover:text-white transition">
-                      이어서 읽기 →
-                    </Link>
-                  </div>
-
-                  {/* 진도율 프로그레스 바 */}
-                  <div className="mt-6">
-                    <div className="flex justify-between text-xs font-bold mb-2">
-                      <span className="text-green-600">진도율 {room.progress}%</span>
-                      <span className="text-gray-400">{room.currentPages} / {room.totalPages}쪽</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                      <div className="bg-green-500 h-2.5 rounded-full transition-all duration-1000 ease-out" style={{ width: `${room.progress}%` }}></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group overflow-hidden">
+              <p className="font-serif text-gray-800 leading-relaxed mb-4">"다정한 것이 살아남는다. 그것은 진화의 역사에서 가장 위대한 무기였다."</p>
+              <p className="text-xs text-gray-400 font-bold mb-6">다정한 것이 살아남는다 | 브라이언 헤어</p>
+              <button 
+                onClick={() => openExportModal("다정한 것이 살아남는다. 그것은 진화의 역사에서 가장 위대한 무기였다.", "다정한 것이 살아남는다", "브라이언 헤어")}
+                className="w-full py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-900 hover:text-white transition flex items-center justify-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                <span>스토리로 공유하기</span>
+              </button>
             </div>
-          )}
-
-          {/* 탭 내용 2: 나의 독서 기록 */}
-          {activeTab === 'history' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {readingHistory.map((book) => (
-                <div key={book.id} className="bg-white p-5 rounded-2xl shadow-sm ring-1 ring-gray-100 flex items-start space-x-4 hover:ring-blue-200 transition">
-                  <div className="w-16 h-24 bg-gray-100 rounded-lg flex items-center justify-center text-2xl shrink-0 shadow-inner">
-                    📕
-                  </div>
-                  <div className="flex-1 py-1">
-                    <h4 className="font-bold text-gray-900 line-clamp-1">{book.title}</h4>
-                    <p className="text-xs text-gray-500 mt-1">{book.author}</p>
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-xs text-gray-400 font-medium">완독일: {book.date}</span>
-                      <span className="text-sm tracking-widest">{book.rating}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group overflow-hidden">
+              <p className="font-serif text-gray-800 leading-relaxed mb-4">"우리는 모두 별빛으로 만들어진 존재들이다."</p>
+              <p className="text-xs text-gray-400 font-bold mb-6">코스모스 | 칼 세이건</p>
+              <button 
+                onClick={() => openExportModal("우리는 모두 별빛으로 만들어진 존재들이다.", "코스모스", "칼 세이건")}
+                className="w-full py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-900 hover:text-white transition flex items-center justify-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                <span>스토리로 공유하기</span>
+              </button>
             </div>
-          )}
+          </div>
+        </section>
+
+        {/* 5. [NEW] 맨 아래 계정 관리 (로그아웃 / 회원탈퇴) 영역 */}
+        <section className="mt-16 pt-8 border-t border-gray-200 flex items-center justify-center space-x-6">
+          <button 
+            onClick={handleLogout} 
+            className="text-sm font-bold text-gray-500 hover:text-gray-900 transition"
+          >
+            로그아웃
+          </button>
+          <span className="text-gray-300">|</span>
+          <button 
+            onClick={handleWithdraw} 
+            className="text-sm font-bold text-gray-400 hover:text-red-500 transition"
+          >
+            회원탈퇴
+          </button>
         </section>
 
       </main>
+
+      {/* 인스타그램 스토리 내보내기 모달 */}
+      {isExportModalOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+          <div className="absolute top-6 right-6 flex space-x-4">
+            <button className="text-white hover:text-gray-300" onClick={() => setIsExportModalOpen(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="relative w-full max-w-[320px] aspect-[9/16] bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-3xl shadow-2xl flex flex-col items-center justify-center p-8 overflow-hidden">
+            <div className="absolute inset-0 opacity-10 mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+            <div className="relative z-10 w-full bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-2xl shadow-xl">
+              <span className="text-4xl text-green-400 opacity-50 font-serif absolute -top-4 -left-2">"</span>
+              <p className="font-serif text-white text-lg leading-relaxed mb-6 relative z-10 break-keep">
+                {selectedQuote.text}
+              </p>
+              <div className="flex flex-col items-end">
+                <span className="text-sm font-black text-white">{selectedQuote.book}</span>
+                <span className="text-xs text-gray-400 mt-1">{selectedQuote.author}</span>
+              </div>
+            </div>
+            <div className="absolute bottom-8 left-0 w-full text-center z-10">
+              <span className="text-[10px] font-bold text-white/50 tracking-widest uppercase">From. 교환독서</span>
+            </div>
+          </div>
+          <div className="mt-8 flex space-x-4 w-full max-w-[320px]">
+            <button 
+              className="flex-1 bg-white text-gray-900 font-black py-4 rounded-full hover:bg-gray-200 transition shadow-lg flex items-center justify-center space-x-2"
+              onClick={() => {
+                alert("이미지가 갤러리에 저장되었습니다!");
+                setIsExportModalOpen(false);
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+              <span>이미지 저장</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,75 +1,99 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('http://localhost:5000/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      // [NEW] 만약 서버가 뻗어서 JSON이 아닌 에러 페이지(HTML)를 보냈을 때를 대비한 코드
-      if (!response.ok) {
-        const textData = await response.text(); 
-        try {
-          const jsonData = JSON.parse(textData);
-          alert(jsonData.message); // 정상적인 실패 메시지 (예: 비번 틀림)
-          return;
-        } catch {
-          alert(`서버 내부 에러가 발생했습니다: ${textData.substring(0, 50)}...`);
-          return;
-        }
-      }
-
-      const data = await response.json();
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userName', data.userName);
-      
-      alert(`${data.userName}님 환영합니다!`);
-      router.push('/'); 
-      
-    } catch (error: any) {
-      // [NEW] 인터넷이 끊겼거나 서버가 아예 꺼져있을 때
-      alert(`서버와 연결할 수 없습니다. (에러: ${error.message})`);
-      console.error(error);
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault(); // 기본 전송(새로고침) 방지!
+    
+    // 임시 로그인 처리 (나중에 실제 백엔드 API로 교체)
+    if (email && password) {
+      localStorage.setItem('token', 'dummy-token');
+      localStorage.setItem('userName', email.split('@')[0]); 
+      router.push('/');
+    } else {
+      alert('이메일과 비밀번호를 입력해주세요.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4">
-      <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm ring-1 ring-gray-100 w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black mb-2"><span className="text-green-600">교환</span><span className="text-orange-500">독서</span></h1>
-          <p className="text-gray-500 font-medium">다시 오신 것을 환영합니다!</p>
+    <div className="min-h-screen flex text-gray-900 font-sans bg-white">
+      
+      {/* 왼쪽: 텍스트힙 감성 이미지 & 명언 (웹에서만 보임) */}
+      <div className="hidden lg:flex w-1/2 bg-gray-900 relative items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1455390582262-044cdead27d8?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-luminosity"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/90"></div>
+        <div className="relative z-10 p-12 text-center max-w-lg">
+          <span className="text-4xl text-gray-500 font-serif mb-4 block">"</span>
+          <h2 className="text-3xl font-serif text-white mb-6 leading-relaxed break-keep">
+            우리가 읽어야 할 것은<br/>오직 영혼을 흔드는 책뿐이다.
+          </h2>
+          <p className="text-sm font-bold text-gray-400 tracking-widest uppercase">프란츠 카프카</p>
         </div>
-
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">이메일</label>
-            <input type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-green-500 focus:bg-white transition outline-none" placeholder="example@email.com" />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">비밀번호</label>
-            <input type="password" required value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-green-500 focus:bg-white transition outline-none" placeholder="비밀번호를 입력하세요" />
-          </div>
-          <button type="submit" className="w-full bg-green-500 text-white font-bold py-3.5 rounded-xl hover:bg-green-600 transition shadow-sm mt-4">
-            로그인
-          </button>
-        </form>
-        
-        <p className="text-center text-sm text-gray-500 mt-6 font-medium">
-          아직 계정이 없으신가요? <Link href="/signup" className="text-green-600 hover:underline font-bold">가입하기</Link>
-        </p>
       </div>
+
+      {/* 오른쪽: 로그인 폼 */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 md:px-24">
+        
+        {/* 뒤로가기 버튼 */}
+        <Link href="/" className="absolute top-8 left-8 lg:left-1/2 lg:ml-8 text-gray-400 hover:text-gray-900 transition flex items-center space-x-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          <span className="text-sm font-bold">홈으로</span>
+        </Link>
+
+        <div className="w-full max-w-sm mx-auto">
+          {/* 로고 */}
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-black tracking-tighter mb-2">교환<span className="text-gray-400">독서</span></h1>
+            <p className="text-sm text-gray-500">당신의 밑줄이 예술이 되는 공간</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input 
+                type="email" 
+                placeholder="이메일" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 transition placeholder:text-gray-400" 
+              />
+            </div>
+            <div>
+              <input 
+                type="password" 
+                placeholder="비밀번호" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 transition placeholder:text-gray-400" 
+              />
+            </div>
+            
+            <div className="flex items-center justify-between py-2">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900" />
+                <span className="text-xs text-gray-500 font-bold">로그인 유지</span>
+              </label>
+              <Link href="#" className="text-xs font-bold text-gray-400 hover:text-gray-900 transition underline">비밀번호 찾기</Link>
+            </div>
+
+            <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition shadow-lg mt-2">
+              로그인
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500 mt-8">
+            아직 기록을 시작하지 않으셨나요? <br className="sm:hidden" />
+            <Link href="/register" className="font-bold text-gray-900 underline ml-1 hover:text-gray-600 transition">회원가입</Link>
+          </p>
+        </div>
+      </div>
+
     </div>
   );
 }
