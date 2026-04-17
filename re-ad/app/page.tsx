@@ -187,10 +187,19 @@ export default function MainPage() {
       <section className="px-6 py-10 mx-auto max-w-7xl border-b border-gray-100">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h3 className="text-2xl font-black tracking-tighter">필사 전시회</h3>
+            <Link href="/exhibition" className="group block">
+              <h3 className="text-2xl font-black tracking-tighter group-hover:text-gray-500 transition-colors">
+                필사 전시회
+              </h3>
+            </Link>
             <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">오늘의 영감을 준 문장들</p>
           </div>
-          <button className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 transition">VIEW ALL</button>
+          <Link 
+            href="/exhibition" 
+            className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition"
+          >
+            VIEW ALL
+          </Link>
         </div>
         <div className="flex space-x-6 overflow-x-auto pb-6 no-scrollbar">
           {[1, 2, 3, 4, 5].map((i) => (

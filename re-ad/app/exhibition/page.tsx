@@ -78,9 +78,6 @@ export default function ExhibitionPage() {
         <Link href="/" className="flex items-center space-x-2">
           <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
         </Link>
-        <Link href="/" className="text-sm font-bold text-gray-400 hover:text-black transition">
-          홈으로
-        </Link>
       </header>
 
       {/* 2. 전시회 히어로 배너 */}
