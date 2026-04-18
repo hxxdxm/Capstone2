@@ -9,10 +9,6 @@ export default function MainPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
 
-  // ==========================================
-  // 💡 자바스크립트 로직은 반드시 return 위에 작성해야 합니다!
-  // ==========================================
-
   // 1. 배너 데이터
   const banners = [
     {
@@ -49,7 +45,7 @@ export default function MainPage() {
     setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
   };
 
-  // 3. 페이지 로드 시 실행되는 기능들 (로그인 체크 & 배너 오토플레이)
+  // 3. 페이지 로드 시 실행되는 기능들
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedName = localStorage.getItem('userName');
@@ -58,7 +54,6 @@ export default function MainPage() {
       setUserName(storedName);
     }
 
-    // 배너 5초 자동 넘김
     const timer = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
     }, 5000); 
@@ -66,7 +61,7 @@ export default function MainPage() {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  // 메인화면용 로그아웃 함수 추가!
+  // 4. 메인화면용 로그아웃 함수
   const handleLogout = () => {
     if (window.confirm("로그아웃 하시겠습니까?")) {
       localStorage.removeItem('token');
@@ -77,20 +72,16 @@ export default function MainPage() {
     }
   };
 
-  // ==========================================
-  // 화면을 그리는 부분 (여기부터 HTML/JSX 시작)
-  // ==========================================
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
       
-      {/* 1. 최상단 헤더: 검색, 알림, 마이페이지 */}
+      {/* 1. 최상단 헤더: 로그인 상태에 따라 버튼 분기처리 */}
       <header className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
         <Link href="/" className="flex items-center space-x-2">
           <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
         </Link>
         
         <div className="flex items-center space-x-6 flex-1 justify-end">
-          {/* 검색창 */}
           <div className="relative hidden md:block w-72">
             <input 
               type="text" 
@@ -102,7 +93,6 @@ export default function MainPage() {
             </button>
           </div>
 
-          {/* 알림 및 유저 메뉴 */}
           <div className="flex items-center space-x-5">
             {isLoggedIn ? (
               <>
@@ -129,8 +119,6 @@ export default function MainPage() {
       {/* 2. 캐러셀형 메인 배너 영역 */}
       <section className="px-6 py-8 mx-auto max-w-7xl relative group">
         <div className="relative h-[300px] md:h-[400px] bg-black rounded-3xl overflow-hidden shadow-xl">
-          
-          {/* 배너 이미지 및 내용 렌더링 */}
           {banners.map((banner, index) => (
             <div 
               key={banner.id}
@@ -155,7 +143,6 @@ export default function MainPage() {
             </div>
           ))}
 
-          {/* 좌우 네비게이션 버튼 (그룹 호버 시 노출) */}
           <button 
             onClick={prevBanner}
             className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
@@ -169,7 +156,6 @@ export default function MainPage() {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
 
-          {/* 하단 페이징 도트 (현재 위치 표시) */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
             {banners.map((_, index) => (
               <button 
@@ -179,16 +165,15 @@ export default function MainPage() {
               ></button>
             ))}
           </div>
-
         </div>
       </section>
 
-      {/* 3. 필사 전시 레이아웃 (가로 스크롤형) */}
+      {/* 3. 필사 전시 레이아웃 */}
       <section className="px-6 py-10 mx-auto max-w-7xl border-b border-gray-100">
         <div className="flex items-end justify-between mb-8">
           <div>
             <Link href="/exhibition" className="group block">
-              <h3 className="text-2xl font-black tracking-tighter group-hover:text-gray-500 transition-colors">
+              <h3 className="text-2xl font-black italic tracking-tighter group-hover:text-gray-500 transition-colors">
                 필사 전시회
               </h3>
             </Link>
@@ -261,8 +246,10 @@ export default function MainPage() {
                     </span>
                   </div>
                   
-                  <h4 className="text-lg font-black mb-2 group-hover:text-gray-600 transition-colors">{room.title}</h4>
-                  <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2">{room.desc}</p>
+                  <Link href="/rooms/1">
+                    <h4 className="text-lg font-black mb-2 group-hover:text-gray-600 transition-colors">{room.title}</h4>
+                    <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2">{room.desc}</p>
+                  </Link>
                   
                   <div className="flex flex-wrap gap-2">
                     {room.tags.map((tag, i) => (
@@ -273,6 +260,28 @@ export default function MainPage() {
               );
             })}
           </div>
+
+          {/* 모임방 우측 하단 더보기 버튼 */}
+          <div className="flex justify-end pt-4">
+            <Link 
+              href="/rooms" 
+              className="group flex items-center space-x-2 text-xs font-black tracking-widest text-gray-400 hover:text-black transition-colors"
+            >
+              <span className="border-b border-transparent group-hover:border-black pb-0.5 transition-colors">
+                EXPLORE MORE ROOMS
+              </span>
+              <svg 
+                className="w-4 h-4 transform group-hover:translate-x-1.5 transition-transform duration-300" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth={2.5} 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+
         </div>
 
         {/* 오른쪽 영역: 책 추천 랭킹 */}
@@ -301,7 +310,6 @@ export default function MainPage() {
             <button className="w-full mt-10 py-3 bg-gray-50 text-[10px] font-black tracking-widest text-gray-400 hover:bg-black hover:text-white transition rounded-xl">더보기</button>
           </section>
 
-          {/* 알림 배너 등 추가 공간 */}
           <div className="bg-gray-900 text-white p-8 rounded-3xl relative overflow-hidden">
              <div className="relative z-10">
                <h4 className="text-lg font-black mb-2 italic">Text Hip Archive</h4>
@@ -314,7 +322,10 @@ export default function MainPage() {
 
       {/* 우측 하단 플로팅 글쓰기 버튼 */}
       <button 
-        onClick={() => setIsLoggedIn(true)} 
+        onClick={() => {
+          if(!isLoggedIn) { alert("기록을 남기려면 로그인이 필요합니다."); router.push('/login'); return; }
+          // 추후 글쓰기 모달 연결
+        }} 
         className="fixed bottom-10 right-10 z-50 w-16 h-16 bg-black text-white rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>

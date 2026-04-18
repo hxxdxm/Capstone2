@@ -8,13 +8,23 @@ export default function MyPage() {
   const router = useRouter();
   const [userName, setUserName] = useState('독서가');
   
+  // 인스타 내보내기 모달 상태
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState({ text: '', book: '', author: '' });
+
+  // 프로필 수정 모달 상태 관리
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    password: '',
+    passwordConfirm: ''
+  });
 
   useEffect(() => {
     const storedName = localStorage.getItem('userName');
     if (storedName && storedName !== 'undefined') {
       setUserName(storedName);
+      setEditFormData(prev => ({ ...prev, name: storedName })); // 수정 모달에 현재 이름 미리 세팅
     }
   }, []);
 
@@ -41,6 +51,27 @@ export default function MyPage() {
     }
   };
 
+  // 프로필 수정 완료 로직
+  const handleEditProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (editFormData.password !== editFormData.passwordConfirm) {
+      alert("새 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (!editFormData.name.trim()) {
+      alert("닉네임을 입력해주세요.");
+      return;
+    }
+
+    // 이름 변경 처리 (실제로는 백엔드 API 연동 필요)
+    localStorage.setItem('userName', editFormData.name);
+    setUserName(editFormData.name);
+    setIsEditProfileOpen(false);
+    alert("프로필 정보가 성공적으로 수정되었습니다!");
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans relative">
       
@@ -56,9 +87,22 @@ export default function MyPage() {
 
       <main className="mx-auto max-w-5xl px-6 mt-8 space-y-10">
         
-        {/* 1. 프로필 & 요약 섹션 (버튼 제거하고 깔끔하게 복구) */}
-        <section className="flex items-center justify-between bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="flex items-center space-x-6">
+        {/* 1. 프로필 & 요약 섹션 */}
+        <section className="flex items-center justify-between bg-white p-8 rounded-3xl border border-gray-100 shadow-sm relative group">
+          
+          {/* [NEW] 프로필 수정 버튼 (우측 상단 배치) */}
+          <button 
+            onClick={() => {
+              setEditFormData(prev => ({ ...prev, name: userName })); // 모달 열 때 현재 이름 장전
+              setIsEditProfileOpen(true);
+            }}
+            className="absolute top-6 right-6 text-[10px] font-black tracking-widest text-gray-400 hover:text-black transition flex items-center space-x-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
+            <span className="underline decoration-transparent hover:decoration-black pb-0.5 transition-colors">프로필 수정</span>
+          </button>
+
+          <div className="flex items-center space-x-6 mt-4 md:mt-0">
             <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center text-white text-2xl font-black shadow-md">
               {userName[0]}
             </div>
@@ -68,7 +112,7 @@ export default function MyPage() {
             </div>
           </div>
           
-          <div className="hidden md:flex space-x-8 text-center">
+          <div className="hidden md:flex space-x-8 text-center mt-4 md:mt-0 pt-4 md:pt-0">
             <div>
               <p className="text-3xl font-black text-gray-900">12</p>
               <p className="text-xs text-gray-400 font-bold mt-1">남긴 기록</p>
@@ -120,7 +164,6 @@ export default function MyPage() {
           <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
             <h3 className="text-lg font-black mb-1">📊 주간 독서량</h3>
             <p className="text-xs text-gray-400 font-bold mb-8">단위: 페이지 (Page)</p>
-            
             <div className="flex-1 flex items-end justify-between gap-2 h-40 mt-auto">
               {[
                 { day: '월', value: 40 },
@@ -179,24 +222,92 @@ export default function MyPage() {
           </div>
         </section>
 
-        {/* 5. [NEW] 맨 아래 계정 관리 (로그아웃 / 회원탈퇴) 영역 */}
-        <section className="mt-16 pt-8 border-t border-gray-200 flex items-center justify-center space-x-6">
-          <button 
-            onClick={handleLogout} 
-            className="text-sm font-bold text-gray-500 hover:text-gray-900 transition"
-          >
-            로그아웃
-          </button>
-          <span className="text-gray-300">|</span>
+        {/* 5. 바디 맨 아래: 강렬한 빨간색 회원탈퇴 버튼 */}
+        <section className="mt-20 pt-8 border-t border-gray-200 flex flex-col items-center justify-center pb-8">
+          <button onClick={handleLogout} className="text-sm font-bold text-gray-400 hover:text-black underline mb-10">로그아웃</button>
+          
+          <p className="text-xs text-gray-400 mb-4 font-bold">더 이상 교환독서 서비스를 이용하지 않으시려면</p>
           <button 
             onClick={handleWithdraw} 
-            className="text-sm font-bold text-gray-400 hover:text-red-500 transition"
+            className="w-full max-w-xs py-4 bg-red-500 text-white text-sm font-black rounded-xl hover:bg-red-600 transition shadow-lg shadow-red-500/30"
           >
-            회원탈퇴
+            회원탈퇴 진행하기
           </button>
         </section>
 
       </main>
+
+      {/* ==========================================
+          [모달] 프로필 / 회원정보 수정
+          ========================================== */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden">
+            
+            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
+              <h3 className="text-lg font-black tracking-tighter">프로필 수정</h3>
+              <button onClick={() => setIsEditProfileOpen(false)} className="text-gray-400 hover:text-gray-900 transition">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleEditProfile} className="p-8 space-y-5">
+              
+              {/* 프로필 이미지 변경 (UI용) */}
+              <div className="flex justify-center mb-6">
+                <div className="relative cursor-pointer group">
+                  <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center text-white text-2xl font-black">
+                    {editFormData.name ? editFormData.name[0] : userName[0]}
+                  </div>
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">닉네임</label>
+                <input 
+                  type="text" 
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black transition font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">새 비밀번호 (선택)</label>
+                <input 
+                  type="password" 
+                  placeholder="변경할 비밀번호 입력"
+                  value={editFormData.password}
+                  onChange={(e) => setEditFormData({...editFormData, password: e.target.value})}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">새 비밀번호 확인</label>
+                <input 
+                  type="password" 
+                  placeholder="비밀번호 다시 입력"
+                  value={editFormData.passwordConfirm}
+                  onChange={(e) => setEditFormData({...editFormData, passwordConfirm: e.target.value})}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black transition"
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full mt-6 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg tracking-widest"
+              >
+                변경 내용 저장
+              </button>
+            </form>
+
+          </div>
+        </div>
+      )}
 
       {/* 인스타그램 스토리 내보내기 모달 */}
       {isExportModalOpen && (
