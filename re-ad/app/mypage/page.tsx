@@ -9,7 +9,7 @@ export default function MyPage() {
   const [userName, setUserName] = useState('독서가');
   
   // ⭐️ [백엔드 연동] 내가 쓴 문장들을 저장할 상태 배열
-  const [myQuotes, setMyQuotes] = useState([]);
+  const [myQuotes, setMyQuotes] = useState<any[]>([]);
 
   // 인스타 내보내기 모달 상태
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
