@@ -17,7 +17,8 @@ export default function RegisterPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  // ⭐️ [백엔드 연동] 가입 완료하기 버튼을 누르면 EC2 서버로 쏩니다!
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault(); // 기본 전송 방지!
     
     if (formData.password !== formData.passwordConfirm) {
@@ -25,11 +26,38 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.name && formData.email && formData.password) {
-      alert('환영합니다! 회원가입이 완료되었습니다.');
-      router.push('/login');
-    } else {
+    if (!formData.name || !formData.email || !formData.password) {
       alert('모든 항목을 입력해주세요.');
+      return;
+    }
+
+    try {
+      // EC2 백엔드 서버의 /register 주소로 데이터(json) 보내기
+      const response = await fetch('http://13.124.191.57:5000/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nickname: formData.name, // 프론트의 name 변수를 백엔드의 nickname 변수로 맞춰서 보냄
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 백엔드에서 201 응답(가입 성공)이 오면 로그인 창으로 이동
+        alert('환영합니다! 회원가입이 완료되었습니다.');
+        router.push('/login');
+      } else {
+        // 이미 가입된 이메일이거나 백엔드에서 에러를 튕겨냈을 때
+        alert(data.message || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('회원가입 에러:', error);
+      alert('서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 

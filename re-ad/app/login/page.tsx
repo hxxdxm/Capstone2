@@ -9,16 +9,44 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault(); // 기본 전송(새로고침) 방지!
+  // ⭐️ [백엔드 연동] EC2 서버로 진짜 로그인 요청 보내기
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); // 기본 전송(새로고침) 방지
     
-    // 임시 로그인 처리 (나중에 실제 백엔드 API로 교체)
-    if (email && password) {
-      localStorage.setItem('token', 'dummy-token');
-      localStorage.setItem('userName', email.split('@')[0]); 
-      router.push('/');
-    } else {
+    if (!email || !password) {
       alert('이메일과 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    try {
+      // 팀장님의 EC2 서버(로그인 API)로 요청 쏘기!
+      const response = await fetch('http://13.124.191.57:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 로그인 성공! EC2 서버가 만들어준 진짜 JWT 토큰을 브라우저에 저장
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userName', data.user?.nickname || email.split('@')[0]); 
+        
+        alert('환영합니다!');
+        router.push('/'); // 메인 홈 화면으로 이동
+      } else {
+        // 로그인 실패 (비밀번호 틀림 등)
+        alert(data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      }
+    } catch (error) {
+      console.error('로그인 에러:', error);
+      alert('서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 

@@ -8,6 +8,9 @@ export default function MyPage() {
   const router = useRouter();
   const [userName, setUserName] = useState('독서가');
   
+  // ⭐️ [백엔드 연동] 내가 쓴 문장들을 저장할 상태 배열
+  const [myQuotes, setMyQuotes] = useState([]);
+
   // 인스타 내보내기 모달 상태
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState({ text: '', book: '', author: '' });
@@ -20,11 +23,35 @@ export default function MyPage() {
     passwordConfirm: ''
   });
 
+  // ⭐️ [백엔드 연동] 화면 켜질 때 내 정보 및 내 피드 가져오기
   useEffect(() => {
     const storedName = localStorage.getItem('userName');
+    const token = localStorage.getItem('token');
+    
     if (storedName && storedName !== 'undefined') {
       setUserName(storedName);
-      setEditFormData(prev => ({ ...prev, name: storedName })); // 수정 모달에 현재 이름 미리 세팅
+      setEditFormData(prev => ({ ...prev, name: storedName })); 
+    }
+
+    if (token) {
+      // 내 수집 문장 데이터 가져오기 (백엔드에 API 추가 예정)
+      fetch('http://13.124.191.57:5000/api/annotations/my', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        // 백엔드에서 데이터가 오면 기존 가짜 데이터 대신 덮어씌움
+        if(Array.isArray(data) && data.length > 0) {
+          setMyQuotes(data);
+        } else {
+          // 서버 통신은 됐지만 아직 글을 안 썼거나 API 미완성일 때 보여줄 기본값
+          setMyQuotes([
+            { _id: '1', quote: "다정한 것이 살아남는다. 그것은 진화의 역사에서 가장 위대한 무기였다.", bookId: { title: "다정한 것이 살아남는다" }, author: "브라이언 헤어" },
+            { _id: '2', quote: "우리는 모두 별빛으로 만들어진 존재들이다.", bookId: { title: "코스모스" }, author: "칼 세이건" }
+          ]);
+        }
+      })
+      .catch(err => console.error("내 문장 불러오기 에러:", err));
     }
   }, []);
 
@@ -42,20 +69,29 @@ export default function MyPage() {
     }
   };
 
-  const handleWithdraw = () => {
+  // ⭐️ [백엔드 연동] 회원 탈퇴 API 쏘기
+  const handleWithdraw = async () => {
     if (window.confirm("정말 탈퇴하시겠습니까? 기록된 모든 독서 데이터가 삭제되며 복구할 수 없습니다.")) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userName');
-      alert("그동안 교환독서를 이용해주셔서 감사합니다. 탈퇴 처리되었습니다.");
-      router.push('/');
+      try {
+        await fetch('http://13.124.191.57:5000/api/users/withdraw', {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        localStorage.removeItem('token');
+        localStorage.removeItem('userName');
+        alert("그동안 교환독서를 이용해주셔서 감사합니다. 탈퇴 처리되었습니다.");
+        router.push('/');
+      } catch (error) {
+        alert("탈퇴 처리 중 에러가 발생했습니다.");
+      }
     }
   };
 
-  // 프로필 수정 완료 로직
-  const handleEditProfile = (e: React.FormEvent) => {
+  // ⭐️ [백엔드 연동] 프로필 수정 API 쏘기
+  const handleEditProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editFormData.password !== editFormData.passwordConfirm) {
+    if (editFormData.password && editFormData.password !== editFormData.passwordConfirm) {
       alert("새 비밀번호가 일치하지 않습니다.");
       return;
     }
@@ -65,11 +101,30 @@ export default function MyPage() {
       return;
     }
 
-    // 이름 변경 처리 (실제로는 백엔드 API 연동 필요)
-    localStorage.setItem('userName', editFormData.name);
-    setUserName(editFormData.name);
-    setIsEditProfileOpen(false);
-    alert("프로필 정보가 성공적으로 수정되었습니다!");
+    try {
+      const response = await fetch('http://13.124.191.57:5000/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          nickname: editFormData.name,
+          newPassword: editFormData.password || undefined // 비번은 바꿀 때만 보냄
+        })
+      });
+
+      if (response.ok) {
+        localStorage.setItem('userName', editFormData.name);
+        setUserName(editFormData.name);
+        setIsEditProfileOpen(false);
+        alert("프로필 정보가 성공적으로 수정되었습니다!");
+      } else {
+        alert("프로필 수정에 실패했습니다.");
+      }
+    } catch (error) {
+      alert("서버 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -90,10 +145,9 @@ export default function MyPage() {
         {/* 1. 프로필 & 요약 섹션 */}
         <section className="flex items-center justify-between bg-white p-8 rounded-3xl border border-gray-100 shadow-sm relative group">
           
-          {/* [NEW] 프로필 수정 버튼 (우측 상단 배치) */}
           <button 
             onClick={() => {
-              setEditFormData(prev => ({ ...prev, name: userName })); // 모달 열 때 현재 이름 장전
+              setEditFormData(prev => ({ ...prev, name: userName }));
               setIsEditProfileOpen(true);
             }}
             className="absolute top-6 right-6 text-[10px] font-black tracking-widest text-gray-400 hover:text-black transition flex items-center space-x-1"
@@ -144,7 +198,6 @@ export default function MyPage() {
                 const day = i + 1;
                 const hasBookCover = day === 5 || day === 15;
                 const hasQuote = day === 12 || day === 16 || day === 22;
-                
                 return (
                   <div key={day} className="aspect-square relative flex items-center justify-center rounded-xl hover:bg-gray-50 cursor-pointer transition">
                     <span className={`text-sm font-bold ${hasBookCover || hasQuote ? 'text-gray-900 z-10' : 'text-gray-500'}`}>{day}</span>
@@ -191,38 +244,29 @@ export default function MyPage() {
           </section>
         </div>
 
-        {/* 4. 내 기록 보관함 */}
+        {/* 4. 내 기록 보관함 (백엔드 연동 매핑) */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-black">나의 문장 수집</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group overflow-hidden">
-              <p className="font-serif text-gray-800 leading-relaxed mb-4">"다정한 것이 살아남는다. 그것은 진화의 역사에서 가장 위대한 무기였다."</p>
-              <p className="text-xs text-gray-400 font-bold mb-6">다정한 것이 살아남는다 | 브라이언 헤어</p>
-              <button 
-                onClick={() => openExportModal("다정한 것이 살아남는다. 그것은 진화의 역사에서 가장 위대한 무기였다.", "다정한 것이 살아남는다", "브라이언 헤어")}
-                className="w-full py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-900 hover:text-white transition flex items-center justify-center space-x-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                <span>스토리로 공유하기</span>
-              </button>
-            </div>
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group overflow-hidden">
-              <p className="font-serif text-gray-800 leading-relaxed mb-4">"우리는 모두 별빛으로 만들어진 존재들이다."</p>
-              <p className="text-xs text-gray-400 font-bold mb-6">코스모스 | 칼 세이건</p>
-              <button 
-                onClick={() => openExportModal("우리는 모두 별빛으로 만들어진 존재들이다.", "코스모스", "칼 세이건")}
-                className="w-full py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-900 hover:text-white transition flex items-center justify-center space-x-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                <span>스토리로 공유하기</span>
-              </button>
-            </div>
+            {myQuotes.map((q) => (
+              <div key={q._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group overflow-hidden">
+                <p className="font-serif text-gray-800 leading-relaxed mb-4">"{q.quote}"</p>
+                <p className="text-xs text-gray-400 font-bold mb-6">{q.bookId?.title || '알 수 없는 책'} | {q.author || '작자 미상'}</p>
+                <button 
+                  onClick={() => openExportModal(q.quote, q.bookId?.title || '책', q.author || '')}
+                  className="w-full py-3 bg-gray-50 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-900 hover:text-white transition flex items-center justify-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                  <span>스토리로 공유하기</span>
+                </button>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* 5. 바디 맨 아래: 강렬한 빨간색 회원탈퇴 버튼 */}
+        {/* 5. 바디 맨 아래: 회원탈퇴 버튼 */}
         <section className="mt-20 pt-8 border-t border-gray-200 flex flex-col items-center justify-center pb-8">
           <button onClick={handleLogout} className="text-sm font-bold text-gray-400 hover:text-black underline mb-10">로그아웃</button>
           

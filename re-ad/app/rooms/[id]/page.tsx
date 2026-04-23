@@ -1,25 +1,98 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 
 export default function RoomDetailPage() {
-  // 실제로는 URL의 id를 통해 백엔드에서 받아올 데이터입니다.
-  const [roomData] = useState({
-    title: "헤르만 헤세 읽는 밤",
-    description: "데미안을 함께 읽고 각자의 성장에 대해 나눕니다. 단순한 독서를 넘어 문장 속에 숨겨진 나를 발견하는 시간을 가집니다. 필사노트 지참 필수입니다.",
-    type: "오프라인",
-    location: "서울 서촌 '무목적' 북카페",
-    bookTitle: "데미안",
-    author: "헤르만 헤세",
-    tags: ["인문학", "소설", "성장", "필사"],
-    members: 5,
-    maxMembers: 8,
-    host: "Hesse_Lover",
-    schedule: "매주 목요일 저녁 7시",
-  });
+  const router = useRouter();
+  // ⭐️ [백엔드 연동] URL 주소창에서 방의 고유 ID(roomId)를 빼오는 Next.js 마법 도구
+  const params = useParams();
+  const roomId = params?.id;
 
-  const isFull = roomData.members >= roomData.maxMembers;
+  // EC2 서버에서 받아올 실제 방 데이터를 담을 공간
+  const [roomData, setRoomData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ⭐️ [백엔드 연동] 화면 켜질 때 특정 방 정보 딱 1개만 가져오기
+  useEffect(() => {
+    if (!roomId) return;
+
+    fetch(`http://13.124.191.57:5000/api/rooms/${roomId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.message) {
+          // 에러 메시지가 온 경우 (방이 없거나 삭제됨)
+          alert("방 정보를 불러올 수 없습니다.");
+          router.push('/');
+          return;
+        }
+
+        // 백엔드 데이터를 화면 디자인 규격에 맞게 예쁘게 가공
+        setRoomData({
+          id: data._id,
+          title: data.roomName || "제목 없음",
+          description: "함께 읽고 함께 성장하는 교환독서 모임방입니다. 단순한 독서를 넘어 문장 속에 숨겨진 나를 발견하는 시간을 가집니다.", // 백엔드에 상세 설명란이 없으므로 기본값
+          type: data.roomType || "온라인",
+          location: data.roomType === '오프라인' ? "협의 후 결정" : "온라인 링크",
+          bookTitle: "자유 독서", // 아직 특정 책 지정 기능이 없으므로 기본값
+          author: "자유 작가",
+          tags: ["독서", "친목", "성장"], // 백엔드 태그 없으므로 기본값
+          members: data.members ? data.members.length : 1,
+          maxMembers: data.maxMembers || 4,
+          host: "방장", // 백엔드에 hostNickname이 없으므로 임시처리
+          schedule: "자유 일정",
+          isFull: data.members && data.members.length >= (data.maxMembers || 4)
+        });
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error("방 상세조회 에러:", err);
+        alert("서버 오류로 방 정보를 가져올 수 없습니다.");
+        router.push('/');
+      });
+  }, [roomId, router]);
+
+  // ⭐️ [백엔드 연동] 이 상세페이지 안에서도 참여하기 버튼을 누를 수 있게 연동!
+  const handleJoinRoom = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      router.push('/login');
+      return;
+    }
+
+    try {
+      // 토큰에서 내 ID 뽑아내기
+      const userId = JSON.parse(atob(token.split('.')[1])).id;
+
+      const res = await fetch(`http://13.124.191.57:5000/api/rooms/${roomId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId, roomPassword: '' })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('모임방 입장에 성공했습니다! 🎉');
+        window.location.reload(); // 새로고침해서 인원수 +1 된 거 보여주기
+      } else {
+        alert(data.message || '방 입장에 실패했습니다.');
+      }
+    } catch (error) {
+      alert('서버 오류로 인해 방에 참여할 수 없습니다.');
+    }
+  };
+
+  // 데이터 로딩 중 화면
+  if (isLoading || !roomData) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-[#F8F9FA]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans selection:bg-black selection:text-white">
@@ -30,10 +103,7 @@ export default function RoomDetailPage() {
           <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
         </Link>
         <div className="flex items-center space-x-4">
-           <button className="text-gray-400 hover:text-black transition">
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-           </button>
-           <Link href="/" className="text-sm font-bold text-gray-400 hover:text-black transition">닫기</Link>
+           <Link href="/rooms" className="text-sm font-bold text-gray-400 hover:text-black transition">뒤로가기</Link>
         </div>
       </header>
 
@@ -53,7 +123,7 @@ export default function RoomDetailPage() {
             <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">{roomData.title}</h2>
             
             <div className="flex flex-wrap gap-2 mb-10">
-              {roomData.tags.map((tag) => (
+              {roomData.tags.map((tag: string) => (
                 <span key={tag} className="px-4 py-2 bg-white border border-gray-200 text-xs font-bold text-gray-500 rounded-xl">
                   #{tag}
                 </span>
@@ -97,18 +167,18 @@ export default function RoomDetailPage() {
             <div>
               <div className="flex items-end justify-between mb-4">
                 <span className="text-sm font-black text-gray-400">참여 현황</span>
-                <span className={`text-2xl font-black ${isFull ? 'text-red-500' : 'text-black'}`}>
+                <span className={`text-2xl font-black ${roomData.isFull ? 'text-red-500' : 'text-black'}`}>
                   {roomData.members} <span className="text-gray-300 text-lg">/ {roomData.maxMembers}</span>
                 </span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full transition-all duration-1000 ${isFull ? 'bg-red-500' : 'bg-black'}`}
+                  className={`h-full transition-all duration-1000 ${roomData.isFull ? 'bg-red-500' : 'bg-black'}`}
                   style={{ width: `${(roomData.members / roomData.maxMembers) * 100}%` }}
                 ></div>
               </div>
               <p className="text-[10px] text-gray-400 mt-3 font-bold text-center italic">
-                {isFull ? "현재 정원이 모두 찼습니다." : `현재 ${roomData.maxMembers - roomData.members}자리 남았습니다.`}
+                {roomData.isFull ? "현재 정원이 모두 찼습니다." : `현재 ${roomData.maxMembers - roomData.members}자리 남았습니다.`}
               </p>
             </div>
 
@@ -123,19 +193,20 @@ export default function RoomDetailPage() {
 
             {/* 신청 버튼 */}
             <button 
-              disabled={isFull}
+              onClick={handleJoinRoom}
+              disabled={roomData.isFull}
               className={`w-full py-5 rounded-2xl text-sm font-black tracking-widest transition-all shadow-lg ${
-                isFull 
+                roomData.isFull 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                 : 'bg-black text-white hover:bg-gray-800 hover:scale-[1.02] active:scale-95 shadow-black/10'
               }`}
             >
-              {isFull ? "모집 마감" : "모임 신청하기"}
+              {roomData.isFull ? "모집 마감" : "모임 신청하기"}
             </button>
           </div>
 
           <p className="text-center text-[10px] text-gray-400 font-bold">
-            신청 시 호스트에게 알림이 전송됩니다.
+            신청 시 방의 참여자 명단에 자동 등록됩니다.
           </p>
         </aside>
         
