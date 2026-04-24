@@ -9,8 +9,8 @@ export default function RoomsPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   
-  // ⭐️ [백엔드 연동] EC2 서버에서 가져온 진짜 방 목록 상태
-  const [rooms, setRooms] = useState([]);
+  // ⭐️ [수정완료] 빈 배열 타입 에러 해결
+  const [rooms, setRooms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // 모임방 만들기 모달 상태
@@ -26,7 +26,6 @@ export default function RoomsPage() {
     const token = localStorage.getItem('token');
     if (!token) return null;
     try {
-      // 토큰의 중간 부분을 해독해서 내 ID를 꺼냄
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.id;
     } catch (e) {
@@ -34,7 +33,6 @@ export default function RoomsPage() {
     }
   };
 
-  // ⭐️ [백엔드 연동] 화면 켜질 때 로그인 확인 & 전체 방 목록 가져오기
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedName = localStorage.getItem('userName');
@@ -44,7 +42,6 @@ export default function RoomsPage() {
       setUserName(storedName);
     }
 
-    // EC2 서버에서 전체 방 목록 싹 가져오기
     fetchRooms();
   }, []);
 
@@ -56,19 +53,18 @@ export default function RoomsPage() {
       const myUserId = getUserIdFromToken();
 
       if (Array.isArray(data)) {
-        // 백엔드 방 데이터를 프론트엔드 형식에 맞게 예쁘게 가공
-        const formattedRooms = data.map(r => {
-          // 내가 이 방의 멤버 목록에 들어있는지 확인
-          const amIMember = myUserId && r.members ? r.members.some(m => m.userId === myUserId) : false;
+        // ⭐️ [수정완료] 파라미터 r 타입 명시
+        const formattedRooms = data.map((r: any) => {
+          const amIMember = myUserId && r.members ? r.members.some((m: any) => m.userId === myUserId) : false;
           
           return {
             id: r._id,
             title: r.roomName || '제목 없음',
-            desc: "함께 읽고 함께 성장하는 교환독서 모임방입니다.", // 백엔드에 desc가 없으므로 임의 문구
+            desc: "함께 읽고 함께 성장하는 교환독서 모임방입니다.", 
             members: r.members ? r.members.length : 0,
             maxMembers: r.maxMembers || 4,
             type: r.roomType || '온라인',
-            tags: ["독서", "친목"], // 태그도 기본값
+            tags: ["독서", "친목"], 
             isJoined: amIMember,
           };
         });
@@ -81,7 +77,6 @@ export default function RoomsPage() {
     }
   };
 
-  // ⭐️ [백엔드 연동] 특정 모임방 참여하기 로직
   const handleJoinRoom = async (roomId: string) => {
     if (!isLoggedIn) {
       alert("로그인이 필요합니다.");
@@ -99,7 +94,6 @@ export default function RoomsPage() {
       const res = await fetch(`http://13.124.191.57:5000/api/rooms/${roomId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 💡 백엔드 라우터(routes/rooms.js)가 요구하는 userId 넘겨주기
         body: JSON.stringify({ userId: userId, roomPassword: '' }) 
       });
 
@@ -107,7 +101,7 @@ export default function RoomsPage() {
 
       if (res.ok) {
         alert('모임방 입장에 성공했습니다! 🎉');
-        fetchRooms(); // 목록 새로고침해서 '참여 중' 배지 띄우기
+        fetchRooms(); 
       } else {
         alert(data.message || '방 입장에 실패했습니다.');
       }
@@ -116,7 +110,6 @@ export default function RoomsPage() {
     }
   };
 
-  // ⭐️ [백엔드 연동] 새 모임방 만들기 로직
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -135,11 +128,10 @@ export default function RoomsPage() {
       const res = await fetch('http://13.124.191.57:5000/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 💡 백엔드 라우터(routes/rooms.js) 규격에 딱 맞춰서 데이터 쏘기!
         body: JSON.stringify({
           roomType: newRoom.type,
           roomName: newRoom.title,
-          roomPassword: '', // 프론트 화면에 비번 입력란이 없으므로 빈칸
+          roomPassword: '', 
           hostId: hostId,
           maxMembers: Number(newRoom.maxMembers)
         })
@@ -149,9 +141,9 @@ export default function RoomsPage() {
 
       if (res.ok) {
         alert("새로운 모임방이 개설되었습니다!");
-        setIsCreateModalOpen(false); // 모달 닫기
-        setNewRoom({ title: '', desc: '', type: '온라인', maxMembers: 4, tags: '' }); // 폼 초기화
-        fetchRooms(); // 새로 만든 방이 보이게 새로고침!
+        setIsCreateModalOpen(false); 
+        setNewRoom({ title: '', desc: '', type: '온라인', maxMembers: 4, tags: '' }); 
+        fetchRooms(); 
       } else {
         alert(data.message || "방 생성에 실패했습니다.");
       }
@@ -205,7 +197,8 @@ export default function RoomsPage() {
                 아직 개설된 모임방이 없습니다. 첫 번째 모임방의 방장이 되어주세요!
               </div>
             ) : (
-              rooms.map((room) => {
+              // ⭐️ [수정완료] 파라미터 room 타입 명시
+              rooms.map((room: any) => {
                 const isFull = room.members >= room.maxMembers;
                 
                 return (
@@ -241,7 +234,8 @@ export default function RoomsPage() {
                     </Link>
 
                     <div className="flex flex-wrap gap-2 mb-6">
-                      {room.tags.map((tag, i) => (
+                      {/* ⭐️ [수정완료] 만약을 대비해 tag 타입도 명시 */}
+                      {room.tags.map((tag: any, i: number) => (
                         <span key={i} className="px-2 py-1 bg-gray-50 text-[10px] font-bold text-gray-400 rounded-md">#{tag}</span>
                       ))}
                     </div>

@@ -7,7 +7,7 @@ export default function ExhibitionPage() {
   const [filter, setFilter] = useState('ALL');
   
   // ⭐️ [백엔드 연동] EC2 서버에서 가져온 전시회 데이터를 담을 공간
-  const [exhibitionData, setExhibitionData] = useState([]);
+  const [exhibitionData, setExhibitionData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // ⭐️ [백엔드 연동] 화면이 켜지자마자 백엔드로 요청 쏘기

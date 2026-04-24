@@ -8,18 +8,25 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // ⭐️ 1. 오류 메시지를 화면에 띄우기 위한 상태 추가
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // ⭐️ [백엔드 연동] EC2 서버로 진짜 로그인 요청 보내기
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); // 기본 전송(새로고침) 방지
+    e.preventDefault(); 
+    setErrorMsg(''); // 요청을 보낼 때 기존 에러 메시지 초기화
     
     if (!email || !password) {
-      alert('이메일과 비밀번호를 입력해주세요.');
+      setErrorMsg('이메일과 비밀번호를 입력해주세요.');
       return;
     }
 
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*?_]).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    setErrorMsg('비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.');
+    return; // 조건에 안 맞으면 여기서 함수 종료 (서버로 요청 안 보냄)
+  }
+  
     try {
-      // 팀장님의 EC2 서버(로그인 API)로 요청 쏘기!
       const response = await fetch('http://13.124.191.57:5000/api/users/login', {
         method: 'POST',
         headers: {
@@ -34,19 +41,19 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // 로그인 성공! EC2 서버가 만들어준 진짜 JWT 토큰을 브라우저에 저장
         localStorage.setItem('token', data.token);
         localStorage.setItem('userName', data.user?.nickname || email.split('@')[0]); 
         
-        alert('환영합니다!');
-        router.push('/'); // 메인 홈 화면으로 이동
+        // alert 대신 조용히 홈으로 이동 (사용자 경험 향상)
+        router.push('/'); 
       } else {
-        // 로그인 실패 (비밀번호 틀림 등)
-        alert(data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+        // ⭐️ 2. 실패 시 화면에 에러 메시지 표시
+        setErrorMsg(data.message || '이메일 또는 비밀번호가 일치하지 않습니다.');
       }
     } catch (error) {
       console.error('로그인 에러:', error);
-      alert('서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.');
+      // 백엔드 통신 실패(CORS 에러 등) 시 표시할 메시지
+      setErrorMsg('서버와 통신할 수 없습니다. 서버 상태나 CORS 설정을 확인해주세요.');
     }
   };
 
@@ -76,9 +83,13 @@ export default function LoginPage() {
         </Link>
 
         <div className="w-full max-w-sm mx-auto">
-          {/* 로고 */}
+          {/* ⭐️ 3. 로고 영역에 Link 태그 적용 (클릭 시 홈으로 이동) */}
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-black tracking-tighter mb-2">교환<span className="text-gray-400">독서</span></h1>
+            <Link href="/" className="inline-block">
+              <h1 className="text-3xl font-black tracking-tighter mb-2 cursor-pointer hover:opacity-80 transition">
+                교환<span className="text-gray-400">독서</span>
+              </h1>
+            </Link>
             <p className="text-sm text-gray-500">당신의 밑줄이 예술이 되는 공간</p>
           </div>
 
@@ -110,6 +121,13 @@ export default function LoginPage() {
               <Link href="#" className="text-xs font-bold text-gray-400 hover:text-gray-900 transition underline">비밀번호 찾기</Link>
             </div>
 
+            {/* ⭐️ 4. 에러 메시지가 있을 때만 빨간색으로 출력되는 영역 추가 */}
+            {errorMsg && (
+              <div className="text-red-500 text-sm font-bold text-center py-1">
+                {errorMsg}
+              </div>
+            )}
+
             <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition shadow-lg mt-2">
               로그인
             </button>
@@ -121,7 +139,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-
     </div>
   );
 }
