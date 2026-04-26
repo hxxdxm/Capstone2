@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   // ⭐️ 1. 오류 메시지를 화면에 띄우기 위한 상태 추가
   const [errorMsg, setErrorMsg] = useState('');
+  // 체크박스 상태 관리(로그인 유지)
+  const [isKeepLoggedIn, setIsKeepLoggedIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); 
@@ -20,12 +22,6 @@ export default function LoginPage() {
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*?_]).{8,}$/;
-  if (!passwordRegex.test(password)) {
-    setErrorMsg('비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.');
-    return; // 조건에 안 맞으면 여기서 함수 종료 (서버로 요청 안 보냄)
-  }
-  
     try {
       const response = await fetch('http://13.124.191.57:5000/api/users/login', {
         method: 'POST',
@@ -41,20 +37,30 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+      // 유저 이름 세팅 (닉네임이 없으면 이메일 앞자리 사용)
+      const currentUserName = data.user?.nickname || email.split('@')[0];
+
+      if (isKeepLoggedIn) {
+        // 로그인 유지 O: 브라우저를 꺼도 남아있는 로컬 스토리지에 저장
         localStorage.setItem('token', data.token);
-        localStorage.setItem('userName', data.user?.nickname || email.split('@')[0]); 
-        
-        // alert 대신 조용히 홈으로 이동 (사용자 경험 향상)
-        router.push('/'); 
+        localStorage.setItem('userName', currentUserName);
       } else {
-        // ⭐️ 2. 실패 시 화면에 에러 메시지 표시
-        setErrorMsg(data.message || '이메일 또는 비밀번호가 일치하지 않습니다.');
+        // 로그인 유지 X: 창을 닫으면 증발하는 세션 스토리지에 저장
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('userName', currentUserName);
       }
-    } catch (error) {
-      console.error('로그인 에러:', error);
-      // 백엔드 통신 실패(CORS 에러 등) 시 표시할 메시지
-      setErrorMsg('서버와 통신할 수 없습니다. 서버 상태나 CORS 설정을 확인해주세요.');
+      
+      // alert 대신 조용히 홈으로 이동 (사용자 경험 향상)
+      router.push('/'); 
+    } else {
+      // 실패 시 화면에 에러 메시지 표시
+      setErrorMsg(data.message || '이메일 또는 비밀번호가 일치하지 않습니다.');
     }
+  } catch (error) {
+    console.error('로그인 에러:', error);
+    // 백엔드 통신 실패(CORS 에러 등) 시 표시할 메시지
+    setErrorMsg('서버와 통신할 수 없습니다. 서버 상태나 CORS 설정을 확인해주세요.');
+  }
   };
 
   return (

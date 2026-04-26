@@ -4,26 +4,29 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// 백엔드 주소를 변수로 빼서 한 곳에서 관리
+const API_BASE_URL = 'http://13.124.191.57:5000/api';
+
 export default function RoomsPage() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   
-  // ⭐️ [수정완료] 빈 배열 타입 에러 해결
   const [rooms, setRooms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // 모임방 만들기 모달 상태
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // 새 모임방 생성용 폼 데이터
   const [newRoom, setNewRoom] = useState({
     title: '', desc: '', type: '온라인', maxMembers: 4, tags: ''
   });
 
-  // JWT 토큰에서 내 고유 ID(userId)를 뽑아내는 마법의 함수
+  // 로컬과 세션 스토리지 중 토큰이 있는 곳을 찾아 반환하는 헬퍼 함수
+  const getToken = () => localStorage.getItem('token') || sessionStorage.getItem('token');
+  const getStoredUserName = () => localStorage.getItem('userName') || sessionStorage.getItem('userName');
+
+  // JWT 토큰에서 내 고유 ID(userId)를 뽑아내는 함수
   const getUserIdFromToken = () => {
-    const token = localStorage.getItem('token');
+    const token = getToken(); // 세션 스토리지도 검사
     if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -34,8 +37,8 @@ export default function RoomsPage() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedName = localStorage.getItem('userName');
+    const token = getToken();
+    const storedName = getStoredUserName();
     
     if (token && storedName && storedName !== 'undefined') {
       setIsLoggedIn(true);
@@ -47,24 +50,23 @@ export default function RoomsPage() {
 
   const fetchRooms = async () => {
     try {
-      const res = await fetch('http://13.124.191.57:5000/api/rooms');
+      const res = await fetch(`${API_BASE_URL}/rooms`);
       const data = await res.json();
       
       const myUserId = getUserIdFromToken();
 
       if (Array.isArray(data)) {
-        // ⭐️ [수정완료] 파라미터 r 타입 명시
         const formattedRooms = data.map((r: any) => {
           const amIMember = myUserId && r.members ? r.members.some((m: any) => m.userId === myUserId) : false;
           
           return {
             id: r._id,
             title: r.roomName || '제목 없음',
-            desc: "함께 읽고 함께 성장하는 교환독서 모임방입니다.", 
+            desc: r.roomDesc || "함께 읽고 함께 성장하는 교환독서 모임방입니다.", 
             members: r.members ? r.members.length : 0,
             maxMembers: r.maxMembers || 4,
             type: r.roomType || '온라인',
-            tags: ["독서", "친목"], 
+            tags: r.tags || ["독서", "친목"], // 백엔드에서 태그가 오면 쓰고, 없으면 기본값
             isJoined: amIMember,
           };
         });
@@ -91,7 +93,7 @@ export default function RoomsPage() {
     }
 
     try {
-      const res = await fetch(`http://13.124.191.57:5000/api/rooms/${roomId}/join`, {
+      const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: userId, roomPassword: '' }) 
@@ -119,28 +121,41 @@ export default function RoomsPage() {
     }
 
     const hostId = getUserIdFromToken();
-    if (!hostId) {
-      alert("로그인 정보가 올바르지 않습니다.");
+    const token = getToken();
+
+    if (!hostId || !token) {
+      alert("로그인 정보가 올바르지 않습니다. 다시 로그인해주세요.");
+      router.push('/login');
       return;
     }
 
+    // 입력받은 태그 텍스트("소설, 힐링")를 배열로 변환 ["소설", "힐링"]
+    const tagsArray = newRoom.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+
     try {
-      const res = await fetch('http://13.124.191.57:5000/api/rooms', {
+      const res = await fetch(`${API_BASE_URL}/rooms`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify({
-          roomType: newRoom.type,
-          roomName: newRoom.title,
+          roomType: newRoom.type,      
+          roomName: newRoom.title,     
+          roomDesc: newRoom.desc, // 소개글도 백엔드로 전송 (필요시 백엔드 스키마 추가 필요)
           roomPassword: '', 
           hostId: hostId,
-          maxMembers: Number(newRoom.maxMembers)
+          maxMembers: Number(newRoom.maxMembers),
+          tags: tagsArray 
         })
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        alert("새로운 모임방이 개설되었습니다!");
+        const inviteCodeText = data.room?.inviteCode ? `\n(초대 코드: ${data.room.inviteCode})` : '';
+        alert("새로운 모임방이 개설되었습니다! 🎉" + inviteCodeText);
+        
         setIsCreateModalOpen(false); 
         setNewRoom({ title: '', desc: '', type: '온라인', maxMembers: 4, tags: '' }); 
         fetchRooms(); 
@@ -148,6 +163,7 @@ export default function RoomsPage() {
         alert(data.message || "방 생성에 실패했습니다.");
       }
     } catch (error) {
+      console.error("방 생성 에러:", error);
       alert("서버 통신 에러가 발생했습니다.");
     }
   };
@@ -155,7 +171,6 @@ export default function RoomsPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
       
-      {/* 1. 상단 헤더 */}
       <header className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-40 border-b border-gray-100 shadow-sm">
         <Link href="/" className="flex items-center space-x-2">
           <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
@@ -167,7 +182,6 @@ export default function RoomsPage() {
 
       <main className="mx-auto max-w-6xl px-6 mt-12 space-y-10">
         
-        {/* 2. 페이지 타이틀 및 방 만들기 버튼 */}
         <section className="flex flex-col md:flex-row md:items-end justify-between border-b border-black pb-6 gap-4">
           <div>
             <h2 className="text-4xl font-black tracking-tighter mb-2">LOUNGE</h2>
@@ -185,7 +199,6 @@ export default function RoomsPage() {
           </button>
         </section>
 
-        {/* 3. 모임방 그리드 리스트 */}
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -197,27 +210,23 @@ export default function RoomsPage() {
                 아직 개설된 모임방이 없습니다. 첫 번째 모임방의 방장이 되어주세요!
               </div>
             ) : (
-              // ⭐️ [수정완료] 파라미터 room 타입 명시
               rooms.map((room: any) => {
                 const isFull = room.members >= room.maxMembers;
                 
                 return (
                   <div key={room.id} className="bg-white p-7 rounded-[2rem] border border-gray-100 hover:shadow-xl transition-all flex flex-col h-full relative overflow-hidden group">
                     
-                    {/* 마감 배지 */}
                     {isFull && !room.isJoined && (
                       <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
                         모집 마감
                       </div>
                     )}
-                    {/* 참여 완료 배지 */}
                     {room.isJoined && (
                       <div className="absolute top-0 right-0 bg-black text-white text-[9px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm z-10">
                         참여 중
                       </div>
                     )}
 
-                    {/* 태그 & 인원 현황 */}
                     <div className="flex justify-between items-start mb-4">
                       <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>
                         {room.type}
@@ -227,20 +236,17 @@ export default function RoomsPage() {
                       </span>
                     </div>
                     
-                    {/* 정보 영역 */}
                     <Link href={`/rooms/${room.id}`} className="flex-1 cursor-pointer">
                       <h4 className="text-xl font-black mb-2 group-hover:text-gray-500 transition-colors">{room.title}</h4>
                       <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2">{room.desc}</p>
                     </Link>
 
                     <div className="flex flex-wrap gap-2 mb-6">
-                      {/* ⭐️ [수정완료] 만약을 대비해 tag 타입도 명시 */}
                       {room.tags.map((tag: any, i: number) => (
                         <span key={i} className="px-2 py-1 bg-gray-50 text-[10px] font-bold text-gray-400 rounded-md">#{tag}</span>
                       ))}
                     </div>
 
-                    {/* [핵심] 리스트에서 바로 누르는 참여 버튼 */}
                     <button 
                       onClick={() => handleJoinRoom(room.id)}
                       disabled={isFull || room.isJoined}
@@ -263,21 +269,18 @@ export default function RoomsPage() {
         )}
       </main>
 
-      {/* ==========================================
-          [모달] 새 모임방 만들기
-          ========================================== */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden">
+          <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
-            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100 shrink-0">
               <h3 className="text-lg font-black tracking-tighter">새 모임방 개설</h3>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-900 transition">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
-            <form onSubmit={handleCreateRoom} className="p-8 space-y-5">
+            <form onSubmit={handleCreateRoom} className="p-8 space-y-5 overflow-y-auto no-scrollbar">
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">모임 이름</label>
                 <input 
@@ -340,7 +343,7 @@ export default function RoomsPage() {
 
               <button 
                 type="submit" 
-                className="w-full mt-4 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg tracking-widest"
+                className="w-full mt-4 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg tracking-widest shrink-0"
               >
                 개설 완료하기
               </button>
