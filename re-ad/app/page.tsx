@@ -9,7 +9,12 @@ export default function MainPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
 
-  // 1. 배너 데이터
+  // ⭐️ 1. [백엔드 연동] 진짜 데이터를 담을 바구니(State) 준비
+  // 처음엔 빈 배열([])로 시작해서, 백엔드에서 데이터를 주면 채워 넣습니다.
+  const [exhibitions, setExhibitions] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
+
+  // 배너 데이터 (이 부분은 보통 고정해두거나 관리자 페이지에서 따로 관리합니다)
   const banners = [
     {
       id: 1,
@@ -34,19 +39,14 @@ export default function MainPage() {
     }
   ];
 
-  // 2. 캐러셀 상태 및 기능
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
-  const prevBanner = () => {
-    setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
-  };
-  
-  const nextBanner = () => {
-    setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-  };
+  const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+  const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
 
-  // 3. 페이지 로드 시 실행되는 기능들
+  // ⭐️ 2. [백엔드 연동] 화면이 켜질 때 DB에서 데이터 가져오기
   useEffect(() => {
+    // 로그인 상태 확인 (세션/로컬 스토리지 통합)
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const storedName = localStorage.getItem('userName') || sessionStorage.getItem('userName');
     if (token && storedName && storedName !== 'undefined') {
@@ -54,18 +54,36 @@ export default function MainPage() {
       setUserName(storedName);
     }
 
+    // 캐러셀 자동 타이머
     const timer = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-    }, 5000); 
+    }, 5000);
+
+    // 💡 [API 호출] 최근 필사 전시글 5개 가져오기
+    fetch('http://13.124.191.57:5000/api/annotations?limit=5')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setExhibitions(data);
+      })
+      .catch(err => console.error("필사 데이터 불러오기 실패:", err));
+
+    // 💡 [API 호출] 최근 모임방 목록 가져오기
+    fetch('http://13.124.191.57:5000/api/rooms')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setRooms(data);
+      })
+      .catch(err => console.error("모임방 데이터 불러오기 실패:", err));
 
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  // 4. 메인화면용 로그아웃 함수
   const handleLogout = () => {
     if (window.confirm("로그아웃 하시겠습니까?")) {
       localStorage.removeItem('token');
       localStorage.removeItem('userName');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('userName');
       setIsLoggedIn(false);
       setUserName('');
       alert("로그아웃 되었습니다.");
@@ -86,7 +104,7 @@ export default function MainPage() {
             <input 
               type="text" 
               placeholder="도서, 모임, 전시 검색" 
-              className="w-full bg-gray-100 border-none rounded-full py-2.5 pl-5 pr-12 text-xs focus:ring-2 focus:ring-black transition"
+              className="w-full bg-gray-100 border-none rounded-full py-2.5 pl-5 pr-12 text-xs focus:ring-2 focus:ring-black transition font-bold"
             />
             <button className="absolute right-4 top-2.5 text-gray-400 hover:text-black">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -101,7 +119,7 @@ export default function MainPage() {
                   <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                 </button>
                 <Link href="/mypage" className="flex items-center space-x-2 group">
-                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] text-white font-bold group-hover:bg-gray-700 transition">MY</div>
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] text-white font-black group-hover:bg-gray-700 transition">MY</div>
                   <span className="text-sm font-bold hidden sm:inline-block">마이페이지</span>
                 </Link>
                 <button onClick={handleLogout} className="text-xs font-bold text-gray-400 hover:text-gray-900 transition ml-2">로그아웃</button>
@@ -109,14 +127,14 @@ export default function MainPage() {
             ) : (
               <>
                 <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-black transition">로그인</Link>
-                <Link href="/register" className="text-sm font-bold bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition">회원가입</Link>
+                <Link href="/register" className="text-sm font-bold bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition shadow-lg">회원가입</Link>
               </>
             )}
           </div>
         </div>
       </header>
 
-      {/* 2. 캐러셀형 메인 배너 영역 */}
+      {/* 2. 캐러셀형 메인 배너 영역 (동일) */}
       <section className="px-6 py-8 mx-auto max-w-7xl relative group">
         <div className="relative h-[300px] md:h-[400px] bg-black rounded-3xl overflow-hidden shadow-xl">
           {banners.map((banner, index) => (
@@ -143,16 +161,10 @@ export default function MainPage() {
             </div>
           ))}
 
-          <button 
-            onClick={prevBanner}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
-          >
+          <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
-          <button 
-            onClick={nextBanner}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
-          >
+          <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
 
@@ -186,20 +198,36 @@ export default function MainPage() {
             VIEW ALL
           </Link>
         </div>
+        
+        {/* ⭐️ 3-1. [백엔드 연동] 실제 데이터를 화면에 뿌려주기 */}
         <div className="flex space-x-6 overflow-x-auto pb-6 no-scrollbar">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="min-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors">
-              <div className="h-40 bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gray-200 group-hover:scale-110 transition-transform duration-500"></div>
-                <div className="absolute inset-0 bg-black/10"></div>
+          {exhibitions.length > 0 ? (
+            exhibitions.map((item) => (
+              <div key={item._id} className="min-w-[280px] max-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors flex flex-col justify-between">
+                <div>
+                  <div className="h-40 bg-gray-100 rounded-xl mb-4 overflow-hidden relative flex items-center justify-center p-4">
+                    {item.type === 'image' && item.image ? (
+                      <img src={item.image} alt="손글씨" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    ) : (
+                      <div className={`w-full h-full rounded-lg ${item.style || 'bg-white'} border border-gray-200 flex items-center justify-center p-4 shadow-sm`}>
+                         <p className="text-xs font-serif text-center line-clamp-4 break-keep">"{item.quote}"</p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="font-serif italic text-gray-800 text-sm leading-relaxed mb-4 line-clamp-2">"{item.quote}"</p>
+                </div>
+                <div className="flex items-center justify-between mt-auto pt-2">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase truncate pr-2">{item.bookName || '알 수 없는 책'} | {item.author || '작자 미상'}</span>
+                  <div className="w-6 h-6 bg-black rounded-full flex-shrink-0 flex items-center justify-center text-[8px] text-white">ID</div>
+                </div>
               </div>
-              <p className="font-serif italic text-gray-800 text-sm leading-relaxed mb-4">"우리는 모두 별빛으로 만들어진 존재들이다."</p>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">Cosmos | Carl Sagan</span>
-                <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center text-[8px] text-white">ID</div>
-              </div>
+            ))
+          ) : (
+            // 데이터가 아직 로딩 중이거나 없을 때 보여줄 안내문
+            <div className="w-full text-center py-10 text-gray-400 font-bold text-sm">
+              아직 등록된 전시글이 없습니다. 첫 번째 문장의 주인공이 되어보세요!
             </div>
-          ))}
+          )}
         </div>
       </section>
 
@@ -209,56 +237,54 @@ export default function MainPage() {
         {/* 왼쪽 영역: 모임방 리스트 */}
         <div className="lg:col-span-8 space-y-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-black">🤝 참여를 기다리는 모임방</h3>
+            <h3 className="text-xl font-black tracking-tight">🤝 참여를 기다리는 모임방</h3>
             <div className="flex space-x-2">
               <button className="px-3 py-1 bg-black text-white text-[10px] font-bold rounded-full">전체</button>
               <button className="px-3 py-1 bg-gray-100 text-gray-400 text-[10px] font-bold rounded-full hover:bg-gray-200 transition">온라인</button>
-              <button className="px-3 py-1 bg-gray-100 text-gray-400 text-[10px] font-bold rounded-full hover:bg-gray-200 transition">오프라인</button>
             </div>
           </div>
 
+          {/* ⭐️ 3-2. [백엔드 연동] 모임방 실제 데이터 뿌려주기 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { title: "헤르만 헤세 읽는 밤", desc: "데미안을 함께 읽고 각자의 성장에 대해 나눕니다.", members: 5, maxMembers: 8, type: "오프라인", tags: ["인문학", "소설"] },
-              { title: "React Deep Dive", desc: "리액트 공식 문서를 한 장씩 파헤치며 토론해요.", members: 8, maxMembers: 8, type: "온라인", tags: ["개발", "IT"] },
-              { title: "텍스트힙 수집가들", desc: "서촌 북카페 투어를 하며 각자의 인생 문장을 교환합니다.", members: 4, maxMembers: 6, type: "오프라인", tags: ["필사", "친목"] },
-              { title: "미라클 독서", desc: "매일 아침 7시, 줌에서 만나 30분간 조용히 독서합니다.", members: 12, maxMembers: 20, type: "온라인", tags: ["자기계발", "습관"] },
-            ].map((room, idx) => {
-              const isFull = room.members >= room.maxMembers;
-              
-              return (
-                <div key={idx} className="bg-white p-7 rounded-3xl border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
-                  
-                  {isFull && (
-                    <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
-                      모집 마감
+            {rooms.length > 0 ? (
+              rooms.slice(0, 4).map((room) => {
+                const isFull = room.participants?.length >= (room.maxMembers || 8);
+                
+                return (
+                  <div key={room._id} className="bg-white p-7 rounded-3xl border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden flex flex-col justify-between h-full">
+                    {isFull && (
+                      <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
+                        모집 마감
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>
+                          {room.type || '온/오프라인'}
+                        </span>
+                        <span className={`text-[10px] font-bold flex items-center ${isFull ? 'text-red-500' : 'text-gray-400'}`}>
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
+                          {room.participants?.length || 0} / {room.maxMembers || 8}명
+                        </span>
+                      </div>
+                      <Link href={`/rooms/${room._id}`}>
+                        <h4 className="text-lg font-black mb-2 group-hover:text-gray-600 transition-colors line-clamp-1">{room.title}</h4>
+                        <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2 break-keep">{room.description}</p>
+                      </Link>
                     </div>
-                  )}
-
-                  <div className="flex justify-between items-start mb-4">
-                    <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>
-                      {room.type}
-                    </span>
-                    
-                    <span className={`text-[10px] font-bold flex items-center ${isFull ? 'text-red-500' : 'text-gray-400'}`}>
-                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
-                      {room.members} / {room.maxMembers}명
-                    </span>
+                    <div className="flex flex-wrap gap-2 mt-auto">
+                      {(room.tags || ['독서', '친목']).map((tag: string, i: number) => (
+                        <span key={i} className="px-2 py-1 bg-gray-50 text-[10px] font-bold text-gray-400 rounded-md">#{tag}</span>
+                      ))}
+                    </div>
                   </div>
-                  
-                  <Link href="/rooms/1">
-                    <h4 className="text-lg font-black mb-2 group-hover:text-gray-600 transition-colors">{room.title}</h4>
-                    <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2">{room.desc}</p>
-                  </Link>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {room.tags.map((tag, i) => (
-                      <span key={i} className="px-2 py-1 bg-gray-50 text-[10px] font-bold text-gray-400 rounded-md">#{tag}</span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div className="col-span-1 md:col-span-2 text-center py-10 text-gray-400 font-bold text-sm bg-white rounded-3xl border border-gray-100">
+                현재 개설된 모임방이 없습니다.
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end pt-4">
@@ -269,20 +295,14 @@ export default function MainPage() {
               <span className="border-b border-transparent group-hover:border-black pb-0.5 transition-colors">
                 EXPLORE MORE ROOMS
               </span>
-              <svg 
-                className="w-4 h-4 transform group-hover:translate-x-1.5 transition-transform duration-300" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth={2.5} 
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4 transform group-hover:translate-x-1.5 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
           </div>
         </div>
 
-        {/* 오른쪽 영역: 책 추천 랭킹 */}
+        {/* 오른쪽 영역: 책 추천 랭킹 (동일) */}
         <aside className="lg:col-span-4 space-y-10">
           <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
             <h3 className="text-xs font-black tracking-[0.3em] text-gray-400 mb-8 uppercase">Book Ranking</h3>

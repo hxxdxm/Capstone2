@@ -1,5 +1,5 @@
 "use client";
-
+const API_BASE_URL = 'http://13.124.191.57:5000/api';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
