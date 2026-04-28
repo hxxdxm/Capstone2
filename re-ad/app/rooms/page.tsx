@@ -16,8 +16,14 @@ export default function RoomsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // ✅ 카테고리(category) 상태 추가 및 기본값 설정
   const [newRoom, setNewRoom] = useState({
-    title: '', desc: '', type: '온라인', maxMembers: 4, tags: ''
+    title: '', 
+    desc: '', 
+    type: '온라인', 
+    maxMembers: 4, 
+    tags: '', 
+    category: '독서모임' 
   });
 
   // 로컬과 세션 스토리지 중 토큰이 있는 곳을 찾아 반환하는 헬퍼 함수
@@ -66,7 +72,8 @@ export default function RoomsPage() {
             members: r.members ? r.members.length : 0,
             maxMembers: r.maxMembers || 4,
             type: r.roomType || '온라인',
-            tags: r.tags || ["독서", "친목"], // 백엔드에서 태그가 오면 쓰고, 없으면 기본값
+            category: r.category === 'EXCHANGE' ? '도서교환' : '독서모임', // 백엔드 데이터 변환
+            tags: r.tags || ["독서", "친목"],
             isJoined: amIMember,
           };
         });
@@ -129,7 +136,7 @@ export default function RoomsPage() {
       return;
     }
 
-    // 입력받은 태그 텍스트("소설, 힐링")를 배열로 변환 ["소설", "힐링"]
+    // 입력받은 태그 텍스트("소설, 힐링")를 배열로 변환
     const tagsArray = newRoom.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
 
     try {
@@ -142,11 +149,12 @@ export default function RoomsPage() {
         body: JSON.stringify({
           roomType: newRoom.type,      
           roomName: newRoom.title,     
-          roomDesc: newRoom.desc, // 소개글도 백엔드로 전송 (필요시 백엔드 스키마 추가 필요)
+          roomDesc: newRoom.desc, 
           roomPassword: '', 
           hostId: hostId,
           maxMembers: Number(newRoom.maxMembers),
-          tags: tagsArray 
+          tags: tagsArray,
+          category: newRoom.category // ✅ 백엔드로 카테고리 전송
         })
       });
 
@@ -157,7 +165,8 @@ export default function RoomsPage() {
         alert("새로운 모임방이 개설되었습니다! 🎉" + inviteCodeText);
         
         setIsCreateModalOpen(false); 
-        setNewRoom({ title: '', desc: '', type: '온라인', maxMembers: 4, tags: '' }); 
+        // ✅ 상태 초기화 시 카테고리도 잊지 않고 초기화
+        setNewRoom({ title: '', desc: '', type: '온라인', maxMembers: 4, tags: '', category: '독서모임' }); 
         fetchRooms(); 
       } else {
         alert(data.message || "방 생성에 실패했습니다.");
@@ -228,9 +237,15 @@ export default function RoomsPage() {
                     )}
 
                     <div className="flex justify-between items-start mb-4">
-                      <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>
-                        {room.type}
-                      </span>
+                      <div className="flex space-x-1">
+                        <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>
+                          {room.type}
+                        </span>
+                        {/* ✅ 카드 목록에도 카테고리 배지 추가 */}
+                        <span className="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">
+                          {room.category}
+                        </span>
+                      </div>
                       <span className={`text-[10px] font-bold flex items-center ${isFull ? 'text-red-500' : 'text-gray-400'}`}>
                         {room.members} / {room.maxMembers}명
                       </span>
@@ -292,8 +307,21 @@ export default function RoomsPage() {
                 />
               </div>
 
-              <div className="flex space-x-4">
-                <div className="flex-1">
+              {/* ✅ 3칸으로 나뉜 카테고리, 형태, 인원 설정 UI */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">카테고리</label>
+                  <select 
+                    value={newRoom.category}
+                    onChange={(e) => setNewRoom({...newRoom, category: e.target.value})}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black font-bold appearance-none"
+                  >
+                    <option value="독서모임">독서모임</option>
+                    <option value="도서교환">도서교환</option>
+                  </select>
+                </div>
+                
+                <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">모임 형태</label>
                   <select 
                     value={newRoom.type}
@@ -304,7 +332,8 @@ export default function RoomsPage() {
                     <option value="오프라인">오프라인</option>
                   </select>
                 </div>
-                <div className="flex-1">
+                
+                <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">최대 인원</label>
                   <input 
                     type="number" 
