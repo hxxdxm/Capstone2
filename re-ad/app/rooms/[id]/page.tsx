@@ -13,19 +13,32 @@ export default function RoomDetailPage() {
 
   const [roomData, setRoomData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isJoined, setIsJoined] = useState(false); // 내 참여 여부
+  const [isJoined, setIsJoined] = useState(false);
   
-  // 비밀방 관련 상태
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [inputPassword, setInputPassword] = useState('');
 
-  // 내 정보 가져오기 전용 함수
+  // ✅ 토큰을 로컬/세션 모두에서 안전하게 가져오는 헬퍼 함수
+  const getToken = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token') || sessionStorage.getItem('token');
+    }
+    return null;
+  };
+
   const getMyId = () => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token = getToken();
     if (!token) return null;
     try {
-      return JSON.parse(atob(token.split('.')[1])).id;
-    } catch (e) { return null; }
+      // JWT 디코딩 시 에러 방지를 위해 구조 확인
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      return payload.id || payload.userId; // 백엔드 필드명에 따라 유연하게 대응
+    } catch (e) { 
+      console.error("토큰 파싱 에러:", e);
+      return null; 
+    }
   };
 
   useEffect(() => {
@@ -41,7 +54,7 @@ export default function RoomDetailPage() {
       if (!res.ok) throw new Error("방을 찾을 수 없습니다.");
 
       const myId = getMyId();
-      // 참여 명단에 내가 있는지 확인
+      // 내 아이디가 참여 명단에 있는지 체크
       const amIIn = data.members?.some((m: any) => m.userId === myId);
       
       setIsJoined(amIIn);
@@ -54,11 +67,12 @@ export default function RoomDetailPage() {
     }
   };
 
-  // 실제 입장 로직 (API 호출)
   const executeJoin = async (password: string = '') => {
     const myId = getMyId();
-    if (!myId) {
-      alert("로그인이 필요합니다.");
+    const token = getToken();
+
+    if (!myId || !token) {
+      alert("로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.");
       router.push('/login');
       return;
     }
@@ -66,7 +80,10 @@ export default function RoomDetailPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/join`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // 헤더에 토큰 추가
+        },
         body: JSON.stringify({ userId: myId, roomPassword: password })
       });
 
@@ -75,7 +92,8 @@ export default function RoomDetailPage() {
       if (res.ok) {
         alert('모임방 입장에 성공했습니다! 🎉');
         setIsPasswordModalOpen(false);
-        fetchRoomDetail(); // 데이터 새로고침
+        setInputPassword('');
+        fetchRoomDetail(); // 정보 새로고침
       } else {
         alert(result.message || '입장에 실패했습니다.');
       }
@@ -84,15 +102,16 @@ export default function RoomDetailPage() {
     }
   };
 
-  // 버튼 클릭 핸들러
   const handleJoinClick = () => {
-    if (isJoined) return; // 이미 참여했으면 무시
+    if (isJoined) return;
 
-    // 비밀방이고 아직 멤버가 아닐 때만 비번 모달 띄움
-    if (roomData.roomPassword && roomData.roomPassword !== "") {
+    // 비밀방 여부 확인 (백엔드 데이터 기준)
+    const isPrivate = !!(roomData.roomPassword && roomData.roomPassword !== "");
+
+    if (isPrivate) {
       setIsPasswordModalOpen(true);
     } else {
-      executeJoin(); // 공개방은 바로 입장
+      executeJoin();
     }
   };
 
@@ -106,8 +125,6 @@ export default function RoomDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
-      
-      {/* 1. 상단 헤더 */}
       <header className="bg-white/80 backdrop-blur-md px-8 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
         <Link href="/" className="flex items-center space-x-2">
           <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
@@ -116,8 +133,6 @@ export default function RoomDetailPage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
-        {/* 왼쪽 영역 */}
         <div className="lg:col-span-8 space-y-12">
           <section>
             <div className="flex items-center space-x-3 mb-6">
@@ -129,7 +144,6 @@ export default function RoomDetailPage() {
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">{roomData.roomName}</h2>
-            
             <div className="flex flex-wrap gap-2 mb-10">
               {roomData.tags?.map((tag: string) => (
                 <span key={tag} className="px-4 py-2 bg-white border border-gray-200 text-xs font-bold text-gray-500 rounded-xl">#{tag}</span>
@@ -137,7 +151,6 @@ export default function RoomDetailPage() {
             </div>
           </section>
 
-          {/* 소개글 섹션 - 백엔드 roomDesc 반영 */}
           <section className="space-y-6">
             <h3 className="text-xl font-black border-b border-black pb-2 inline-block">모임 소개</h3>
             <p className="text-gray-600 leading-loose text-lg font-medium break-keep whitespace-pre-wrap">
@@ -146,27 +159,23 @@ export default function RoomDetailPage() {
           </section>
         </div>
 
-        {/* 오른쪽 사이드바 */}
         <aside className="lg:col-span-4 lg:sticky lg:top-28 h-fit space-y-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl space-y-8">
-            
-            {/* 참여 현황 */}
             <div>
               <div className="flex items-end justify-between mb-4">
                 <span className="text-sm font-black text-gray-400">참여 현황</span>
-                <span className={`text-2xl font-black`}>
+                <span className="text-2xl font-black">
                   {roomData.members?.length || 0} <span className="text-gray-300 text-lg">/ {roomData.maxMembers}</span>
                 </span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full transition-all duration-1000 bg-black`}
+                  className="h-full transition-all duration-1000 bg-black"
                   style={{ width: `${((roomData.members?.length || 0) / roomData.maxMembers) * 100}%` }}
                 ></div>
               </div>
             </div>
 
-            {/* 초대 코드 섹션 */}
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Invite Code</p>
@@ -180,48 +189,42 @@ export default function RoomDetailPage() {
               </button>
             </div>
 
-            {/* ⭐️ 참여자 명단 - 백엔드 실제 데이터 반영 */}
             <div className="space-y-4">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Members</p>
               <div className="flex flex-wrap gap-2">
                 {roomData.members?.map((member: any, i: number) => (
                   <div key={i} className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-full border border-gray-100">
-                    <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-[8px] text-white font-black">
-                      {i + 1}
-                    </div>
+                    <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-[8px] text-white font-black">{i + 1}</div>
                     <span className="text-xs font-bold text-gray-700">{member.userId.substring(0, 8)}...</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 신청 버튼 로직 수정 */}
             <button 
               onClick={handleJoinClick}
               disabled={isJoined || (roomData.members?.length >= roomData.maxMembers)}
               className={`w-full py-5 rounded-2xl text-sm font-black tracking-widest transition-all shadow-lg ${
                 isJoined 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
                 : roomData.members?.length >= roomData.maxMembers
                   ? 'bg-red-50 text-red-300 cursor-not-allowed'
                   : 'bg-black text-white hover:bg-gray-800 active:scale-95'
               }`}
             >
-              {isJoined ? "참여 완료된 모임" : roomData.members?.length >= roomData.maxMembers ? "정원 초과" : "모임 신청하기"}
+              {isJoined ? "참여 중인 모임" : roomData.members?.length >= roomData.maxMembers ? "정원 초과" : "모임 신청하기"}
             </button>
           </div>
         </aside>
       </main>
 
-      {/* ⭐️ 비밀번호 입력 모달 */}
       {isPasswordModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm bg-white rounded-[2rem] p-8 shadow-2xl">
-            <h3 className="text-xl font-black mb-2 text-center">비밀번호 입력</h3>
-            <p className="text-xs text-gray-400 font-bold text-center mb-6">이 방은 비밀번호가 필요합니다.</p>
+            <h3 className="text-xl font-black mb-6 text-center">비밀번호 입력</h3>
             <input 
               type="password"
-              placeholder="비밀번호 4자리"
+              placeholder="비밀번호 입력"
               value={inputPassword}
               onChange={(e) => setInputPassword(e.target.value)}
               className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-4 py-4 text-center text-2xl font-black focus:border-black focus:outline-none mb-6 transition"
