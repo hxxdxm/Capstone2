@@ -18,7 +18,7 @@ export default function RoomDetailPage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [inputPassword, setInputPassword] = useState('');
 
-  // ✅ 토큰을 로컬/세션 모두에서 안전하게 가져오는 헬퍼 함수
+  // ✅ 토큰 가져오기 헬퍼
   const getToken = () => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -26,17 +26,16 @@ export default function RoomDetailPage() {
     return null;
   };
 
+  // ✅ 내 ID 추출 헬퍼
   const getMyId = () => {
     const token = getToken();
     if (!token) return null;
     try {
-      // JWT 디코딩 시 에러 방지를 위해 구조 확인
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const payload = JSON.parse(window.atob(base64));
-      return payload.id || payload.userId; // 백엔드 필드명에 따라 유연하게 대응
+      return payload.id || payload.userId;
     } catch (e) { 
-      console.error("토큰 파싱 에러:", e);
       return null; 
     }
   };
@@ -50,11 +49,9 @@ export default function RoomDetailPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
       const data = await res.json();
-      
-      if (!res.ok) throw new Error("방을 찾을 수 없습니다.");
+      if (!res.ok) throw new Error("방 정보 로드 실패");
 
       const myId = getMyId();
-      // 내 아이디가 참여 명단에 있는지 체크
       const amIIn = data.members?.some((m: any) => m.userId === myId);
       
       setIsJoined(amIIn);
@@ -62,8 +59,36 @@ export default function RoomDetailPage() {
       setIsLoading(false);
     } catch (err) {
       console.error(err);
-      alert("방 정보를 불러오는 중 에러가 발생했습니다.");
       router.push('/rooms');
+    }
+  };
+
+  // ✅ [신규] 모임 삭제 함수
+  const handleDeleteRoom = async () => {
+    if (!confirm("정말로 이 모임방을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.")) return;
+
+    const token = getToken();
+    const myId = getMyId();
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: myId })
+      });
+
+      if (res.ok) {
+        alert("모임방이 성공적으로 삭제되었습니다.");
+        router.push('/rooms');
+      } else {
+        const err = await res.json();
+        alert(err.message || "삭제 권한이 없습니다.");
+      }
+    } catch (error) {
+      alert("서버 연결에 실패했습니다.");
     }
   };
 
@@ -72,7 +97,7 @@ export default function RoomDetailPage() {
     const token = getToken();
 
     if (!myId || !token) {
-      alert("로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.");
+      alert("로그인이 필요합니다.");
       router.push('/login');
       return;
     }
@@ -82,156 +107,95 @@ export default function RoomDetailPage() {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // 헤더에 토큰 추가
+          'Authorization': `Bearer ${token}` 
         },
         body: JSON.stringify({ userId: myId, roomPassword: password })
       });
 
-      const result = await res.json();
-
       if (res.ok) {
-        alert('모임방 입장에 성공했습니다! 🎉');
+        alert('모임 참여 성공!');
         setIsPasswordModalOpen(false);
-        setInputPassword('');
-        fetchRoomDetail(); // 정보 새로고침
+        fetchRoomDetail();
       } else {
-        alert(result.message || '입장에 실패했습니다.');
+        const result = await res.json();
+        alert(result.message || '참여 실패');
       }
     } catch (error) {
-      alert('서버 오류가 발생했습니다.');
+      alert('서버 오류');
     }
   };
 
-  const handleJoinClick = () => {
-    if (isJoined) return;
-
-    // 비밀방 여부 확인 (백엔드 데이터 기준)
-    const isPrivate = !!(roomData.roomPassword && roomData.roomPassword !== "");
-
-    if (isPrivate) {
-      setIsPasswordModalOpen(true);
-    } else {
-      executeJoin();
-    }
-  };
-
-  if (isLoading || !roomData) {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-[#F8F9FA]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
+  if (isLoading || !roomData) return <div className="p-20 text-center">로드 중...</div>;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
-      <header className="bg-white/80 backdrop-blur-md px-8 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
-        <Link href="/" className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
-        </Link>
-        <Link href="/rooms" className="text-sm font-bold text-gray-400 hover:text-black transition">뒤로가기</Link>
+    <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans">
+      <header className="bg-white px-8 py-4 flex items-center justify-between border-b border-gray-100 sticky top-0 z-50">
+        <Link href="/" className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></Link>
+        <Link href="/rooms" className="text-sm font-bold text-gray-400 hover:text-black">뒤로가기</Link>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div className="lg:col-span-8 space-y-12">
-          <section>
-            <div className="flex items-center space-x-3 mb-6">
-              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${roomData.roomType === '온라인' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}`}>
-                {roomData.roomType}
-              </span>
-              <span className="px-3 py-1 rounded-full text-[10px] font-black bg-gray-100 text-gray-500 uppercase tracking-widest">
-                {roomData.category === 'READING' ? '독서모임' : '도서교환'}
-              </span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">{roomData.roomName}</h2>
-            <div className="flex flex-wrap gap-2 mb-10">
-              {roomData.tags?.map((tag: string) => (
-                <span key={tag} className="px-4 py-2 bg-white border border-gray-200 text-xs font-bold text-gray-500 rounded-xl">#{tag}</span>
-              ))}
-            </div>
-          </section>
-
+        <div className="lg:col-span-8">
+          <div className="mb-6">
+            <span className="px-3 py-1 rounded-full text-[10px] font-black bg-black text-white mr-2">
+              {roomData.roomType}
+            </span>
+          </div>
+          <h2 className="text-4xl font-black mb-8 leading-tight">{roomData.roomName}</h2>
+          
           <section className="space-y-6">
-            <h3 className="text-xl font-black border-b border-black pb-2 inline-block">모임 소개</h3>
-            <p className="text-gray-600 leading-loose text-lg font-medium break-keep whitespace-pre-wrap">
+            <h3 className="text-xl font-black border-b-2 border-black pb-2 inline-block">모임 소개</h3>
+            {/* ✅ 소개글 줄바꿈 수정 포인트 */}
+            <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-wrap break-keep bg-white p-6 rounded-2xl border border-gray-100">
               {roomData.roomDesc || "작성된 소개글이 없습니다."}
             </p>
           </section>
         </div>
 
-        <aside className="lg:col-span-4 lg:sticky lg:top-28 h-fit space-y-6">
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl space-y-8">
-            <div>
-              <div className="flex items-end justify-between mb-4">
-                <span className="text-sm font-black text-gray-400">참여 현황</span>
-                <span className="text-2xl font-black">
-                  {roomData.members?.length || 0} <span className="text-gray-300 text-lg">/ {roomData.maxMembers}</span>
-                </span>
-              </div>
-              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full transition-all duration-1000 bg-black"
-                  style={{ width: `${((roomData.members?.length || 0) / roomData.maxMembers) * 100}%` }}
-                ></div>
-              </div>
+        <aside className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl">
+            <div className="flex justify-between items-end mb-6">
+              <span className="text-sm font-bold text-gray-400">참여 현황</span>
+              <span className="text-2xl font-black">{roomData.members?.length || 0} / {roomData.maxMembers}</span>
             </div>
-
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Invite Code</p>
-                <p className="text-lg font-mono font-black tracking-wider text-black">{roomData.inviteCode}</p>
-              </div>
+            
+            {/* ✅ 방장에게만 보이는 삭제 버튼 */}
+            {roomData.creatorId === getMyId() && (
               <button 
-                onClick={() => { navigator.clipboard.writeText(roomData.inviteCode); alert("복사 완료!"); }}
-                className="p-3 bg-white border border-gray-200 rounded-xl hover:border-black transition"
+                onClick={handleDeleteRoom}
+                className="w-full mb-4 py-3 border-2 border-red-500 text-red-500 rounded-xl text-xs font-black hover:bg-red-50 transition"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                모임방 삭제하기 (방장 전용)
               </button>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Members</p>
-              <div className="flex flex-wrap gap-2">
-                {roomData.members?.map((member: any, i: number) => (
-                  <div key={i} className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-full border border-gray-100">
-                    <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-[8px] text-white font-black">{i + 1}</div>
-                    <span className="text-xs font-bold text-gray-700">{member.userId.substring(0, 8)}...</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
 
             <button 
-              onClick={handleJoinClick}
-              disabled={isJoined || (roomData.members?.length >= roomData.maxMembers)}
-              className={`w-full py-5 rounded-2xl text-sm font-black tracking-widest transition-all shadow-lg ${
-                isJoined 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
-                : roomData.members?.length >= roomData.maxMembers
-                  ? 'bg-red-50 text-red-300 cursor-not-allowed'
-                  : 'bg-black text-white hover:bg-gray-800 active:scale-95'
+              onClick={() => (roomData.roomPassword ? setIsPasswordModalOpen(true) : executeJoin())}
+              disabled={isJoined || roomData.members?.length >= roomData.maxMembers}
+              className={`w-full py-5 rounded-2xl text-sm font-black tracking-widest transition-all ${
+                isJoined ? 'bg-gray-100 text-gray-400' : 'bg-black text-white hover:bg-gray-800'
               }`}
             >
-              {isJoined ? "참여 중인 모임" : roomData.members?.length >= roomData.maxMembers ? "정원 초과" : "모임 신청하기"}
+              {isJoined ? "이미 참여 중입니다" : "모임 신청하기"}
             </button>
           </div>
         </aside>
       </main>
 
+      {/* 비밀번호 모달 */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm bg-white rounded-[2rem] p-8 shadow-2xl">
-            <h3 className="text-xl font-black mb-6 text-center">비밀번호 입력</h3>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm">
+            <h3 className="text-center font-black mb-6">비밀번호 입력</h3>
             <input 
-              type="password"
-              placeholder="비밀번호 입력"
-              value={inputPassword}
+              type="password" 
+              value={inputPassword} 
               onChange={(e) => setInputPassword(e.target.value)}
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-4 py-4 text-center text-2xl font-black focus:border-black focus:outline-none mb-6 transition"
+              className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 mb-6 focus:border-black outline-none"
             />
             <div className="flex space-x-3">
-              <button onClick={() => setIsPasswordModalOpen(false)} className="flex-1 py-4 text-sm font-bold text-gray-400">취소</button>
-              <button onClick={() => executeJoin(inputPassword)} className="flex-1 py-4 bg-black text-white rounded-xl text-sm font-black shadow-lg">확인</button>
+              <button onClick={() => setIsPasswordModalOpen(false)} className="flex-1 text-gray-400 font-bold">취소</button>
+              <button onClick={() => executeJoin(inputPassword)} className="flex-1 bg-black text-white py-3 rounded-xl font-black">확인</button>
             </div>
           </div>
         </div>
