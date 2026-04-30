@@ -14,22 +14,20 @@ export default function MainPage() {
     const fetchMainData = async () => {
       setIsLoading(true);
       try {
-        // 1. 모임방 데이터 가져오기
+        // 1. 모임방 데이터 가져오기 (최신순 4개)
         const roomsRes = await fetch(`${API_BASE_URL}/rooms`);
         const roomsData = await roomsRes.json();
         if (Array.isArray(roomsData)) {
-          // 최신순 정렬 후 4개만 추출
           const latestRooms = roomsData
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .slice(0, 4);
           setRooms(latestRooms);
         }
 
-        // 2. 필사 데이터 가져오기 (API 주소가 /transcriptions 라고 가정)
+        // 2. 필사 데이터 가져오기 (최신순 4개)
         const transRes = await fetch(`${API_BASE_URL}/transcriptions`);
         const transData = await transRes.json();
         if (Array.isArray(transData)) {
-          // 최신순 정렬 후 4개만 추출
           const latestTrans = transData
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .slice(0, 4);
@@ -46,115 +44,84 @@ export default function MainPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 font-sans selection:bg-black selection:text-white">
-      {/* 네비게이션 바 */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-black tracking-tighter italic">RE-AD</Link>
-        <div className="hidden md:flex space-x-10 text-[10px] font-black tracking-[0.2em] uppercase">
-          <Link href="/ranking" className="hover:text-gray-400 transition">Ranking</Link>
-          <Link href="/rooms" className="hover:text-gray-400 transition">Lounge</Link>
-          <Link href="/transcription" className="hover:text-gray-400 transition">Transcription</Link>
-          <Link href="/mypage" className="hover:text-gray-400 transition">My Page</Link>
+    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 font-sans">
+      {/* 네비게이션 */}
+      <nav className="fixed top-0 w-full z-50 bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center">
+        <Link href="/" className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></Link>
+        <div className="flex space-x-6 text-sm font-bold">
+          <Link href="/ranking" className="hover:text-gray-400 transition">랭킹</Link>
+          <Link href="/rooms" className="hover:text-gray-400 transition">모임방</Link>
+          <Link href="/transcription" className="hover:text-gray-400 transition">필사</Link>
+          <Link href="/mypage" className="hover:text-gray-400 transition">마이페이지</Link>
         </div>
       </nav>
 
-      {/* 히어로 섹션 */}
-      <header className="pt-40 pb-20 px-8 text-center bg-white border-b border-gray-50">
-        <span className="inline-block px-4 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-6 rounded-full">EST. 2024</span>
-        <h1 className="text-7xl md:text-9xl font-black tracking-tighter mb-8 leading-[0.85]">
-          READING <br /> <span className="text-gray-200">EXPERIENCE</span>
+      {/* 히어로 */}
+      <header className="pt-32 pb-20 px-8 text-center bg-white border-b border-gray-50">
+        <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-6">
+          기록하고 공유하는 <br /> 새로운 <span className="text-gray-300">독서 문화</span>
         </h1>
-        <p className="max-w-2xl mx-auto text-lg font-bold text-gray-400 leading-relaxed">
-          단순한 독서를 넘어, 기록하고 공유하며 새로운 가치를 발견하는 <br/> 우리들만의 교환독서 플랫폼
-        </p>
+        <p className="text-gray-400 font-bold">교환독서에서 취향이 맞는 독서 모임을 찾아보세요.</p>
       </header>
 
-      <main className="max-w-7xl mx-auto py-24 px-8 space-y-32">
+      <main className="max-w-6xl mx-auto py-20 px-6 space-y-24">
         
-        {/* 모임방 섹션 (최신 4개) */}
+        {/* 모임방 섹션 */}
         <section>
-          <div className="flex justify-between items-end mb-12 border-b-4 border-black pb-4">
-            <h2 className="text-4xl font-black tracking-tighter">LOUNGE</h2>
-            <Link href="/rooms" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-400 hover:border-gray-400 transition">VIEW ALL</Link>
+          <div className="flex justify-between items-end mb-8 border-b-2 border-black pb-3">
+            <h2 className="text-2xl font-black">최신 모임방</h2>
+            <Link href="/rooms" className="text-xs font-bold text-gray-400 hover:text-black">전체보기 +</Link>
           </div>
           
-          {isLoading ? (
-            <div className="py-10 text-center font-bold text-gray-300">LOADING...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {rooms.length > 0 ? rooms.map((room) => (
-                <Link href={`/rooms/${room._id}`} key={room._id} className="group bg-white p-8 rounded-[2.5rem] border border-gray-100 hover:shadow-2xl transition-all duration-500 flex flex-col justify-between h-[300px]">
-                  <div>
-                    <span className="text-[9px] font-black bg-gray-100 px-2 py-1 rounded mb-4 inline-block uppercase">{room.roomType}</span>
-                    <h3 className="text-xl font-black leading-tight group-hover:text-gray-500 transition-colors line-clamp-2">{room.roomName}</h3>
-                    <p className="text-xs text-gray-400 mt-4 font-bold line-clamp-3">{room.roomDesc}</p>
-                  </div>
-                  <div className="flex justify-between items-center pt-6 border-t border-gray-50">
-                    <span className="text-[10px] font-black">{room.members?.length || 0} / {room.maxMembers} MEMBERS</span>
-                    <span className="text-lg">→</span>
-                  </div>
-                </Link>
-              )) : (
-                <div className="col-span-full py-10 text-center text-gray-400 font-bold">최근 개설된 모임이 없습니다.</div>
-              )}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {rooms.length > 0 ? rooms.map((room) => (
+              <Link href={`/rooms/${room._id}`} key={room._id} className="bg-white p-6 rounded-3xl border border-gray-100 hover:shadow-lg transition-all flex flex-col justify-between h-[220px]">
+                <div>
+                  <span className="text-[10px] font-bold text-blue-500 mb-2 inline-block">{room.roomType}</span>
+                  <h3 className="text-lg font-black leading-tight line-clamp-2">{room.roomName}</h3>
+                  <p className="text-xs text-gray-400 mt-2 line-clamp-2">{room.roomDesc}</p>
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-bold text-gray-300">
+                  <span>{room.members?.length || 0} / {room.maxMembers} 참여</span>
+                </div>
+              </Link>
+            )) : (
+              <div className="col-span-full py-10 text-center text-gray-300 font-bold">최근 개설된 모임이 없습니다.</div>
+            )}
+          </div>
         </section>
 
-        {/* 필사 게시판 섹션 (최신 4개) */}
+        {/* 필사 게시판 섹션 */}
         <section>
-          <div className="flex justify-between items-end mb-12 border-b-4 border-black pb-4">
-            <h2 className="text-4xl font-black tracking-tighter">TRANSCRIPTION</h2>
-            <Link href="/transcription" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-400 hover:border-gray-400 transition">EXPLORE</Link>
+          <div className="flex justify-between items-end mb-8 border-b-2 border-black pb-3">
+            <h2 className="text-2xl font-black">최신 필사</h2>
+            <Link href="/transcription" className="text-xs font-bold text-gray-400 hover:text-black">더보기 +</Link>
           </div>
 
-          {isLoading ? (
-             <div className="py-10 text-center font-bold text-gray-300">LOADING...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {transcriptions.length > 0 ? transcriptions.map((item) => (
-                <div key={item._id} className="group cursor-pointer">
-                  <div className="aspect-[3/4] bg-white rounded-[3rem] p-8 border border-gray-100 mb-6 group-hover:shadow-3xl transition-all duration-500 relative overflow-hidden flex flex-col justify-center text-center">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-black scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                    <p className="text-sm font-serif italic text-gray-600 leading-relaxed line-clamp-6 mb-4">"{item.content}"</p>
-                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{item.bookTitle}</p>
-                  </div>
-                  <h4 className="font-black text-sm mb-1">{item.title}</h4>
-                  <p className="text-[10px] font-bold text-gray-400">{item.authorName} · {new Date(item.createdAt).toLocaleDateString()}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {transcriptions.length > 0 ? transcriptions.map((item) => (
+              <div key={item._id} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 italic leading-relaxed line-clamp-4 mb-4">"{item.content}"</p>
+                  <p className="text-[10px] font-bold text-gray-300 uppercase">{item.bookTitle}</p>
                 </div>
-              )) : (
-                <div className="col-span-full py-10 text-center text-gray-400 font-bold">작성된 필사 기록이 없습니다.</div>
-              )}
-            </div>
-          )}
+                <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
+                  <span className="text-[10px] font-black">{item.authorName}</span>
+                  <span className="text-[10px] text-gray-300">{new Date(item.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            )) : (
+              <div className="col-span-full py-10 text-center text-gray-300 font-bold">작성된 필사 기록이 없습니다.</div>
+            )}
+          </div>
         </section>
 
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-black text-white py-20 px-8 mt-40">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
-          <div>
-            <h2 className="text-6xl font-black italic mb-4 tracking-tighter">RE-AD</h2>
-            <p className="text-gray-500 font-bold text-sm uppercase tracking-widest">Digital Archive of Reading Experience</p>
-          </div>
-          <div className="grid grid-cols-2 gap-20">
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Connect</h4>
-              <ul className="text-sm font-bold space-y-2">
-                <li><a href="#" className="hover:text-gray-400 transition">Github</a></li>
-                <li><a href="#" className="hover:text-gray-400 transition">Contact</a></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Project</h4>
-              <ul className="text-sm font-bold space-y-2">
-                <li><a href="#" className="hover:text-gray-400 transition">Capstone</a></li>
-                <li><a href="#" className="hover:text-gray-400 transition">About Us</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
+      <footer className="bg-gray-900 text-white py-12 px-8 text-center">
+        <h2 className="text-xl font-black mb-4">교환독서</h2>
+        <p className="text-xs text-gray-500">© 2026 Re-ad. All rights reserved.</p>
       </footer>
     </div>
   );
