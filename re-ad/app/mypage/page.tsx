@@ -322,7 +322,7 @@ export default function MyPage() {
                </div>
                <button type="submit" className="w-full mt-6 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg uppercase tracking-widest text-xs">Save Changes</button>
              </form>
-           </div>
+           </div> 
         </div>
       )}
 
