@@ -11,11 +11,9 @@ export default function MainPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
 
-  // ⭐️ 1. 실제 데이터를 담을 바구니
   const [exhibitions, setExhibitions] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
 
-  // 배너 데이터
   const banners = [
     {
       id: 1,
@@ -46,7 +44,6 @@ export default function MainPage() {
   const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
 
   useEffect(() => {
-    // 로그인 상태 확인
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const storedName = localStorage.getItem('userName') || sessionStorage.getItem('userName');
     if (token && storedName && storedName !== 'undefined') {
@@ -54,12 +51,11 @@ export default function MainPage() {
       setUserName(storedName);
     }
 
-    // 캐러셀 타이머
     const timer = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
     }, 5000);
 
-    // 💡 [API 호출] 필사 데이터 최신 4개 가져오기
+    // [API] 필사 데이터 최신 4개
     fetch(`${API_BASE_URL}/transcriptions`)
       .then(res => res.json())
       .then(data => {
@@ -70,9 +66,9 @@ export default function MainPage() {
           setExhibitions(latestTrans);
         }
       })
-      .catch(err => console.error("필사 로드 실패:", err));
+      .catch(err => console.error(err));
 
-    // 💡 [API 호출] 모임방 데이터 최신 4개 가져오기
+    // [API] 모임방 데이터 최신 4개
     fetch(`${API_BASE_URL}/rooms`)
       .then(res => res.json())
       .then(data => {
@@ -83,7 +79,7 @@ export default function MainPage() {
           setRooms(latestRooms);
         }
       })
-      .catch(err => console.error("모임방 로드 실패:", err));
+      .catch(err => console.error(err));
 
     return () => clearInterval(timer);
   }, [banners.length]);
@@ -103,75 +99,53 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
       
-      <header className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
+      {/* 1. 상단 헤더 */}
+      <header className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm relative">
         <Link href="/" className="flex items-center space-x-2">
           <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
         </Link>
         
-        <div className="flex items-center space-x-6 flex-1 justify-end">
-          <div className="relative hidden md:block w-72">
-            <input 
-              type="text" 
-              placeholder="도서, 모임, 전시 검색" 
-              className="w-full bg-gray-100 border-none rounded-full py-2.5 pl-5 pr-12 text-xs focus:ring-2 focus:ring-black transition font-bold"
-            />
-            <button className="absolute right-4 top-2.5 text-gray-400 hover:text-black">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            </button>
-          </div>
+        {/* ⭐️ 상단 메뉴바 복구 (가운데 정렬) */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 space-x-8 text-sm font-bold">
+          <Link href="/ranking" className="hover:text-gray-400 transition">랭킹</Link>
+          <Link href="/rooms" className="hover:text-gray-400 transition">모임방</Link>
+          <Link href="/transcription" className="hover:text-gray-400 transition">필사</Link>
+        </div>
 
-          <div className="flex items-center space-x-5">
-            {isLoggedIn ? (
-              <>
-                <Link href="/mypage" className="flex items-center space-x-2 group">
-                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] text-white font-black group-hover:bg-gray-700 transition">MY</div>
-                  <span className="text-sm font-bold hidden sm:inline-block">마이페이지</span>
-                </Link>
-                <button onClick={handleLogout} className="text-xs font-bold text-gray-400 hover:text-gray-900 transition ml-2">로그아웃</button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-black transition">로그인</Link>
-                <Link href="/register" className="text-sm font-bold bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition shadow-lg">회원가입</Link>
-              </>
-            )}
-          </div>
+        <div className="flex items-center space-x-5 justify-end">
+          {isLoggedIn ? (
+            <>
+              <Link href="/mypage" className="flex items-center space-x-2 group">
+                <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] text-white font-black group-hover:bg-gray-700 transition">MY</div>
+                <span className="text-sm font-bold hidden sm:inline-block">마이페이지</span>
+              </Link>
+              <button onClick={handleLogout} className="text-xs font-bold text-gray-400 hover:text-gray-900 transition ml-2">로그아웃</button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-black transition">로그인</Link>
+              <Link href="/register" className="text-sm font-bold bg-black text-white px-5 py-2 rounded-full hover:bg-gray-800 transition shadow-lg">회원가입</Link>
+            </>
+          )}
         </div>
       </header>
 
-      {/* 2. 캐러셀 배너 */}
+      {/* 2. 메인 배너 */}
       <section className="px-6 py-8 mx-auto max-w-7xl relative group">
         <div className="relative h-[300px] md:h-[400px] bg-black rounded-3xl overflow-hidden shadow-xl">
           {banners.map((banner, index) => (
-            <div 
-              key={banner.id}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-            >
-              <div 
-                className="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-1000 group-hover:scale-105"
-                style={{ backgroundImage: `url(${banner.image})` }}
-              ></div>
+            <div key={banner.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
+              <div className="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${banner.image})` }}></div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
               <div className="absolute bottom-10 left-10 text-white z-20">
-                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest mb-4">
-                  {banner.tag}
-                </span>
-                <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight whitespace-pre-line">
-                  {banner.title}
-                </h2>
-                <p className="text-gray-300 text-sm font-medium">
-                  {banner.desc}
-                </p>
+                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest mb-4">{banner.tag}</span>
+                <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight whitespace-pre-line">{banner.title}</h2>
+                <p className="text-gray-300 text-sm font-medium">{banner.desc}</p>
               </div>
             </div>
           ))}
-
-          <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          </button>
+          <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
+          <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
         </div>
       </section>
 
@@ -180,30 +154,29 @@ export default function MainPage() {
         <div className="flex items-end justify-between mb-8">
           <div>
             <Link href="/transcription" className="group block">
-              <h3 className="text-2xl font-black italic tracking-tighter group-hover:text-gray-500 transition-colors">
-                필사 전시회
-              </h3>
+              <h3 className="text-2xl font-black italic tracking-tighter group-hover:text-gray-500 transition-colors">필사 전시회</h3>
             </Link>
             <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">오늘의 영감을 준 문장들</p>
           </div>
-          <Link href="/transcription" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition">
-            VIEW ALL
-          </Link>
+          <Link href="/transcription" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition">VIEW ALL</Link>
         </div>
         
         <div className="flex space-x-6 overflow-x-auto pb-6 no-scrollbar">
           {exhibitions.length > 0 ? (
             exhibitions.map((item) => (
-              <div key={item._id} className="min-w-[280px] max-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors flex flex-col justify-between">
+              // ⭐️ 전체 카드를 Link로 감싸서 어디를 눌러도 이동하게 수정
+              <Link href={`/transcription/${item._id}`} key={item._id} className="min-w-[280px] max-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors flex flex-col justify-between block">
                 <div>
                   <div className="h-40 bg-gray-50 rounded-xl mb-4 overflow-hidden relative flex items-center justify-center p-4">
-                    <p className="text-xs font-serif text-center line-clamp-4 italic">"{item.content}"</p>
+                    <p className="text-xs font-serif text-center line-clamp-4 italic">"{item.content || item.quote}"</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-auto pt-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase truncate pr-2">{item.bookTitle} | {item.authorName}</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase truncate pr-2">
+                    {item.bookTitle || item.bookName || '도서'} | {item.authorName || item.author || '작자미상'}
+                  </span>
                 </div>
-              </div>
+              </Link>
             ))
           ) : (
             <div className="w-full text-center py-10 text-gray-300 font-bold">등록된 전시글이 없습니다.</div>
@@ -211,7 +184,7 @@ export default function MainPage() {
         </div>
       </section>
 
-      {/* 4. 모임방 & 랭킹 */}
+      {/* 4. 메인 콘텐츠: 모임방 & 랭킹 */}
       <main className="px-6 py-12 mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-8 space-y-8">
           <div className="flex items-center justify-between mb-6">
@@ -222,28 +195,38 @@ export default function MainPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {rooms.length > 0 ? (
               rooms.map((room) => {
-                const isFull = room.members?.length >= (room.maxMembers || 4);
+                // participants와 members 중 있는 데이터를 사용
+                const currentMembers = room.participants?.length || room.members?.length || 0;
+                const isFull = currentMembers >= (room.maxMembers || 8);
+                
                 return (
-                  <div key={room._id} className="bg-white p-7 rounded-3xl border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative flex flex-col justify-between h-[200px]">
+                  // ⭐️ 전체 카드를 Link로 감싸서 수정
+                  <Link href={`/rooms/${room._id}`} key={room._id} className="bg-white p-7 rounded-3xl border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative flex flex-col justify-between h-[200px] block">
+                    {isFull && (
+                      <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
+                        모집 마감
+                      </div>
+                    )}
                     <div>
                       <div className="flex justify-between items-start mb-4">
-                        <span className="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest bg-gray-50 text-gray-400">
-                          {room.roomType}
+                        <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.roomType === '온라인' || room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>
+                          {room.roomType || room.type || '온/오프라인'}
                         </span>
-                        <span className={`text-[10px] font-bold ${isFull ? 'text-red-500' : 'text-gray-400'}`}>
-                          {room.members?.length || 0} / {room.maxMembers || 4}명
+                        <span className={`text-[10px] font-bold flex items-center ${isFull ? 'text-red-500' : 'text-gray-400'}`}>
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
+                          {currentMembers} / {room.maxMembers || 8}명
                         </span>
                       </div>
-                      <Link href={`/rooms/${room._id}`}>
-                        <h4 className="text-lg font-black mb-2 line-clamp-1">{room.roomName}</h4>
-                        <p className="text-xs text-gray-500 line-clamp-2">{room.roomDesc}</p>
-                      </Link>
+                      <h4 className="text-lg font-black mb-2 group-hover:text-gray-600 transition-colors line-clamp-1">{room.roomName || room.title}</h4>
+                      <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2 break-keep">{room.roomDesc || room.description}</p>
                     </div>
-                  </div>
+                  </Link>
                 );
               })
             ) : (
-              <div className="col-span-2 text-center py-10 text-gray-300 font-bold">개설된 모임이 없습니다.</div>
+              <div className="col-span-1 md:col-span-2 text-center py-10 text-gray-400 font-bold text-sm bg-white rounded-3xl border border-gray-100">
+                현재 개설된 모임방이 없습니다.
+              </div>
             )}
           </div>
         </div>
@@ -258,15 +241,18 @@ export default function MainPage() {
                 { title: "클린 코드", author: "로버트 C. 마틴", trend: "down" },
                 { title: "코스모스", author: "칼 세이건", trend: "stable" },
               ].map((book, idx) => (
-                <div key={idx} className="flex items-center group cursor-pointer">
+                <Link href="/ranking" key={idx} className="flex items-center group cursor-pointer">
                   <span className="text-xl font-serif italic text-gray-200 group-hover:text-black transition-colors w-8">{idx + 1}</span>
                   <div className="flex-1">
-                    <h4 className="text-sm font-bold mb-1">{book.title}</h4>
+                    <h4 className="text-sm font-bold leading-none mb-1 group-hover:text-gray-600">{book.title}</h4>
                     <p className="text-[10px] text-gray-400 font-bold">{book.author}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
+            <Link href="/ranking" className="block text-center w-full mt-10 py-3 bg-gray-50 text-[10px] font-black tracking-widest text-gray-400 hover:bg-black hover:text-white transition rounded-xl">
+              더보기
+            </Link>
           </section>
         </aside>
       </main>
