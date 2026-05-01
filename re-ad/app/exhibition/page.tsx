@@ -32,13 +32,15 @@ export default function ExhibitionPage() {
   const [posts, setPosts] = useState<any[]>(initialExhibitionData);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   
-  // ⭐️ [NEW] 이미지 파일과 미리보기를 저장할 상태 추가
+  // ⭐️ [NEW] 좋아요를 누른 게시물 ID들을 저장하는 배열 상태
+  const [likedPostIds, setLikedPostIds] = useState<number[]>([]);
+  
   const [newPost, setNewPost] = useState({
     quote: '',
     book: '',
     author: '',
     style: 'bg-white text-gray-900 border-gray-200',
-    imagePreview: '' // 사진 미리보기 URL
+    imagePreview: '' 
   });
 
   useEffect(() => {
@@ -50,11 +52,9 @@ export default function ExhibitionPage() {
     }
   }, []);
 
-  // ⭐️ [NEW] 사진 업로드 시 미리보기 생성 함수
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 파일을 브라우저에서 바로 볼 수 있는 임시 URL로 변환
       const imageUrl = URL.createObjectURL(file);
       setNewPost({ ...newPost, imagePreview: imageUrl });
     }
@@ -67,11 +67,10 @@ export default function ExhibitionPage() {
       return;
     }
 
-    // ⭐️ [NEW] 사진이 있으면 'image' 타입으로, 없으면 'text' 타입으로 저장
     const createdPost = {
       id: posts.length + 1,
       type: newPost.imagePreview ? "image" : "text",
-      image: newPost.imagePreview || undefined, // 사진이 있을 때만 이미지 URL 저장
+      image: newPost.imagePreview || undefined, 
       quote: newPost.quote,
       book: newPost.book,
       author: newPost.author || "작자 미상",
@@ -84,6 +83,15 @@ export default function ExhibitionPage() {
     setIsWriteModalOpen(false); 
     setNewPost({ quote: '', book: '', author: '', style: 'bg-white text-gray-900 border-gray-200', imagePreview: '' }); 
     alert("전시회에 문장이 성공적으로 걸렸습니다!");
+  };
+
+  // ⭐️ [NEW] 하트 클릭 시 좋아요 상태를 토글하는 함수
+  const toggleLike = (postId: number) => {
+    setLikedPostIds((prev) => 
+      prev.includes(postId) 
+        ? prev.filter((id) => id !== postId) // 이미 누른 상태면 취소 (배열에서 제거)
+        : [...prev, postId] // 안 누른 상태면 추가 (배열에 넣기)
+    );
   };
 
   return (
@@ -129,43 +137,60 @@ export default function ExhibitionPage() {
 
       <main className="mx-auto max-w-7xl px-6">
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-          {posts.map((item) => (
-            <article 
-              key={item.id} 
-              className={`break-inside-avoid relative group rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border ${item.bg || 'border-transparent'}`}
-            >
-              {item.type === 'image' ? (
-                <div className="relative aspect-[4/5] bg-gray-900">
-                  <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${item.image})` }}></div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                  <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
-                    <p className="font-serif text-lg leading-relaxed italic mb-6 break-keep whitespace-pre-line shadow-black drop-shadow-md">"{item.quote}"</p>
-                    <div>
-                      <p className="text-xs font-black mb-1">{item.book}</p>
-                      <p className="text-[10px] text-gray-300">{item.author}</p>
+          {posts.map((item) => {
+            // ⭐️ 해당 포스트 ID가 likedPostIds 배열에 있는지 확인
+            const isLiked = likedPostIds.includes(item.id);
+
+            return (
+              <article 
+                key={item.id} 
+                className={`break-inside-avoid relative group rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border ${item.bg || 'border-transparent'}`}
+              >
+                {item.type === 'image' ? (
+                  <div className="relative aspect-[4/5] bg-gray-900">
+                    <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${item.image})` }}></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                    <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
+                      <p className="font-serif text-lg leading-relaxed italic mb-6 break-keep whitespace-pre-line shadow-black drop-shadow-md">"{item.quote}"</p>
+                      <div>
+                        <p className="text-xs font-black mb-1">{item.book}</p>
+                        <p className="text-[10px] text-gray-300">{item.author}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className={`p-8 h-full flex flex-col justify-between ${item.bg}`}>
-                  <p className="font-serif text-lg leading-relaxed italic mb-10 break-keep whitespace-pre-line">"{item.quote}"</p>
-                  <div>
-                    <p className="text-xs font-black mb-1">{item.book}</p>
-                    <p className="text-[10px] opacity-70">{item.author}</p>
+                ) : (
+                  <div className={`p-8 h-full flex flex-col justify-between ${item.bg}`}>
+                    <p className="font-serif text-lg leading-relaxed italic mb-10 break-keep whitespace-pre-line">"{item.quote}"</p>
+                    <div>
+                      <p className="text-xs font-black mb-1">{item.book}</p>
+                      <p className="text-[10px] opacity-70">{item.author}</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full border border-white/30 mix-blend-difference">
-                  @{item.user}
-                </span>
-                <button className="bg-white/90 text-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg>
-                </button>
-              </div>
-            </article>
-          ))}
+                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full border border-white/30 mix-blend-difference">
+                    @{item.user}
+                  </span>
+                  
+                  {/* ⭐️ 좋아요 버튼 토글 이벤트와 동적 스타일링 적용 */}
+                  <button 
+                    onClick={() => toggleLike(item.id)}
+                    className="bg-white/90 w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform focus:outline-none"
+                  >
+                    <svg 
+                      className={`w-4 h-4 transition-colors duration-300 ${isLiked ? 'text-red-500' : 'text-gray-300 hover:text-red-300'}`} 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                    >
+                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+
+                </div>
+              </article>
+            );
+          })}
         </div>
       </main>
 
@@ -192,7 +217,6 @@ export default function ExhibitionPage() {
 
             <form onSubmit={handleSubmitPost} className="p-8 space-y-6 overflow-y-auto no-scrollbar">
               
-              {/* ⭐️ [NEW] 손글씨 사진 첨부 영역 */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-2">손글씨 사진 첨부 (선택)</label>
                 <div className="flex items-center space-x-4">
@@ -258,7 +282,6 @@ export default function ExhibitionPage() {
                 </div>
               </div>
 
-              {/* 사진이 없을 때만 갤러리 테마 선택 창 보이기 */}
               {!newPost.imagePreview && (
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-2">텍스트 테마 선택</label>
