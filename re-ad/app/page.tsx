@@ -107,9 +107,9 @@ export default function MainPage() {
         
         {/* ⭐️ 상단 메뉴바 복구 (가운데 정렬) */}
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 space-x-8 text-sm font-bold">
-          <Link href="/ranking" className="hover:text-gray-400 transition">랭킹</Link>
+          <Link href="/ranking" className="hover:text-gray-400 transition">북랭킹</Link>
           <Link href="/rooms" className="hover:text-gray-400 transition">모임방</Link>
-          <Link href="/transcription" className="hover:text-gray-400 transition">필사</Link>
+          <Link href="/exhibition" className="hover:text-gray-400 transition">필사</Link>
         </div>
 
         <div className="flex items-center space-x-5 justify-end">
@@ -153,19 +153,19 @@ export default function MainPage() {
       <section className="px-6 py-10 mx-auto max-w-7xl border-b border-gray-100">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <Link href="/transcription" className="group block">
+            <Link href="/exhibition" className="group block">
               <h3 className="text-2xl font-black italic tracking-tighter group-hover:text-gray-500 transition-colors">필사 전시회</h3>
             </Link>
             <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">오늘의 영감을 준 문장들</p>
           </div>
-          <Link href="/transcription" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition">VIEW ALL</Link>
+          <Link href="/exhibition" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition">VIEW ALL</Link>
         </div>
         
         <div className="flex space-x-6 overflow-x-auto pb-6 no-scrollbar">
           {exhibitions.length > 0 ? (
             exhibitions.map((item) => (
               // ⭐️ 전체 카드를 Link로 감싸서 어디를 눌러도 이동하게 수정
-              <Link href={`/transcription/${item._id}`} key={item._id} className="min-w-[280px] max-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors flex flex-col justify-between block">
+              <Link href={`/exhibition/${item._id}`} key={item._id} className="min-w-[280px] max-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors flex flex-col justify-between block">
                 <div>
                   <div className="h-40 bg-gray-50 rounded-xl mb-4 overflow-hidden relative flex items-center justify-center p-4">
                     <p className="text-xs font-serif text-center line-clamp-4 italic">"{item.content || item.quote}"</p>
