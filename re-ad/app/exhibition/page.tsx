@@ -1,243 +1,322 @@
 "use client";
-const API_BASE_URL = 'http://13.124.191.57:5000/api';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export default function ExhibitionPage() {
-  const router = useRouter();
-  const [filter, setFilter] = useState('ALL');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
+const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
-  // ⭐️ 1. 더미데이터(initialExhibitionData) 완전 삭제! 처음엔 빈 바구니([])로 시작합니다.
-  const [posts, setPosts] = useState<any[]>([]);
+export default function RoomsPage() {
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
-  const [likedPostIds, setLikedPostIds] = useState<string[]>([]); 
-  
-  const [newPost, setNewPost] = useState({
-    quote: '',
-    book: '',
-    author: '',
-    style: 'bg-white text-gray-900 border-gray-200',
-    imagePreview: '' 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // ⭐️ [NEW] 카테고리 필터 상태 (기본값: '전체')
+  const [categoryFilter, setCategoryFilter] = useState('전체');
+
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [targetRoomId, setTargetRoomId] = useState('');
+  const [inputPassword, setInputPassword] = useState('');
+
+  const [newRoom, setNewRoom] = useState({
+    title: '', 
+    desc: '', 
+    type: '온라인', 
+    maxMembers: 4, 
+    tags: '', 
+    category: '독서모임',
+    isPrivate: false,
+    password: ''
   });
 
-  useEffect(() => {
-    // 로그인 체크
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const storedName = localStorage.getItem('userName') || sessionStorage.getItem('userName');
-    if (token && storedName && storedName !== 'undefined') {
-      setIsLoggedIn(true);
-      setUserName(storedName);
+  const getToken = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token') || sessionStorage.getItem('token');
     }
+    return null;
+  };
 
-    // ⭐️ 2. 화면이 켜질 때 백엔드 DB에서 실제 데이터 가져오기
-    fetchPosts();
+  const getUserIdFromToken = () => {
+    const token = getToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.id || payload.userId;
+    } catch (e) { return null; }
+  };
+
+  useEffect(() => {
+    const token = getToken();
+    if (token) setIsLoggedIn(true);
+    fetchRooms();
   }, []);
 
-  const fetchPosts = async () => {
+  const fetchRooms = async () => {
     setIsLoading(true);
     try {
-      // 백엔드의 필사 API 주소 (필요시 맞게 수정하세요)
-      const res = await fetch(`${API_BASE_URL}/transcriptions`);
+      const res = await fetch(`${API_BASE_URL}/rooms`);
       const data = await res.json();
-      
+      const myUserId = getUserIdFromToken();
+
       if (Array.isArray(data)) {
-        // 최신순으로 정렬해서 화면에 반영
-        const sortedData = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setPosts(sortedData);
+        const formattedRooms = data.map((r: any) => ({
+          id: r._id,
+          title: r.roomName || '제목 없음',
+          desc: r.roomDesc || "", 
+          members: r.members ? r.members.length : 0,
+          maxMembers: r.maxMembers || 4,
+          type: r.roomType || '온라인',
+          category: r.category === 'EXCHANGE' ? '도서교환' : '독서모임',
+          tags: Array.isArray(r.tags) ? r.tags : [], 
+          isJoined: myUserId && r.members ? r.members.some((m: any) => m.userId === myUserId) : false,
+          isPrivate: !!(r.roomPassword && r.roomPassword !== "")
+        }));
+        
+        // 최신순 정렬
+        const sortedRooms = formattedRooms.reverse();
+        setRooms(sortedRooms);
       }
     } catch (error) {
-      console.error("데이터 로드 실패:", error);
+      console.error('방 목록 로드 실패:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setNewPost({ ...newPost, imagePreview: imageUrl });
+  const handleJoinClick = (room: any) => {
+    if (!isLoggedIn) {
+      alert("로그인이 필요합니다.");
+      router.push('/login');
+      return;
+    }
+    if (room.isPrivate) {
+      setTargetRoomId(room.id);
+      setIsPasswordModalOpen(true);
+    } else {
+      executeJoin(room.id);
     }
   };
 
-  const handleSubmitPost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPost.quote || !newPost.book) {
-      alert("문장과 책 제목은 필수입니다.");
-      return;
-    }
-
-    // ⭐️ 3. 백엔드 DB로 새 글 전송하기 (실제 DB에 저장)
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const executeJoin = async (roomId: string, password: string = '') => {
+    const userId = getUserIdFromToken();
+    const token = getToken();
     try {
-      const res = await fetch(`${API_BASE_URL}/transcriptions`, {
+      const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/join`, {
         method: 'POST',
-        headers: {
+        headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          content: newPost.quote,
-          bookTitle: newPost.book,
-          authorName: newPost.author || "작자 미상",
-          type: newPost.imagePreview ? "image" : "text",
-          image: newPost.imagePreview || "", 
-          bgStyle: newPost.style
-        })
+        body: JSON.stringify({ userId, roomPassword: password }) 
       });
 
+      const data = await res.json();
       if (res.ok) {
-        alert("전시회에 문장이 성공적으로 걸렸습니다!");
-        setIsWriteModalOpen(false); 
-        setNewPost({ quote: '', book: '', author: '', style: 'bg-white text-gray-900 border-gray-200', imagePreview: '' }); 
-        fetchPosts(); // DB에 저장됐으니 목록 다시 불러오기
+        alert('모임방 참여 성공! 🎉');
+        setIsPasswordModalOpen(false);
+        setInputPassword('');
+        fetchRooms(); 
       } else {
-        alert("업로드에 실패했습니다.");
+        alert(data.message || '입장에 실패했습니다.');
       }
     } catch (error) {
-      alert("서버 오류가 발생했습니다.");
+      alert('서버 오류가 발생했습니다.');
     }
   };
 
-  const toggleLike = (postId: string) => {
-    setLikedPostIds((prev) => 
-      prev.includes(postId) 
-        ? prev.filter((id) => id !== postId) 
-        : [...prev, postId] 
-    );
+  const handleCreateRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRoom.title) return alert("모임 이름을 입력해주세요.");
+    const hostId = getUserIdFromToken();
+    const token = getToken();
+    const tagsArray = newRoom.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/rooms`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          roomType: newRoom.type,      
+          roomName: newRoom.title,     
+          roomDesc: newRoom.desc, 
+          roomPassword: newRoom.isPrivate ? newRoom.password : '', 
+          hostId: hostId,
+          maxMembers: Number(newRoom.maxMembers),
+          tags: tagsArray,
+          category: newRoom.category === '도서교환' ? 'EXCHANGE' : 'READING'
+        })
+      });
+      if (res.ok) {
+        alert("개설 완료! 🎉");
+        setIsCreateModalOpen(false); 
+        setNewRoom({ title: '', desc: '', type: '온라인', maxMembers: 4, tags: '', category: '독서모임', isPrivate: false, password: '' }); 
+        fetchRooms(); 
+      }
+    } catch (error) {
+      alert("통신 에러");
+    }
   };
+
+  // ⭐️ [NEW] 필터링된 방 목록 계산
+  const filteredRooms = rooms.filter(room => {
+    if (categoryFilter === '전체') return true;
+    return room.category === categoryFilter;
+  });
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
-      
       <header className="bg-white/80 backdrop-blur-md px-8 py-4 flex items-center justify-between sticky top-0 z-40 border-b border-gray-100 shadow-sm">
-        <Link href="/" className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
-        </Link>
-        <Link href="/" className="text-sm font-bold text-gray-400 hover:text-black transition">
-          홈으로
-        </Link>
+        <Link href="/" className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></Link>
+        <Link href="/" className="text-sm font-bold text-gray-400 hover:text-black transition">홈으로</Link>
       </header>
 
-      <section className="px-6 py-12 md:py-20 mx-auto max-w-7xl text-center">
-        <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-6 rounded-full">
-          ONLINE EXHIBITION
-        </span>
-        <h2 className="text-4xl md:text-6xl font-serif font-black italic mb-6 tracking-tight text-gray-900">
-          당신의 밑줄, <br className="md:hidden" />우리의 영감
-        </h2>
-        <p className="text-sm md:text-base text-gray-500 font-medium max-w-2xl mx-auto leading-relaxed">
-          교환독서 멤버들이 직접 남긴 인생 문장들을 갤러리처럼 감상해 보세요. <br className="hidden md:block"/>
-          마음에 드는 문장은 내 서재로 스크랩할 수 있습니다.
-        </p>
-      </section>
-
-      <nav className="flex justify-center space-x-2 md:space-x-4 mb-12 px-6">
-        {['ALL', 'TRENDING', 'NEW', 'EDITOR PICK'].map((item) => (
+      <main className="mx-auto max-w-6xl px-6 mt-12 space-y-8">
+        <section className="flex flex-col md:flex-row md:items-end justify-between border-b border-black pb-6 gap-4">
+          <div>
+            <h2 className="text-4xl font-black tracking-tighter mb-2">LOUNGE</h2>
+            <p className="text-sm font-bold text-gray-500 tracking-widest uppercase">취향이 통하는 사람들과의 교환독서</p>
+          </div>
           <button 
-            key={item}
-            onClick={() => setFilter(item)}
-            className={`px-5 py-2 rounded-full text-xs font-black tracking-widest transition-all ${
-              filter === item 
-                ? 'bg-black text-white shadow-md' 
-                : 'bg-white text-gray-400 border border-gray-200 hover:border-black hover:text-black'
-            }`}
+            onClick={() => isLoggedIn ? setIsCreateModalOpen(true) : (alert("로그인이 필요합니다."), router.push('/login'))}
+            className="px-6 py-3 bg-black text-white text-sm font-black tracking-widest rounded-full hover:bg-gray-800 transition shadow-lg flex items-center justify-center space-x-2"
           >
-            {item}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            <span>모임방 만들기</span>
           </button>
-        ))}
-      </nav>
+        </section>
 
-      <main className="mx-auto max-w-7xl px-6">
+        {/* ⭐️ [NEW] 카테고리 필터 네비게이션 */}
+        <nav className="flex space-x-3">
+          {['전체', '독서모임', '도서교환'].map((cat) => (
+            <button 
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-5 py-2 rounded-full text-xs font-black tracking-widest transition-all ${
+                categoryFilter === cat 
+                  ? 'bg-black text-white shadow-md' 
+                  : 'bg-white text-gray-400 border border-gray-200 hover:border-black hover:text-black'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </nav>
+
         {isLoading ? (
-          <div className="py-20 text-center font-bold text-gray-300">데이터를 불러오는 중입니다...</div>
-        ) : posts.length === 0 ? (
-          <div className="py-20 text-center font-bold text-gray-300">아직 등록된 전시글이 없습니다. 첫 번째 주인공이 되어주세요!</div>
+          <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div></div>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-            {posts.map((item) => {
-              // DB에서 오는 id값 매칭 (_id 또는 id)
-              const postId = item._id || item.id;
-              const isLiked = likedPostIds.includes(postId);
-              
-              // 필드명이 백엔드와 다를 수 있어 호환되도록 처리
-              const quote = item.content || item.quote;
-              const bookTitle = item.bookTitle || item.book;
-              const authorName = item.authorName || item.author;
-              const bgStyle = item.bgStyle || item.bg || 'bg-white text-gray-900 border-gray-200';
-
-              return (
-                <article 
-                  key={postId} 
-                  className={`break-inside-avoid relative group rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border ${bgStyle}`}
-                >
-                  {item.type === 'image' && item.image ? (
-                    <div className="relative aspect-[4/5] bg-gray-900">
-                      <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${item.image})` }}></div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                      <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
-                        <p className="font-serif text-lg leading-relaxed italic mb-6 break-keep whitespace-pre-line shadow-black drop-shadow-md">"{quote}"</p>
-                        <div>
-                          <p className="text-xs font-black mb-1">{bookTitle}</p>
-                          <p className="text-[10px] text-gray-300">{authorName}</p>
-                        </div>
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredRooms.length === 0 ? (
+              <div className="col-span-full text-center py-12 text-gray-400 font-bold">해당 카테고리에 개설된 모임이 없습니다.</div>
+            ) : (
+              filteredRooms.map((room) => {
+                const isFull = room.members >= room.maxMembers;
+                return (
+                  <div key={room.id} className="bg-white p-7 rounded-[2rem] border border-gray-100 hover:shadow-xl transition-all flex flex-col h-full relative group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex space-x-1">
+                        <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.type === '온라인' ? 'bg-blue-50 text-blue-500' : 'bg-orange-50 text-orange-500'}`}>{room.type}</span>
+                        <span className="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">{room.category}</span>
+                        {room.isPrivate && (
+                          <span className="px-2 py-1 rounded bg-red-50 text-red-500"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" /></svg></span>
+                        )}
                       </div>
+                      <span className={`text-[10px] font-bold ${isFull ? 'text-red-500' : 'text-gray-400'}`}>{room.members} / {room.maxMembers}명</span>
                     </div>
-                  ) : (
-                    <div className={`p-8 h-full flex flex-col justify-between ${bgStyle}`}>
-                      <p className="font-serif text-lg leading-relaxed italic mb-10 break-keep whitespace-pre-line">"{quote}"</p>
-                      <div>
-                        <p className="text-xs font-black mb-1">{bookTitle}</p>
-                        <p className="text-[10px] opacity-70">{authorName}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full border border-white/30 mix-blend-difference">
-                      @{item.user || userName || '독서가'}
-                    </span>
                     
+                    <Link href={`/rooms/${room.id}`} className="flex-1 cursor-pointer block">
+                      <h4 className="text-xl font-black mb-2 group-hover:text-gray-500 transition-colors line-clamp-2">{room.title}</h4>
+                      <p className="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2">{room.desc}</p>
+                    </Link>
+
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {room.tags.map((tag: string, i: number) => (
+                        <span key={i} className="px-2 py-1 bg-gray-50 text-[10px] font-bold text-gray-400 rounded-md">#{tag}</span>
+                      ))}
+                    </div>
+
                     <button 
-                      onClick={() => toggleLike(postId)}
-                      className="bg-white/90 w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform focus:outline-none"
+                      onClick={() => handleJoinClick(room)}
+                      disabled={isFull || room.isJoined}
+                      className={`w-full py-3.5 rounded-xl text-sm font-black tracking-widest transition-all ${
+                        room.isJoined ? 'bg-gray-100 text-gray-400' : isFull ? 'bg-red-50 text-red-300' : 'bg-black text-white hover:bg-gray-800'
+                      }`}
                     >
-                      <svg 
-                        className={`w-4 h-4 transition-colors duration-300 ${isLiked ? 'text-red-500' : 'text-gray-300 hover:text-red-300'}`} 
-                        fill="currentColor" 
-                        viewBox="0 0 20 20"
-                      >
-                        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                      </svg>
+                      {room.isJoined ? "참여 중" : isFull ? "정원 초과" : room.isPrivate ? "비밀방 참여" : "바로 참여하기"}
                     </button>
                   </div>
-                </article>
-              );
-            })}
-          </div>
+                );
+              })
+            )}
+          </section>
         )}
       </main>
 
-      <button 
-        onClick={() => {
-          if(!isLoggedIn) { alert("문장을 기록하려면 로그인이 필요합니다."); router.push('/login'); return; }
-          setIsWriteModalOpen(true);
-        }}
-        className="fixed bottom-10 right-10 z-30 w-16 h-16 bg-black text-white rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
-      >
-        <svg className="w-6 h-6 transform group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-      </button>
+      {/* 비밀번호 입력 모달 */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl">
+            <h3 className="text-center text-xl font-black mb-6">비밀번호 입력</h3>
+            <input 
+              type="password" 
+              value={inputPassword} 
+              onChange={(e) => setInputPassword(e.target.value)}
+              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-4 py-4 text-center text-2xl font-black focus:border-black outline-none mb-6"
+            />
+            <div className="flex space-x-3">
+              <button onClick={() => setIsPasswordModalOpen(false)} className="flex-1 py-4 text-gray-400 font-bold">취소</button>
+              <button onClick={() => executeJoin(targetRoomId, inputPassword)} className="flex-1 bg-black text-white rounded-xl font-black">확인</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* 모달창 코드는 이전과 동일하게 유지 */}
-      {isWriteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-           {/* ... 모달창 내용 (위 코드에 연결되어 있음) ... */}
-           {/* (전체 코드는 복사해서 붙여넣기 하시면 문제없이 들어갑니다!) */}
+      {/* 방 개설 모달 */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
+              <h3 className="text-lg font-black tracking-tighter">새 모임방 개설</h3>
+              <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-900 transition"><svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" /></svg></button>
+            </div>
+            <form onSubmit={handleCreateRoom} className="p-8 space-y-5 overflow-y-auto no-scrollbar">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">모임 이름</label>
+                <input type="text" placeholder="예: 주말 아침 독서 클럽" value={newRoom.title} onChange={(e) => setNewRoom({...newRoom, title: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none font-bold" />
+              </div>
+              <div className="space-y-4">
+                <div className={`flex items-center space-x-3 p-4 rounded-2xl border transition cursor-pointer ${newRoom.isPrivate ? 'bg-black text-white border-black' : 'bg-gray-50 border-gray-100 text-gray-900'}`} onClick={() => setNewRoom({...newRoom, isPrivate: !newRoom.isPrivate})}>
+                  <input type="checkbox" checked={newRoom.isPrivate} readOnly className="w-5 h-5 accent-white cursor-pointer" />
+                  <div className="flex flex-col"><span className="text-sm font-black">비밀방으로 만들기</span><span className={`text-[10px] font-bold ${newRoom.isPrivate ? 'text-gray-300' : 'text-gray-400'}`}>비밀번호가 있어야 입장 가능합니다.</span></div>
+                </div>
+                {newRoom.isPrivate && (
+                  <div className="animate-in slide-in-from-top-2 duration-300">
+                    <label className="block text-xs font-bold text-gray-500 mb-1">방 비밀번호</label>
+                    <input type="password" placeholder="숫자 4자리 이상" value={newRoom.password} onChange={(e) => setNewRoom({...newRoom, password: e.target.value})} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-sm focus:outline-none font-bold" />
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div><label className="block text-xs font-bold text-gray-500 mb-1">카테고리</label>
+                  <select value={newRoom.category} onChange={(e) => setNewRoom({...newRoom, category: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none font-bold"><option value="독서모임">독서모임</option><option value="도서교환">도서교환</option></select>
+                </div>
+                <div><label className="block text-xs font-bold text-gray-500 mb-1">형태</label>
+                  <select value={newRoom.type} onChange={(e) => setNewRoom({...newRoom, type: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none font-bold"><option value="온라인">온라인</option><option value="오프라인">오프라인</option></select>
+                </div>
+                <div><label className="block text-xs font-bold text-gray-500 mb-1">인원</label>
+                  <input type="number" min="2" max="30" value={newRoom.maxMembers} onChange={(e) => setNewRoom({...newRoom, maxMembers: Number(e.target.value)})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none font-bold" />
+                </div>
+              </div>
+              <div><label className="block text-xs font-bold text-gray-500 mb-1">모임 소개</label><textarea placeholder="소개를 작성해주세요." rows={3} value={newRoom.desc} onChange={(e) => setNewRoom({...newRoom, desc: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"></textarea></div>
+              <div><label className="block text-xs font-bold text-gray-500 mb-1">태그 (쉼표 구분)</label><input type="text" placeholder="예: 인문학, 소설" value={newRoom.tags} onChange={(e) => setNewRoom({...newRoom, tags: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none" /></div>
+              <button type="submit" className="w-full mt-4 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg">개설 완료하기</button>
+            </form>
+          </div>
         </div>
       )}
     </div>
