@@ -60,7 +60,7 @@ export default function RankingPage() {
             TRENDING NOW
           </span>
           <h2 className="text-5xl font-black tracking-tighter">BOOK RANKING</h2>
-          <p className="mt-4 text-gray-400 font-bold">실시간 알라딘 베스트셀러 순위</p>
+          <p className="mt-4 text-gray-400 font-bold">실시간 베스트셀러 순위</p>
         </section>
 
         {/* 장르 선택 탭 */}
