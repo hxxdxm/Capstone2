@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header'; // ⭐️ 공통 헤더 임포트
+import Header from '@/components/Header'; // 공통 헤더 컴포넌트 불러오기
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function MainPage() {
-  const [exhibitions, setExhibitions] = useState<any[]>([]);
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [rankings, setRankings] = useState<any[]>([]); // ⭐️ 실제 랭킹 데이터를 담을 상태
+  // 상태 관리 (State)
+  const [exhibitions, setExhibitions] = useState<any[]>([]); // 필사 전시 데이터
+  const [rooms, setRooms] = useState<any[]>([]);             // 모임방 데이터
+  const [rankings, setRankings] = useState<any[]>([]);       // 북랭킹 데이터
 
+  // 하드코딩된 메인 배너 데이터
   const banners = [
     {
       id: 1,
@@ -39,58 +41,59 @@ export default function MainPage() {
   const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
   const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
 
+  // 페이지가 처음 켜질 때 실행되는 로직들
   useEffect(() => {
-    // 1. 배너 타이머
+    // 1. 배너 자동 넘김 타이머 (5초)
     const timer = setInterval(() => {
       setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
     }, 5000);
 
-    // 2. [API] 필사 데이터 최신 5개 (엔드포인트 exhibition으로 통일)
-    fetch(`${API_BASE_URL}/exhibition`)
+    // 2. [API] 필사 데이터 최신 5개 불러오기
+    fetch(`${API_BASE_URL}/annotations`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
           const latestTrans = data
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 5); // ⭐️ 5개로 수정
+            .slice(0, 5);
           setExhibitions(latestTrans);
         }
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error("필사 데이터 로드 실패:", err));
 
-    // 3. [API] 모임방 데이터 최신 4개
+    // 3. [API] 모임방 데이터 최신 4개 불러오기
     fetch(`${API_BASE_URL}/rooms`)
       .then(res => res.json())
       .then(data => {
-        // 응답이 배열이거나 { rooms: [...] } 형태일 수 있음
         const roomArray = Array.isArray(data) ? data : (data.rooms || []);
         const latestRooms = roomArray
           .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 4);
         setRooms(latestRooms);
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error("모임방 데이터 로드 실패:", err));
 
-    // 4. [API] ⭐️ 실제 북랭킹 데이터 최신 5개
+    // 4. [API] 실제 북랭킹 데이터 최신 5개 불러오기
     fetch(`${API_BASE_URL}/books/public-ranking?genre=`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          setRankings(data.slice(0, 5)); // 1위부터 5위까지만 자르기
+          setRankings(data.slice(0, 5));
         }
       })
       .catch(err => console.error("랭킹 로드 실패:", err));
 
+    // 컴포넌트가 꺼질 때 타이머 정리
     return () => clearInterval(timer);
   }, [banners.length]);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
       
-      {/* ⭐️ 1. 기존의 길고 복잡했던 코드를 공통 헤더로 깔끔하게 교체 */}
+      {/* --- 공통 헤더 영역 --- */}
       <Header />
 
-      {/* 2. 메인 배너 */}
+      {/* --- 메인 배너 슬라이드 영역 --- */}
       <section className="px-6 py-8 mx-auto max-w-7xl relative group">
         <div className="relative h-[300px] md:h-[400px] bg-black rounded-3xl overflow-hidden shadow-xl">
           {banners.map((banner, index) => (
@@ -105,30 +108,31 @@ export default function MainPage() {
             </div>
           ))}
 
+          {/* 배너 좌우 이동 버튼 */}
           <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
           <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
         </div>
       </section>
 
-      {/* 3. 필사 전시 레이아웃 */}
+      {/* --- 필사 전시 리스트 영역 --- */}
       <section className="px-6 py-10 mx-auto max-w-7xl border-b border-gray-100">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <Link href="/exhibition" className="group block">
+            <Link href="/annotations" className="group block">
               <h3 className="text-2xl font-black italic tracking-tighter group-hover:text-gray-500 transition-colors">필사 전시회</h3>
             </Link>
             <p className="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest">오늘의 영감을 준 문장들</p>
           </div>
-          <Link href="/exhibition" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition">VIEW ALL</Link>
+          <Link href="/annotations" className="text-xs font-black border-b-2 border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition">VIEW ALL</Link>
         </div>
 
         <div className="flex space-x-6 overflow-x-auto pb-6 no-scrollbar">
           {exhibitions.length > 0 ? (
             exhibitions.map((item) => (
-              <Link href={`/exhibition`} key={item.id} className="min-w-[280px] max-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors flex flex-col justify-between block">
+              <Link href={`/annotations`} key={item.id || item._id} className="min-w-[280px] max-w-[280px] bg-white p-6 rounded-2xl shadow-sm border border-gray-50 group cursor-pointer hover:border-black transition-colors flex flex-col justify-between block">
                 <div>
                   <div className="h-40 bg-gray-50 rounded-xl mb-4 overflow-hidden relative flex items-center justify-center p-4">
-                    <p className="text-xs font-serif text-center line-clamp-4 italic text-black">"{item.content}"</p>
+                    <p className="text-xs font-serif text-center line-clamp-4 italic text-black">"{item.description || item.content}"</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-auto pt-2">
@@ -144,10 +148,10 @@ export default function MainPage() {
         </div>
       </section>
 
-      {/* 4. 메인 콘텐츠: 모임방 & 랭킹 */}
+      {/* --- 메인 하단: 모임방 & 북랭킹 영역 --- */}
       <main className="px-6 py-12 mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12">
         
-        {/* 모임방 영역 */}
+        {/* 좌측: 모임방 카드 리스트 */}
         <div className="lg:col-span-8 space-y-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-black tracking-tight">🤝 참여를 기다리는 모임방</h3>
@@ -162,6 +166,7 @@ export default function MainPage() {
                 
                 return (
                   <Link href={`/rooms/${room._id || room.id}`} key={room._id || room.id} className="bg-white p-7 rounded-3xl border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative flex flex-col justify-between h-[200px] block">
+                    {/* 정원 초과 시 보여주는 뱃지 */}
                     {isFull && (
                       <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black px-4 py-1.5 rounded-bl-xl shadow-sm">
                         모집 마감
@@ -191,7 +196,7 @@ export default function MainPage() {
           </div>
         </div>
 
-        {/* ⭐️ 북랭킹 영역 (실제 데이터 렌더링) */}
+        {/* 우측: 북랭킹 리스트 */}
         <aside className="lg:col-span-4 space-y-10">
           <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
             <h3 className="text-xs font-black tracking-[0.3em] text-gray-400 mb-8 uppercase">Book Ranking</h3>
