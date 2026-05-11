@@ -1,256 +1,234 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Header from '@/components/Header';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function HandMeDownsPage() {
-  const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // 모달 및 폼 상태
-  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('전체');
+
+  // 모달 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    bookTitle: '',
-    bookThumbnail: '', // 이미지 URL
-    bookAuthor: '',
-    comment: '',
-    contactLink: '' // 오픈카톡 링크 등
+    title: '',
+    author: '',
+    condition: '거의 새 것',
+    tradeType: '나눔',
+    description: ''
   });
 
   const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
-  const getMyId = () => {
-    const token = getToken();
-    if (!token) return null;
-    try {
-      const payload = JSON.parse(window.atob(token.split('.')[1]));
-      return payload.id || payload.userId;
-    } catch (e) { return null; }
-  };
 
   useEffect(() => {
-    const token = getToken();
-    if (token) setIsLoggedIn(true);
+    // 📍 임시 더미 데이터 (백엔드 API가 완성되기 전까지 UI를 보여주기 위함)
+    const dummyData = [
+      {
+        id: 1,
+        title: "다정한 것이 살아남는다",
+        author: "브라이언 헤어",
+        condition: "거의 새 것",
+        tradeType: "나눔",
+        provider: "독서광",
+        imageUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800",
+        description: "두 번 읽고 깨끗하게 보관했습니다. 꼭 읽어보고 싶으신 분께 드려요.",
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 2,
+        title: "모순",
+        author: "양귀자",
+        condition: "사용감 있음",
+        tradeType: "교환",
+        provider: "하민",
+        imageUrl: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800",
+        description: "다른 소설책이랑 교환하고 싶습니다. 표지에 약간의 구김이 있어요.",
+        createdAt: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: 3,
+        title: "클린 코드 (Clean Code)",
+        author: "로버트 C. 마틴",
+        condition: "밑줄 많음",
+        tradeType: "나눔",
+        provider: "개발자A",
+        imageUrl: "https://images.unsplash.com/photo-1555662800-87311cb37552?q=80&w=800",
+        description: "공부하면서 밑줄을 많이 쳤지만 읽는 데는 지장 없습니다. 후배님들 가져가세요!",
+        createdAt: new Date(Date.now() - 172800000).toISOString()
+      }
+    ];
+
+    // 📍 나중에 백엔드 API가 완성되면 아래 주석을 풀고 연결하세요!
+    /*
+    const fetchItems = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/handmedowns`); // 백엔드 주소 확인 필요
+        const data = await res.json();
+        if (Array.isArray(data)) setItems(data);
+      } catch (error) {
+        console.error("물려주기 목록 로드 실패:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchItems();
+    */
+
+    // 임시로 더미데이터 세팅 후 로딩 해제 (0.5초 딜레이)
+    setTimeout(() => {
+      setItems(dummyData);
+      setIsLoading(false);
+    }, 500);
   }, []);
 
-  // 1. 전체 목록 불러오기 (GET)
-  const fetchItems = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/handmedowns`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setItems(data);
-      }
-    } catch (error) {
-      console.error("데이터 로드 실패:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 2. 새 글 올리기 (POST)
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    const token = getToken();
-    if (!token) { alert("로그인이 필요합니다."); router.push('/login'); return; }
-    if (!formData.bookTitle || !formData.comment) return alert("책 제목과 코멘트는 필수입니다.");
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/handmedowns`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (res.ok) {
-        alert("게시글이 등록되었습니다! 🎉");
-        setIsWriteModalOpen(false);
-        setFormData({ bookTitle: '', bookThumbnail: '', bookAuthor: '', comment: '', contactLink: '' });
-        fetchItems(); // 목록 새로고침
-      } else {
-        alert("등록에 실패했습니다.");
-      }
-    } catch (error) {
-      alert("서버 연결 오류");
-    }
+    if (!getToken()) return alert("로그인 후 등록할 수 있습니다.");
+    
+    // 📍 나중에 백엔드 POST 로직으로 교체할 부분
+    alert("도서가 성공적으로 등록되었습니다! (현재는 UI 테스트 모드입니다)");
+    setIsModalOpen(false);
+    setFormData({ title: '', author: '', condition: '거의 새 것', tradeType: '나눔', description: '' });
   };
 
-  // 3. 거래 상태 변경 (PUT)
-  const handleToggleStatus = async (id: string) => {
-    const token = getToken();
-    try {
-      const res = await fetch(`${API_BASE_URL}/handmedowns/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        fetchItems(); // 상태 변경 후 목록 새로고침
-      } else {
-        alert("상태 변경 권한이 없습니다.");
-      }
-    } catch (error) {
-      alert("서버 연결 오류");
-    }
-  };
-
-  // 4. 글 삭제 (DELETE)
-  const handleDelete = async (id: string) => {
-    if (!confirm("정말로 이 게시글을 삭제하시겠습니까?")) return;
-    const token = getToken();
-    try {
-      const res = await fetch(`${API_BASE_URL}/handmedowns/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        alert("삭제되었습니다.");
-        fetchItems();
-      } else {
-        alert("삭제 권한이 없습니다.");
-      }
-    } catch (error) {
-      alert("서버 연결 오류");
-    }
-  };
+  const filteredItems = items.filter(item => {
+    if (activeFilter === '전체') return true;
+    return item.tradeType === activeFilter;
+  });
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans text-gray-900">
-      <header className="bg-white/80 backdrop-blur-md px-8 py-4 flex items-center justify-between border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-        <Link href="/" className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></Link>
-        <Link href="/" className="text-sm font-bold text-gray-400 hover:text-black transition">홈으로</Link>
-      </header>
+    <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans text-black">
+      <Header />
 
-      <main className="mx-auto max-w-6xl px-6 mt-12 space-y-8">
-        <section className="flex flex-col md:flex-row md:items-end justify-between border-b border-black pb-6 gap-4">
-          <div>
-            <h2 className="text-4xl font-black tracking-tighter mb-2">물려주기</h2>
-            <p className="text-sm font-bold text-gray-500 tracking-widest uppercase">다 읽은 책을 새로운 독자에게 보내주세요</p>
+      <main className="mx-auto max-w-6xl px-6 mt-16">
+        {/* 상단 헤더 섹션 */}
+        <section className="text-center mb-12 relative">
+          <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-4 rounded-full">
+            BOOK EXCHANGE
+          </span>
+          <h2 className="text-5xl font-black tracking-tighter uppercase text-black">물려주기</h2>
+          <p className="mt-4 text-gray-700 font-bold">다 읽은 책은 나누고, 새로운 책을 만나보세요</p>
+          
+          <div className="absolute right-0 bottom-0">
+            <button 
+              onClick={() => {
+                if (!getToken()) return alert("로그인 후 이용 가능합니다.");
+                setIsModalOpen(true);
+              }}
+              className="bg-black text-white px-6 py-3 rounded-full font-black text-sm hover:bg-gray-800 transition shadow-lg flex items-center space-x-2"
+            >
+              <span>+ 책 등록하기</span>
+            </button>
           </div>
-          <button 
-            onClick={() => isLoggedIn ? setIsWriteModalOpen(true) : (alert("로그인이 필요합니다."), router.push('/login'))}
-            className="px-6 py-3 bg-black text-white text-sm font-black tracking-widest rounded-full hover:bg-gray-800 transition shadow-lg flex items-center justify-center space-x-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-            <span>책 등록하기</span>
-          </button>
         </section>
 
+        {/* 필터 탭 */}
+        <div className="flex justify-center space-x-2 mb-12">
+          {['전체', '나눔', '교환'].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-6 py-2 rounded-full text-xs font-black transition-all ${
+                activeFilter === filter
+                  ? 'bg-black text-white shadow-md'
+                  : 'bg-white text-gray-500 border border-gray-200 hover:border-black hover:text-black'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        {/* 책 목록 그리드 */}
         {isLoading ? (
-          <div className="py-20 text-center font-bold text-gray-300">데이터를 불러오는 중입니다...</div>
-        ) : items.length === 0 ? (
-          <div className="py-20 text-center font-bold text-gray-300 bg-white rounded-[2rem] border border-gray-100">
-            아직 등록된 책이 없습니다. 첫 번째로 책을 나눠보세요!
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {items.map((item) => {
-              const isMine = item.userId === getMyId() || item.userId?._id === getMyId();
-              const isCompleted = item.status === 'COMPLETED' || item.status === '완료';
-
-              return (
-                <div key={item._id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col relative group">
-                  {/* 썸네일 이미지 영역 */}
-                  <div className="relative aspect-[3/4] bg-gray-100 flex items-center justify-center overflow-hidden">
-                    {item.bookThumbnail ? (
-                      <img src={item.bookThumbnail} alt={item.bookTitle} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isCompleted ? 'grayscale opacity-50' : ''}`} />
-                    ) : (
-                      <svg className="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>
-                    )}
-                    
-                    {/* 상태 뱃지 */}
-                    <div className="absolute top-4 left-4">
-                      <span className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest shadow-sm ${isCompleted ? 'bg-gray-800 text-white' : 'bg-green-500 text-white'}`}>
-                        {isCompleted ? '거래완료' : '나눔대기'}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredItems.length === 0 ? (
+              <div className="col-span-full text-center py-24 border-2 border-dashed border-gray-300 rounded-[2.5rem]">
+                <p className="text-gray-600 font-bold text-lg">조건에 맞는 도서가 없습니다.</p>
+              </div>
+            ) : (
+              filteredItems.map((item) => (
+                <div key={item.id} className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full cursor-pointer">
+                  {/* 도서 표지 이미지 */}
+                  <div className="h-48 overflow-hidden relative bg-gray-100">
+                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute top-4 left-4 flex space-x-2">
+                      <span className={`px-2 py-1 rounded text-[10px] font-black tracking-widest text-white shadow-sm ${item.tradeType === '나눔' ? 'bg-green-500' : 'bg-purple-500'}`}>
+                        {item.tradeType}
                       </span>
                     </div>
                   </div>
-
-                  {/* 정보 영역 */}
+                  
+                  {/* 도서 정보 */}
                   <div className="p-6 flex flex-col flex-1">
-                    <h3 className="text-lg font-black line-clamp-1 mb-1">{item.bookTitle}</h3>
-                    <p className="text-xs text-gray-400 font-bold mb-4">{item.bookAuthor || '저자 미상'}</p>
-                    <p className="text-sm text-gray-600 leading-relaxed line-clamp-2 break-keep mb-6 flex-1">
-                      {item.comment}
-                    </p>
+                    <h3 className="text-lg font-black mb-1 text-black line-clamp-1">{item.title}</h3>
+                    <p className="text-xs font-bold text-gray-400 mb-4">{item.author}</p>
                     
-                    {/* 하단 액션 / 링크 */}
-                    <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                      {isMine ? (
-                        <div className="flex space-x-2 w-full">
-                          <button onClick={() => handleToggleStatus(item._id)} className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-xs font-bold rounded-lg transition">
-                            상태변경
-                          </button>
-                          <button onClick={() => handleDelete(item._id)} className="py-2 px-3 border border-red-200 text-red-500 hover:bg-red-50 text-xs font-bold rounded-lg transition">
-                            삭제
-                          </button>
-                        </div>
-                      ) : (
-                        <a 
-                          href={item.contactLink || '#'} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className={`w-full text-center py-2.5 rounded-xl text-xs font-black tracking-widest transition ${isCompleted ? 'bg-gray-100 text-gray-400 pointer-events-none' : 'bg-black text-white hover:bg-gray-800'}`}
-                        >
-                          {isCompleted ? '마감되었습니다' : '연락하기'}
-                        </a>
-                      )}
+                    <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between text-[10px] font-black text-gray-500">
+                      <span className="flex items-center space-x-1">
+                        <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                        <span>{item.condition}</span>
+                      </span>
+                      <span>By {item.provider}</span>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
         )}
       </main>
 
-      {/* 글쓰기 모달 */}
-      {isWriteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
-              <h3 className="text-lg font-black tracking-tighter">책 등록하기</h3>
-              <button onClick={() => setIsWriteModalOpen(false)} className="text-gray-400 hover:text-gray-900 transition">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
+      {/* 등록 모달창 */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 relative shadow-2xl my-8">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-gray-400 hover:text-black font-bold text-xl">✕</button>
+            <h3 className="text-3xl font-black tracking-tighter mb-8 text-black">물려줄 책 등록</h3>
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto no-scrollbar">
+            <form onSubmit={handleRegister} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">책 제목 *</label>
-                <input type="text" value={formData.bookTitle} onChange={(e) => setFormData({...formData, bookTitle: e.target.value})} placeholder="예: 코스모스" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none font-bold" />
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">지은이</label>
-                <input type="text" value={formData.bookAuthor} onChange={(e) => setFormData({...formData, bookAuthor: e.target.value})} placeholder="예: 칼 세이건" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none font-bold" />
+                <label className="block text-xs font-black text-gray-500 mb-2">책 제목 *</label>
+                <input type="text" className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black transition" placeholder="책 제목을 정확히 입력해주세요" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">표지 이미지 링크 (선택)</label>
-                <input type="text" value={formData.bookThumbnail} onChange={(e) => setFormData({...formData, bookThumbnail: e.target.value})} placeholder="http://..." className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none" />
+                <label className="block text-xs font-black text-gray-500 mb-2">저자명 *</label>
+                <input type="text" className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black transition" placeholder="지은이를 입력해주세요" value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} required />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-black text-gray-500 mb-2">책 상태 *</label>
+                  <select className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black bg-white" value={formData.condition} onChange={(e) => setFormData({...formData, condition: e.target.value})}>
+                    <option value="거의 새 것">거의 새 것</option>
+                    <option value="사용감 있음">사용감 있음</option>
+                    <option value="밑줄 많음">밑줄 많음</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-gray-500 mb-2">거래 방식 *</label>
+                  <select className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black bg-white" value={formData.tradeType} onChange={(e) => setFormData({...formData, tradeType: e.target.value})}>
+                    <option value="나눔">나눔 (무료)</option>
+                    <option value="교환">교환 (책 맞교환)</option>
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">남길 코멘트 *</label>
-                <textarea rows={3} value={formData.comment} onChange={(e) => setFormData({...formData, comment: e.target.value})} placeholder="책 상태나 물려주는 이유를 적어주세요." className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"></textarea>
+                <label className="block text-xs font-black text-gray-500 mb-2">상세 설명</label>
+                <textarea className="w-full border-2 border-gray-100 rounded-2xl p-4 h-24 focus:border-black outline-none font-bold text-black transition resize-none" placeholder="어떤 책과 교환하고 싶은지, 혹은 책의 상태에 대해 자유롭게 적어주세요" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})}></textarea>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1">오픈채팅/연락처 링크 (선택)</label>
-                <input type="text" value={formData.contactLink} onChange={(e) => setFormData({...formData, contactLink: e.target.value})} placeholder="https://open.kakao.com/o/..." className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none text-blue-500 font-medium" />
-              </div>
-
-              <button type="submit" className="w-full mt-6 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg tracking-widest">
-                등록 완료하기
+              <button type="submit" className="w-full bg-black text-white py-4 rounded-2xl font-black text-lg hover:bg-gray-800 transition shadow-lg mt-4">
+                서재에 책 올리기
               </button>
             </form>
           </div>

@@ -10,18 +10,16 @@ export default function RoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // ⭐️ [NEW] 필터 상태 (전체 / 온라인 / 오프라인)
   const [activeFilter, setActiveFilter] = useState('전체');
 
-  // ⭐️ [NEW] 방 만들기 모달 상태 및 폼 데이터
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newRoom, setNewRoom] = useState({
     roomName: '',
-    roomType: '온라인', // 기본값
+    roomType: '온라인', 
     maxMembers: 10,
     roomPassword: '',
     roomDesc: '',
-    tags: '' // 콤마로 입력받을 예정
+    tags: '' 
   });
 
   const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
@@ -55,7 +53,6 @@ export default function RoomsPage() {
     fetchRooms();
   }, []);
 
-  // ⭐️ [NEW] 모임방 생성 API 호출
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getToken();
@@ -71,14 +68,14 @@ export default function RoomsPage() {
       return;
     }
 
-    // 태그를 콤마 기준으로 배열로 변환
     const tagArray = newRoom.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
 
+    // 📍 핵심 수정: 방을 처음 만들 때도 백엔드 명세에 맞춰 description 키값을 추가로 보냅니다.
     const roomPayload = {
       ...newRoom,
+      description: newRoom.roomDesc, 
       hostId: myId,
       tags: tagArray
-      // category 필드는 완전히 제거했습니다!
     };
 
     try {
@@ -104,7 +101,6 @@ export default function RoomsPage() {
     }
   };
 
-  // ⭐️ [NEW] 필터 적용 로직
   const filteredRooms = rooms.filter(room => {
     if (activeFilter === '전체') return true;
     return room.roomType === activeFilter;
@@ -122,7 +118,6 @@ export default function RoomsPage() {
           <h2 className="text-5xl font-black tracking-tighter uppercase text-black">Rooms</h2>
           <p className="mt-4 text-gray-700 font-bold">함께 읽고, 나누고, 성장하는 공간</p>
           
-          {/* 모임방 개설 버튼 (모달 열기) */}
           <div className="absolute right-0 bottom-0">
             <button 
               onClick={() => {
@@ -136,7 +131,6 @@ export default function RoomsPage() {
           </div>
         </section>
 
-        {/* ⭐️ [NEW] 필터 탭 */}
         <div className="flex justify-center space-x-2 mb-12">
           {['전체', '온라인', '오프라인'].map((filter) => (
             <button
@@ -173,7 +167,6 @@ export default function RoomsPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      {/* ⭐️ 카테고리(독서/교환) 뱃지 삭제됨 */}
                       <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.roomType === '온라인' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                         {room.roomType}
                       </span>
@@ -185,8 +178,10 @@ export default function RoomsPage() {
                     <h3 className="text-xl font-black mb-3 text-black group-hover:text-gray-700 transition-colors line-clamp-2">
                       {room.roomName}
                     </h3>
+                    
+                    {/* 📍 핵심 수정: room.description을 최우선으로 보여줍니다. */}
                     <p className="text-sm font-bold text-gray-600 line-clamp-2 leading-relaxed">
-                      {room.roomDesc || "모임 소개글이 없습니다."}
+                      {room.description || room.roomDesc || "모임 소개글이 없습니다."}
                     </p>
                   </div>
 
@@ -205,7 +200,6 @@ export default function RoomsPage() {
         )}
       </main>
 
-      {/* ⭐️ [NEW] 방 만들기 모달창 */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-xl rounded-[2.5rem] p-8 md:p-10 relative shadow-2xl my-8">
