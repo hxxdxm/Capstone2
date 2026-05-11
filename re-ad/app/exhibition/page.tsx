@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import Header from '@/components/Header';
 
 // 백엔드 기본 주소
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
@@ -17,6 +17,7 @@ interface ExhibitionItem {
 export default function ExhibitionPage() {
   const [exhibitions, setExhibitions] = useState<ExhibitionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchExhibitions = async () => {
@@ -39,18 +40,8 @@ export default function ExhibitionPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans">
-      {/* 상단 헤더 */}
-      <header className="bg-white/80 backdrop-blur-md px-8 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200 shadow-sm">
-        <Link href="/" className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black tracking-tighter text-black">교환<span className="text-gray-500">독서</span></h1>
-        </Link>
-        <nav className="flex space-x-6 items-center">
-          <Link href="/ranking" className="text-sm font-bold text-gray-600 hover:text-black transition">랭킹</Link>
-          <Link href="/rooms" className="text-sm font-bold text-gray-600 hover:text-black transition">라운지</Link>
-          <Link href="/" className="text-sm font-bold text-black border-b-2 border-black">홈으로</Link>
-        </nav>
-      </header>
+    <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans text-black">
+      <Header />
 
       <main className="mx-auto max-w-6xl px-6 mt-16">
         <section className="text-center mb-16">
@@ -107,16 +98,36 @@ export default function ExhibitionPage() {
         )}
       </main>
 
-      {/* 📍 [추가됨] 우측 하단 고정 글쓰기 버튼 */}
-      <Link 
-        href="/exhibition/write" 
-        className="fixed bottom-8 right-8 bg-black text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(0,0,0,0.3)] hover:scale-110 hover:bg-gray-800 transition-all z-50 group"
-        title="필사 등록하기"
+      {/* 📍 플로팅 버튼 클릭 시 모달 열기 */}
+      <button 
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-10 right-10 w-16 h-16 bg-black text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all z-50"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-        </svg>
-      </Link>
+        <span className="text-3xl font-bold">+</span>
+      </button>
+
+      {/* 📍 모달창 레이아웃 */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-10 relative shadow-2xl border border-gray-100">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-gray-400 hover:text-black font-bold text-xl">✕</button>
+            
+            <h3 className="text-3xl font-black tracking-tighter mb-8">필사 문장 등록</h3>
+            
+            <form className="space-y-6">
+              <div>
+                <label className="block text-xs font-black text-gray-400 mb-2 uppercase">Book Title</label>
+                <input type="text" className="w-full border-b-2 border-gray-100 py-2 focus:border-black outline-none font-bold transition" placeholder="책 제목을 입력하세요" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-400 mb-2 uppercase">Sentence</label>
+                <textarea className="w-full border-2 border-gray-50 rounded-2xl p-4 h-32 focus:border-black outline-none font-bold transition resize-none" placeholder="마음에 남은 문장을 적어주세요"></textarea>
+              </div>
+              <button type="submit" className="w-full bg-black text-white py-4 rounded-2xl font-black hover:bg-gray-800 transition shadow-lg">전시회에 올리기</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
