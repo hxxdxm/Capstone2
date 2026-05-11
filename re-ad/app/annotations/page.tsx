@@ -27,7 +27,6 @@ export default function ExhibitionPage() {
   const fetchExhibitions = async () => {
     setIsLoading(true);
     try {
-      // 📍 [수정] 주소를 exhibition -> annotations 로 변경
       const res = await fetch(`${API_BASE_URL}/annotations`);
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -60,24 +59,22 @@ export default function ExhibitionPage() {
       return;
     }
 
-    const submissionData = new FormData();
-    if (uploadFile) {
-      submissionData.append('image', uploadFile);
-    }
-    
-    // 📍 폼 데이터 담기 (?? '' 로 null 방지 추가)
-    submissionData.append('bookTitle', formData.bookTitle ?? '');
-    submissionData.append('description', formData.content ?? ''); // 모임방처럼 description을 쓸 확률이 높음
-    submissionData.append('author', getMyName() ?? '익명');
+    // 📍 핵심 수정: FormData 대신 서버가 좋아하는 순수 JSON(텍스트) 형태로 만듭니다!
+    // (서버에서 파일 처리가 가능해질 때까지 사진 전송은 임시로 빼둡니다)
+    const submissionData = {
+      bookTitle: formData.bookTitle ?? '',
+      description: formData.content ?? '',
+      author: getMyName() ?? '익명'
+    };
 
     try {
-      // 📍 [수정] POST 요청 주소도 annotations 로 변경
       const res = await fetch(`${API_BASE_URL}/annotations`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' // 📍 "우리 텍스트(JSON)로 보낼게!" 라고 서버에 알려줌
         },
-        body: submissionData,
+        body: JSON.stringify(submissionData), // 📍 데이터를 JSON 문자열로 변환해서 발사!
       });
 
       if (res.ok) {
@@ -89,7 +86,7 @@ export default function ExhibitionPage() {
         fetchExhibitions();
       } else {
         const errData = await res.json().catch(() => ({}));
-        alert(`등록 실패: ${errData.message || '엔드포인트나 권한을 확인해주세요.'}`);
+        alert(`등록 실패: ${errData.message || res.status + ' 에러'}`);
       }
     } catch (error) {
       alert("서버 연결에 실패했습니다.");
@@ -99,12 +96,11 @@ export default function ExhibitionPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans text-black">
       <Header />
-      {/* ... 이하 렌더링 코드는 이전과 동일 ... */}
       <main className="mx-auto max-w-6xl px-6 mt-16">
         <section className="text-center mb-16">
           <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-4 rounded-full">MEMORIES</span>
           <h2 className="text-5xl font-black tracking-tighter uppercase text-black">Exhibition</h2>
-          <p className="mt-4 text-gray-700 font-bold">새로운 주소 'annotations'로 연결된 문장들</p>
+          <p className="mt-4 text-gray-700 font-bold">사진과 함께, 혹은 문장만 가볍게 남겨보세요</p>
         </section>
 
         {isLoading ? (
@@ -141,7 +137,6 @@ export default function ExhibitionPage() {
         )}
       </main>
 
-      {/* 📍 플로팅 버튼 및 모달창 코드 생략 (이전과 동일) */}
       <button onClick={() => setIsModalOpen(true)} className="fixed bottom-10 right-10 w-16 h-16 bg-black text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all z-50">
         <span className="text-3xl font-bold">+</span>
       </button>
