@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
-import Header from '@/components/Header'; // ⭐️ 공통 헤더 임포트
+import Header from '@/components/Header';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 const SOCKET_URL = 'http://13.124.191.57:5000';
@@ -23,12 +23,10 @@ export default function RoomDetailPage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [inputPassword, setInputPassword] = useState('');
 
-  // ⭐️ [방장 전용] 모임 소개글 수정 상태
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [editRoomDesc, setEditRoomDesc] = useState('');
 
   // --- 피드 관련 상태 ---
-  // ⭐️ [좋아요 토글] likedByMe 속성 추가
   const [posts, setPosts] = useState<any[]>([
     {
       id: 2, author: "독서요정", content: "오늘 주말 모임 너무 즐거웠습니다! 다음 주에 읽을 책 사진 공유해요 📚",
@@ -80,7 +78,9 @@ export default function RoomDetailPage() {
       
       setIsJoined(amIIn);
       setRoomData(data);
-      setEditRoomDesc(data.roomDesc || ''); // 수정용 초기값 세팅
+      
+      // ⭐️ 백엔드가 description으로 줄 수도 있고 roomDesc로 줄 수도 있으니 둘 다 커버!
+      setEditRoomDesc(data.description || data.roomDesc || ''); 
       setIsLoading(false);
     } catch (err) {
       console.error(err);
@@ -122,25 +122,31 @@ export default function RoomDetailPage() {
     } catch (error) { alert('서버 오류'); }
   };
 
-  // ⭐️ [NEW] 소개글 수정 핸들러
+  // ⭐️ [NEW] 백엔드 팀원이 알려준 형식대로 description 을 수정해서 보냅니다!
   const handleUpdateDesc = async () => {
     const token = getToken();
+    if (!token) return alert("로그인이 필요합니다.");
+    
     try {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ roomDesc: editRoomDesc, userId: getMyId() })
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+        // ⭐️ "roomDesc"가 아니라 "description" 이라는 이름표로 보냅니다!
+        body: JSON.stringify({ description: editRoomDesc })
       });
+      
       if (res.ok) {
-        setRoomData({ ...roomData, roomDesc: editRoomDesc });
+        // 성공 시 화면의 데이터도 즉시 갈아끼워줍니다.
+        setRoomData({ ...roomData, description: editRoomDesc, roomDesc: editRoomDesc });
         setIsEditingInfo(false);
       } else {
-        alert("수정 실패");
+        alert("수정 실패: 방장 권한이 없거나 서버 오류입니다.");
       }
     } catch (error) {
-      // API 연결 전이어도 화면엔 즉시 반영되도록 임시 처리
-      setRoomData({ ...roomData, roomDesc: editRoomDesc });
-      setIsEditingInfo(false);
+      alert("서버와 연결할 수 없습니다.");
     }
   };
 
@@ -166,14 +172,13 @@ export default function RoomDetailPage() {
     setIsWriteModalOpen(false); setNewPostContent(''); setNewPostMedia(null);
   };
 
-  // ⭐️ [NEW] 좋아요 토글 기능
   const handleLike = (postId: number) => {
     setPosts(posts.map(p => {
       if (p.id === postId) {
         const isLiked = p.likedByMe;
         return { 
           ...p, 
-          likes: isLiked ? p.likes - 1 : p.likes + 1, // 누른 상태면 -1, 아니면 +1
+          likes: isLiked ? p.likes - 1 : p.likes + 1,
           likedByMe: !isLiked 
         };
       }
@@ -197,7 +202,6 @@ export default function RoomDetailPage() {
   useEffect(() => {
     if (!isJoined || activeTab !== 'chat') return;
 
-    // 1. 과거 채팅 내역 불러오기 (Step 1)
     fetch(`${API_BASE_URL}/chats/${roomId}`)
       .then(res => res.json())
       .then(data => {
@@ -205,7 +209,6 @@ export default function RoomDetailPage() {
       })
       .catch(err => console.error("과거 채팅 로드 실패:", err));
 
-    // 2. 소켓 연결 (Step 2)
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
       auth: { token: getToken() }
@@ -245,19 +248,14 @@ export default function RoomDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans text-black">
-      {/* ⭐️ 공통 헤더 교체 완료 */}
       <Header />
 
       <main className="mx-auto max-w-5xl px-6 mt-12">
-        {/* 모임방 헤더 정보 */}
         <section className="bg-white p-10 rounded-[2.5rem] border border-gray-200 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${roomData.roomType === '온라인' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                 {roomData.roomType}
-              </span>
-              <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-600">
-                {roomData.category === 'READING' ? '독서모임' : '도서교환'}
               </span>
             </div>
             <h2 className="text-4xl font-black mb-2 leading-tight text-black">{roomData.roomName}</h2>
@@ -282,7 +280,6 @@ export default function RoomDetailPage() {
           </div>
         </section>
 
-        {/* 탭 네비게이션 */}
         <nav className="flex space-x-8 border-b-2 border-gray-200 mb-8 px-2">
           <button onClick={() => setActiveTab('info')} className={`pb-4 text-lg font-black transition-colors ${activeTab === 'info' ? 'border-b-4 border-black text-black' : 'text-gray-500 hover:text-black'}`}>
             모임 소개
@@ -301,16 +298,13 @@ export default function RoomDetailPage() {
           </button>
         </nav>
 
-        {/* 탭 콘텐츠 영역 */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
           <div className="lg:col-span-8 flex flex-col">
             {/* --- 탭 1: 모임 소개 --- */}
             {activeTab === 'info' && (
               <section className="bg-white p-8 rounded-[2rem] border border-gray-200 shadow-sm animate-in fade-in duration-300">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-black text-black">모임 소개</h3>
-                  {/* ⭐️ [방장 전용] 소개글 수정 버튼 */}
                   {roomData.hostId === getMyId() && !isEditingInfo && (
                     <button onClick={() => setIsEditingInfo(true)} className="text-xs font-bold text-gray-500 hover:text-black underline">수정하기</button>
                   )}
@@ -330,7 +324,8 @@ export default function RoomDetailPage() {
                   </div>
                 ) : (
                   <p className="text-gray-800 font-bold leading-relaxed text-lg whitespace-pre-wrap break-keep">
-                    {roomData.roomDesc || "작성된 소개글이 없습니다."}
+                    {/* ⭐️ GET 요청으로 들어온 키가 description일 수도 있으니 안전하게 둘 다 출력 */}
+                    {roomData.description || roomData.roomDesc || "작성된 소개글이 없습니다."}
                   </p>
                 )}
 
@@ -345,7 +340,6 @@ export default function RoomDetailPage() {
             {/* --- 탭 2: 피드 --- */}
             {activeTab === 'feed' && isJoined && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                {/* ⭐️ 명확해진 글쓰기 버튼 */}
                 <div onClick={() => setIsWriteModalOpen(true)} className="bg-black p-4 rounded-[2rem] shadow-md cursor-pointer hover:bg-gray-800 transition-colors flex items-center justify-between group">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-black text-white flex-shrink-0">{getMyName()?.charAt(0) || '나'}</div>
@@ -354,7 +348,6 @@ export default function RoomDetailPage() {
                   <span className="bg-white text-black text-xs font-black px-4 py-2 rounded-full">게시글 쓰기 +</span>
                 </div>
 
-                {/* 피드 리스트 */}
                 {posts.map((post) => (
                   <article key={post.id} className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
@@ -370,7 +363,6 @@ export default function RoomDetailPage() {
                       </div>
                     )}
                     <div className="flex items-center space-x-6 border-t border-gray-100 pt-4 mb-4">
-                      {/* ⭐️ 좋아요 토글 버튼 */}
                       <button onClick={() => handleLike(post.id)} className={`flex items-center space-x-2 transition font-bold group ${post.likedByMe ? 'text-red-500' : 'text-gray-500 hover:text-black'}`}>
                         <span>{post.likedByMe ? '❤️' : '🤍'}</span>
                         <span className="text-sm">좋아요 {post.likes}</span>
@@ -378,7 +370,6 @@ export default function RoomDetailPage() {
                       <div className="flex items-center space-x-2 text-gray-500"><span className="text-sm font-bold">💬 댓글 {post.comments.length}</span></div>
                     </div>
                     
-                    {/* 댓글 영역 */}
                     <div className="bg-gray-50 rounded-2xl p-4 space-y-4">
                       {post.comments.map((comment: any) => (
                         <div key={comment.id} className="flex space-x-3">
@@ -439,7 +430,6 @@ export default function RoomDetailPage() {
             )}
           </div>
 
-          {/* 오른쪽 사이드바 (정보란) */}
           <aside className="lg:col-span-4 space-y-6">
             <div className="bg-white p-8 rounded-[2rem] border border-gray-200 shadow-sm sticky top-24">
               <h4 className="text-sm font-black text-gray-500 mb-6 tracking-widest uppercase">Room Info</h4>
