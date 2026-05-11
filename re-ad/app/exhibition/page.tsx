@@ -14,9 +14,12 @@ export default function ExhibitionPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     bookTitle: '',
-    content: '',
-    author: '나' // 실제론 로그인 유저 이름
+    content: ''
   });
+
+  // ⭐️ [NEW] 토큰과 유저 이름을 가져오는 함수
+  const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
+  const getMyName = () => typeof window !== 'undefined' ? (localStorage.getItem('userName') || sessionStorage.getItem('userName')) : '익명';
 
   useEffect(() => {
     fetchExhibitions();
@@ -25,10 +28,13 @@ export default function ExhibitionPage() {
   const fetchExhibitions = async () => {
     setIsLoading(true);
     try {
+      // ⚠️ 주의: 백엔드 주소가 /transcriptions 로 바뀌었다면 여기를 수정해야 합니다!
       const res = await fetch(`${API_BASE_URL}/exhibition`);
       const data = await res.json();
       if (Array.isArray(data)) {
-        setExhibitions(data);
+        // 최신순 정렬 적용
+        const sortedData = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setExhibitions(sortedData);
       }
     } catch (error) {
       console.error("데이터 로드 실패:", error);
@@ -48,26 +54,34 @@ export default function ExhibitionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 📍 사진 확인 로직 제거: 책 제목과 내용만 있으면 통과!
+    // 1. 로그인 확인
+    const token = getToken();
+    if (!token) {
+      alert("로그인 후 이용해주세요!");
+      return;
+    }
+
     if (!formData.bookTitle || !formData.content) {
       alert("책 제목과 문장은 반드시 입력해주세요!");
       return;
     }
 
     const submissionData = new FormData();
-    
-    // 📍 사진이 있을 때만 FormData에 추가
     if (uploadFile) {
-      submissionData.append('image', uploadFile);
+      submissionData.append('image', uploadFile); // 백엔드에서 'image'라는 키를 쓰는지 확인 필요!
     }
-    
-    submissionData.append('bookTitle', formData.bookTitle);
-    submissionData.append('content', formData.content);
-    submissionData.append('author', formData.author);
+    submissionData.append('bookTitle', formData.bookTitle ?? '');
+  submissionData.append('description', formData.content ?? '');
+  submissionData.append('author', getMyName() ?? '익명'); // null이면 '익명'으로 처리 ⭐️ '나' 대신 실제 이름 전송
 
     try {
+      // ⚠️ 주의: 백엔드 주소가 /transcriptions 로 바뀌었다면 여기도 수정해야 합니다!
       const res = await fetch(`${API_BASE_URL}/exhibition`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}` // ⭐️ 핵심: 헤더에 토큰(신분증) 포함!
+          // 주의: FormData를 보낼 때는 Content-Type을 적지 않아야 브라우저가 알아서 처리합니다.
+        },
         body: submissionData,
       });
 
@@ -76,13 +90,16 @@ export default function ExhibitionPage() {
         setIsModalOpen(false);
         setPreviewImage(null);
         setUploadFile(null);
-        setFormData({ bookTitle: '', content: '', author: '나' });
-        
-        fetchExhibitions();
+        setFormData({ bookTitle: '', content: '' });
+        fetchExhibitions(); // 성공 시 즉시 새로고침
       } else {
-        alert("등록에 실패했습니다.");
+        // ⭐️ [NEW] 백엔드가 왜 거절했는지 정확한 이유를 알림창으로 띄웁니다.
+        const errData = await res.json().catch(() => ({}));
+        console.error("업로드 실패 상세:", errData);
+        alert(`등록 실패: ${errData.message || '권한이 없거나 서버 에러입니다.'}`);
       }
     } catch (error) {
+      console.error("통신 에러:", error);
       alert("서버 연결에 실패했습니다.");
     }
   };
@@ -110,21 +127,15 @@ export default function ExhibitionPage() {
             ) : (
               exhibitions.map((item) => {
                 const hasImage = item.imageUrl || item.image_url;
-                
                 return (
-                  <div key={item.id} className="bg-white rounded-[2.5rem] border border-gray-200 overflow-hidden hover:shadow-2xl hover:border-gray-300 transition-all group flex flex-col min-h-[300px]">
-                    
-                    {/* 📍 이미지가 있을 때만 사진 영역을 렌더링 */}
+                  <div key={item.id || item._id} className="bg-white rounded-[2.5rem] border border-gray-200 overflow-hidden hover:shadow-2xl hover:border-gray-300 transition-all group flex flex-col min-h-[300px]">
                     {hasImage && (
                       <div className="h-56 overflow-hidden relative flex-shrink-0">
                         <img src={hasImage} alt={item.bookTitle} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                       </div>
                     )}
-                    
-                    {/* 텍스트 영역 (이미지가 없으면 이 부분이 카드 전체를 예쁘게 채움) */}
                     <div className="p-8 flex flex-col flex-1 justify-between relative">
-                      {/* 따옴표 장식 (이미지가 없을 때만 표시하여 덜 심심하게) */}
                       {!hasImage && (
                         <div className="absolute top-6 right-8 text-gray-100">
                           <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
@@ -132,7 +143,6 @@ export default function ExhibitionPage() {
                           </svg>
                         </div>
                       )}
-
                       <div className="relative z-10">
                         <h4 className="text-[10px] font-black text-gray-600 mb-4 tracking-widest uppercase bg-gray-100 inline-block px-2 py-1 rounded">
                           {item.bookTitle}
@@ -141,7 +151,6 @@ export default function ExhibitionPage() {
                           "{item.content}"
                         </p>
                       </div>
-
                       <div className="mt-8 pt-5 border-t border-gray-100 flex justify-between items-center text-xs font-black text-gray-500">
                         <span>By {item.author}</span>
                         <span className="text-[10px] text-gray-400">
@@ -157,7 +166,10 @@ export default function ExhibitionPage() {
         )}
       </main>
 
-      <button onClick={() => setIsModalOpen(true)} className="fixed bottom-10 right-10 w-16 h-16 bg-black text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all z-50 group">
+      <button onClick={() => {
+        if (!getToken()) return alert("로그인 후 작성할 수 있습니다.");
+        setIsModalOpen(true);
+      }} className="fixed bottom-10 right-10 w-16 h-16 bg-black text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all z-50 group">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
         </svg>
@@ -166,16 +178,9 @@ export default function ExhibitionPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-6 overflow-y-auto">
           <div className="bg-white w-full max-w-xl rounded-[3rem] p-10 relative shadow-2xl my-auto">
-            <button onClick={() => {
-              setIsModalOpen(false);
-              setPreviewImage(null);
-              setUploadFile(null);
-            }} className="absolute top-8 right-10 text-gray-400 hover:text-black font-bold text-2xl">✕</button>
-            
+            <button onClick={() => { setIsModalOpen(false); setPreviewImage(null); setUploadFile(null); }} className="absolute top-8 right-10 text-gray-400 hover:text-black font-bold text-2xl">✕</button>
             <h3 className="text-3xl font-black tracking-tighter mb-8 text-black">새 필사 등록</h3>
-            
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 📍 (선택) 사진 업로드 영역 */}
               <div>
                 <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase">Photo (선택)</label>
                 <div className="group relative w-full h-40 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center cursor-pointer hover:border-black transition-all">
@@ -190,31 +195,15 @@ export default function ExhibitionPage() {
                   <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
                 </div>
               </div>
-
               <div>
                 <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase">Book Title *</label>
-                <input 
-                  type="text" 
-                  className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold transition text-lg text-black" 
-                  placeholder="책 제목"
-                  value={formData.bookTitle}
-                  onChange={(e) => setFormData({...formData, bookTitle: e.target.value})}
-                />
+                <input type="text" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold transition text-lg text-black" placeholder="책 제목" value={formData.bookTitle} onChange={(e) => setFormData({...formData, bookTitle: e.target.value})} />
               </div>
-
               <div>
                 <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase">Your Thought *</label>
-                <textarea 
-                  className="w-full border-2 border-gray-100 rounded-3xl p-5 h-32 focus:border-black outline-none font-bold transition resize-none text-base text-black" 
-                  placeholder="마음에 남은 문장을 적어주세요"
-                  value={formData.content}
-                  onChange={(e) => setFormData({...formData, content: e.target.value})}
-                ></textarea>
+                <textarea className="w-full border-2 border-gray-100 rounded-3xl p-5 h-32 focus:border-black outline-none font-bold transition resize-none text-base text-black" placeholder="마음에 남은 문장을 적어주세요" value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})}></textarea>
               </div>
-
-              <button type="submit" className="w-full bg-black text-white py-5 rounded-[2rem] font-black text-lg hover:bg-gray-800 transition shadow-xl mt-4">
-                전시회에 올리기
-              </button>
+              <button type="submit" className="w-full bg-black text-white py-5 rounded-[2rem] font-black text-lg hover:bg-gray-800 transition shadow-xl mt-4">전시회에 올리기</button>
             </form>
           </div>
         </div>
