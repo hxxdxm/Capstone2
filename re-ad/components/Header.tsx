@@ -42,7 +42,7 @@ export default function Header() {
 
       <nav className="absolute left-1/2 transform -translate-x-1/2 flex space-x-8 items-center">
         <Link href="/ranking" className={getLinkStyle('/ranking')}>북랭킹</Link>
-        <Link href="/exhibition" className={getLinkStyle('/exhibition')}>필사전시</Link>
+        <Link href="/annotations" className={getLinkStyle('/annotations')}>필사전시</Link>
         <Link href="/rooms" className={getLinkStyle('/rooms')}>모임방</Link>
         <Link href="/handmedowns" className={getLinkStyle('/handmedowns')}>물려주기</Link>
       </nav>
