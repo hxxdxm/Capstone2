@@ -1,23 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/Header';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function ExhibitionPage() {
   const router = useRouter();
-  const [filter, setFilter] = useState('ALL');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // ⭐️ 더미데이터 대신 빈 배열로 시작하여 서버에서 받아옵니다.
   const [posts, setPosts] = useState<any[]>([]);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
-  
-  // 좋아요를 누른 게시물 ID들을 저장하는 배열 상태
   const [likedPostIds, setLikedPostIds] = useState<string[]>([]);
   
   const [newPost, setNewPost] = useState({
@@ -45,12 +41,9 @@ export default function ExhibitionPage() {
       setIsLoggedIn(true);
       setUserName(storedName);
     }
-    
-    // 페이지 렌더링 시 데이터 불러오기
     fetchExhibitions();
   }, []);
 
-  // ⭐️ [API] 데이터 불러오기 함수
   const fetchExhibitions = async () => {
     setIsLoading(true);
     try {
@@ -61,16 +54,14 @@ export default function ExhibitionPage() {
         const myId = getMyId();
         const initialLikedIds: string[] = [];
 
-        // 백엔드 데이터를 UI 형식에 맞게 변환 (매핑)
         const formattedData = data.map((apiItem: any) => {
-          // 내가 좋아요 누른 게시글인지 확인
           if (myId && apiItem.likes && apiItem.likes.includes(myId)) {
             initialLikedIds.push(apiItem._id);
           }
 
           const hasImage = apiItem.imageUrl || apiItem.image_url;
           return {
-            id: apiItem._id, // 문자열 ID 사용
+            id: apiItem._id, 
             type: hasImage ? "image" : "text",
             image: hasImage,
             quote: apiItem.quote || apiItem.content,
@@ -78,7 +69,7 @@ export default function ExhibitionPage() {
             author: '작자미상', 
             user: apiItem.userId?.nickname || '익명',
             likes: apiItem.likes?.length || 0,
-            bg: apiItem.color || "bg-white text-gray-900 border-gray-200" // 저장된 테마 색상 적용
+            bg: apiItem.color || "bg-white text-gray-900 border-gray-200"
           };
         });
 
@@ -100,7 +91,6 @@ export default function ExhibitionPage() {
     }
   };
 
-  // ⭐️ [API] 게시글 등록 함수 (500 에러 방지 JSON 전송)
   const handleSubmitPost = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getToken();
@@ -115,12 +105,11 @@ export default function ExhibitionPage() {
       return;
     }
 
-    // 백엔드 명세에 맞춰 JSON 조립
     const payload = {
       userId: getMyId(),
       annotationType: 'QUOTE_TEXT',
       quote: newPost.quote,
-      color: newPost.style // 선택한 테마 색상을 color로 전송
+      color: newPost.style 
     };
 
     try {
@@ -134,10 +123,10 @@ export default function ExhibitionPage() {
       });
 
       if (res.ok) {
-        alert("전시회에 문장이 성공적으로 걸렸습니다!");
+        alert("전시회에 문장이 성공적으로 걸렸습니다! 🎉");
         setIsWriteModalOpen(false); 
         setNewPost({ quote: '', book: '', author: '', style: 'bg-white text-gray-900 border-gray-200', imagePreview: '' }); 
-        fetchExhibitions(); // 새 데이터 불러오기
+        fetchExhibitions(); 
       } else {
         alert("등록에 실패했습니다.");
       }
@@ -146,11 +135,10 @@ export default function ExhibitionPage() {
     }
   };
 
-  // ⭐️ [API] 하트 클릭 시 좋아요 상태 토글 함수
   const toggleLike = async (postId: string) => {
     const token = getToken();
     if (!token) {
-      alert("좋아요를 누르려면 로그인이 필요합니다.");
+      alert("로그인 후 이용 가능합니다.");
       return;
     }
 
@@ -161,11 +149,20 @@ export default function ExhibitionPage() {
       });
 
       if (res.ok) {
-        // 성공 시 화면 즉각 반영 (낙관적 업데이트)
+        const result = await res.json();
+        
         setLikedPostIds((prev) => 
           prev.includes(postId) 
-            ? prev.filter((id) => id !== postId) // 취소
-            : [...prev, postId] // 추가
+            ? prev.filter((id) => id !== postId) 
+            : [...prev, postId] 
+        );
+
+        setPosts((prevPosts) => 
+          prevPosts.map((post) => 
+            post.id === postId 
+              ? { ...post, likes: result.likesCount } 
+              : post
+          )
         );
       }
     } catch (error) {
@@ -175,17 +172,10 @@ export default function ExhibitionPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
-      
-      <header className="bg-white/80 backdrop-blur-md px-8 py-4 flex items-center justify-between sticky top-0 z-40 border-b border-gray-100 shadow-sm">
-        <Link href="/" className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black tracking-tighter">교환<span className="text-gray-400">독서</span></h1>
-        </Link>
-        <Link href="/" className="text-sm font-bold text-gray-400 hover:text-black transition">
-          홈으로
-        </Link>
-      </header>
+      <Header />
 
-      <section className="px-6 py-12 md:py-20 mx-auto max-w-7xl text-center">
+      {/* 📍 필터가 삭제된 만큼 mb-12를 추가하여 아래 갤러리와의 여백을 자연스럽게 맞췄습니다. */}
+      <section className="px-6 py-12 md:py-20 mx-auto max-w-7xl text-center mb-12">
         <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-6 rounded-full">
           ONLINE EXHIBITION
         </span>
@@ -193,26 +183,9 @@ export default function ExhibitionPage() {
           당신의 밑줄, <br className="md:hidden" />우리의 영감
         </h2>
         <p className="text-sm md:text-base text-gray-500 font-medium max-w-2xl mx-auto leading-relaxed">
-          교환독서 멤버들이 직접 남긴 인생 문장들을 갤러리처럼 감상해 보세요. <br className="hidden md:block"/>
-          마음에 드는 문장은 내 서재로 스크랩할 수 있습니다.
+          교환독서 멤버들이 직접 남긴 인생 문장들을 갤러리처럼 감상해 보세요.
         </p>
       </section>
-
-      <nav className="flex justify-center space-x-2 md:space-x-4 mb-12 px-6">
-        {['ALL', 'TRENDING', 'NEW', 'EDITOR PICK'].map((item) => (
-          <button 
-            key={item}
-            onClick={() => setFilter(item)}
-            className={`px-5 py-2 rounded-full text-xs font-black tracking-widest transition-all ${
-              filter === item 
-                ? 'bg-black text-white shadow-md' 
-                : 'bg-white text-gray-400 border border-gray-200 hover:border-black hover:text-black'
-            }`}
-          >
-            {item}
-          </button>
-        ))}
-      </nav>
 
       <main className="mx-auto max-w-7xl px-6">
         {isLoading ? (
@@ -221,67 +194,73 @@ export default function ExhibitionPage() {
           </div>
         ) : (
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-            {posts.map((item) => {
-              // ⭐️ 해당 포스트 ID가 likedPostIds 배열에 있는지 확인
-              const isLiked = likedPostIds.includes(item.id);
+            {posts.length === 0 ? (
+              <div className="col-span-full text-center py-20 text-gray-400 font-bold">
+                전시된 필사가 없습니다. 첫 번째 영감을 기록해 보세요!
+              </div>
+            ) : (
+              posts.map((item) => {
+                const isLiked = likedPostIds.includes(item.id);
 
-              return (
-                <article 
-                  key={item.id} 
-                  className={`break-inside-avoid relative group rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border ${item.bg || 'border-transparent'}`}
-                >
-                  {item.type === 'image' ? (
-                    <div className="relative aspect-[4/5] bg-gray-900">
-                      <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${item.image})` }}></div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                      <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
-                        <p className="font-serif text-lg leading-relaxed italic mb-6 break-keep whitespace-pre-line shadow-black drop-shadow-md">"{item.quote}"</p>
-                        <div>
-                          <p className="text-xs font-black mb-1">{item.book}</p>
-                          <p className="text-[10px] text-gray-300">{item.author}</p>
+                return (
+                  <article 
+                    key={item.id} 
+                    className={`break-inside-avoid relative group rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border ${item.bg || 'border-transparent'}`}
+                  >
+                    {item.type === 'image' ? (
+                      <div className="relative aspect-[4/5] bg-gray-900">
+                        <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${item.image})` }}></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                        <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
+                          <p className="font-serif text-lg leading-relaxed italic mb-6 break-keep whitespace-pre-line shadow-black drop-shadow-md">"{item.quote}"</p>
+                          <div>
+                            <p className="text-xs font-black mb-1">{item.book}</p>
+                            <p className="text-[10px] text-gray-300">{item.author}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className={`p-8 h-full flex flex-col justify-between ${item.bg}`}>
-                      <p className="font-serif text-lg leading-relaxed italic mb-10 break-keep whitespace-pre-line">"{item.quote}"</p>
-                      <div>
-                        <p className="text-xs font-black mb-1">{item.book}</p>
-                        <p className="text-[10px] opacity-70">{item.author}</p>
+                    ) : (
+                      <div className={`p-8 h-full flex flex-col justify-between ${item.bg}`}>
+                        <p className="font-serif text-lg leading-relaxed italic mb-10 break-keep whitespace-pre-line">"{item.quote}"</p>
+                        <div className="flex justify-between items-end">
+                          <div>
+                            <p className="text-xs font-black mb-1">{item.book}</p>
+                            <p className="text-[10px] opacity-70">{item.author}</p>
+                          </div>
+                          <span className="text-[10px] font-black opacity-40">♥ {item.likes}</span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full border border-white/30 mix-blend-difference">
-                      @{item.user}
-                    </span>
-                    
-                    {/* ⭐️ 좋아요 버튼 토글 이벤트와 동적 스타일링 적용 */}
-                    <button 
-                      onClick={() => toggleLike(item.id)}
-                      className="bg-white/90 w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform focus:outline-none"
-                    >
-                      <svg 
-                        className={`w-4 h-4 transition-colors duration-300 ${isLiked ? 'text-red-500' : 'text-gray-300 hover:text-red-300'}`} 
-                        fill="currentColor" 
-                        viewBox="0 0 20 20"
+                    <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full border border-white/30 mix-blend-difference">
+                        @{item.user}
+                      </span>
+                      
+                      <button 
+                        onClick={() => toggleLike(item.id)}
+                        className="bg-white/90 w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform focus:outline-none"
                       >
-                        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-
-                  </div>
-                </article>
-              );
-            })}
+                        <svg 
+                          className={`w-4 h-4 transition-colors duration-300 ${isLiked ? 'text-red-500' : 'text-gray-300 hover:text-red-300'}`} 
+                          fill="currentColor" 
+                          viewBox="0 0 20 20"
+                        >
+                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </article>
+                );
+              })
+            )}
           </div>
         )}
       </main>
 
       <button 
         onClick={() => {
-          if(!isLoggedIn) { alert("문장을 기록하려면 로그인이 필요합니다."); router.push('/login'); return; }
+          if(!isLoggedIn) { alert("로그인이 필요합니다."); router.push('/login'); return; }
           setIsWriteModalOpen(true);
         }}
         className="fixed bottom-10 right-10 z-30 w-16 h-16 bg-black text-white rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
@@ -292,47 +271,13 @@ export default function ExhibitionPage() {
       {isWriteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
             <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
               <h3 className="text-lg font-black tracking-tighter">새 문장 기록하기</h3>
               <button onClick={() => setIsWriteModalOpen(false)} className="text-gray-400 hover:text-gray-900 transition">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-
             <form onSubmit={handleSubmitPost} className="p-8 space-y-6 overflow-y-auto no-scrollbar">
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-2">손글씨 사진 첨부 (선택)</label>
-                <div className="flex items-center space-x-4">
-                  {newPost.imagePreview ? (
-                    <div className="relative w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-200">
-                      <img src={newPost.imagePreview} alt="preview" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    </div>
-                  )}
-                  
-                  <label className="cursor-pointer bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:border-black hover:text-black transition shadow-sm">
-                    {newPost.imagePreview ? '사진 변경' : '사진 업로드'}
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  </label>
-                  
-                  {newPost.imagePreview && (
-                    <button 
-                      type="button" 
-                      onClick={() => setNewPost({...newPost, imagePreview: ''})} 
-                      className="text-xs text-red-500 font-bold hover:underline"
-                    >
-                      삭제
-                    </button>
-                  )}
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2">사진을 첨부하면 갤러리에 이미지 모드로 전시됩니다.</p>
-              </div>
-
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-2">기억하고 싶은 문장</label>
                 <textarea 
@@ -343,13 +288,12 @@ export default function ExhibitionPage() {
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black transition resize-none font-serif italic"
                 ></textarea>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-2">책 제목</label>
                   <input 
                     type="text" 
-                    placeholder="예: 다정한 것이 살아남는다" 
+                    placeholder="예: 모순" 
                     value={newPost.book}
                     onChange={(e) => setNewPost({...newPost, book: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black font-bold"
@@ -359,55 +303,26 @@ export default function ExhibitionPage() {
                   <label className="block text-xs font-bold text-gray-500 mb-2">저자</label>
                   <input 
                     type="text" 
-                    placeholder="예: 브라이언 헤어" 
+                    placeholder="예: 양귀자" 
                     value={newPost.author}
                     onChange={(e) => setNewPost({...newPost, author: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black font-bold"
                   />
                 </div>
               </div>
-
-              {!newPost.imagePreview && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-2">텍스트 테마 선택</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button 
-                      type="button"
-                      onClick={() => setNewPost({...newPost, style: 'bg-white text-gray-900 border-gray-200'})}
-                      className={`h-12 rounded-xl border-2 flex items-center justify-center text-xs font-bold bg-white text-gray-900 transition ${newPost.style.includes('bg-white') ? 'border-black' : 'border-gray-100 hover:border-gray-300'}`}
-                    >
-                      순백
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setNewPost({...newPost, style: 'bg-gray-900 text-white border-gray-900'})}
-                      className={`h-12 rounded-xl border-2 flex items-center justify-center text-xs font-bold bg-gray-900 text-white transition ${newPost.style.includes('bg-gray-900') ? 'border-gray-400' : 'border-gray-900 hover:border-gray-700'}`}
-                    >
-                      심연
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setNewPost({...newPost, style: 'bg-[#FDFBF7] text-gray-800 border-orange-100'})}
-                      className={`h-12 rounded-xl border-2 flex items-center justify-center text-xs font-bold bg-[#FDFBF7] text-gray-800 transition ${newPost.style.includes('FDFBF7') ? 'border-black' : 'border-orange-100 hover:border-orange-300'}`}
-                    >
-                      미색
-                    </button>
-                  </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-2">텍스트 테마 선택</label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button type="button" onClick={() => setNewPost({...newPost, style: 'bg-white text-gray-900 border-gray-200'})} className="h-10 rounded-xl border bg-white text-xs font-bold">순백</button>
+                  <button type="button" onClick={() => setNewPost({...newPost, style: 'bg-gray-900 text-white border-gray-900'})} className="h-10 rounded-xl border bg-gray-900 text-white text-xs font-bold">심연</button>
+                  <button type="button" onClick={() => setNewPost({...newPost, style: 'bg-[#FDFBF7] text-gray-800 border-orange-100'})} className="h-10 rounded-xl border bg-[#FDFBF7] text-xs font-bold">미색</button>
                 </div>
-              )}
-
-              <button 
-                type="submit" 
-                className="w-full mt-4 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg tracking-widest"
-              >
-                전시하기
-              </button>
+              </div>
+              <button type="submit" className="w-full mt-4 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition tracking-widest">전시하기</button>
             </form>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
