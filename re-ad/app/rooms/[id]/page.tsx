@@ -217,7 +217,7 @@ export default function RoomDetailPage() {
 
     newSocket.emit('joinRoom', roomId);
 
-    newSocket.on('receiveMessage', (chatData) => {
+    newSocket.on('receiveMessage', (chatData:any) => {
       setChats((prev) => [...prev, chatData]);
     });
 
