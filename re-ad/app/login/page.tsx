@@ -2,25 +2,40 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/Header'; // 공통 헤더
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  
+  // 📍 로그인 유지 체크박스 상태 추가
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 📍 실제 백엔드 로그인 통신 로직이 들어갈 자리입니다.
-    // 임시 처리
+    
+    // 📍 실제 백엔드 연동 시 fetch() 로직이 들어갈 자리
     if (formData.email && formData.password) {
-      alert("로그인 성공!");
-      router.push('/');
+      
+      // 로그인 유지 체크 여부에 따라 저장소 분리
+      if (keepLoggedIn) {
+        // 체크 O: 브라우저를 꺼도 유지되는 localStorage에 저장
+        localStorage.setItem('token', 'dummy-token-1234');
+        localStorage.setItem('userName', '하민');
+      } else {
+        // 체크 X: 브라우저 끄면 날아가는 sessionStorage에 저장
+        sessionStorage.setItem('token', 'dummy-token-1234');
+        sessionStorage.setItem('userName', '하민');
+      }
+
+      alert("로그인 성공! 환영합니다.");
+      
+      // 헤더 상태 업데이트를 위해 강제 이동 (새로고침)
+      window.location.href = '/';
     }
   };
 
@@ -51,7 +66,7 @@ export default function LoginPage() {
               <input 
                 type="email" 
                 className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" 
-                placeholder="이메일을 입력해주세요" 
+                placeholder="example@company.com" 
                 value={formData.email} 
                 onChange={(e) => setFormData({...formData, email: e.target.value})} 
                 required 
@@ -72,6 +87,20 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* 📍 로그인 상태 유지 체크박스 영역 추가 */}
+            <div className="flex items-center pt-2">
+              <input 
+                type="checkbox" 
+                id="keepLoggedIn" 
+                checked={keepLoggedIn}
+                onChange={(e) => setKeepLoggedIn(e.target.checked)}
+                className="w-4 h-4 accent-black cursor-pointer rounded-sm border-gray-300"
+              />
+              <label htmlFor="keepLoggedIn" className="ml-2 text-xs font-bold text-gray-500 cursor-pointer select-none hover:text-black transition">
+                로그인 상태 유지
+              </label>
+            </div>
+
             <button 
               type="submit" 
               className="w-full bg-black text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-gray-800 transition shadow-lg mt-8"
@@ -80,10 +109,9 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* 📍 요청하신 하단 텍스트 링크 영역 */}
+          {/* 하단 텍스트 링크 영역 */}
           <div className="mt-10 flex flex-col text-center">
             
-            {/* 1. 회원가입 유도 */}
             <div className="text-xs font-bold text-gray-500 pb-8">
               <span>아직 기록을 시작하지 않으셨나요? </span>
               <Link href="/signup" className="text-black font-black underline underline-offset-4 hover:text-gray-600 transition">
@@ -91,7 +119,6 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* 2. 로그인 문제 해결 (이메일 찾기 / 비밀번호 재설정) */}
             <div className="pt-6 border-t border-gray-100 flex flex-col space-y-3">
               <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
                 로그인에 문제가 있나요?

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-// ⭐️ [NEW] 이미지 캡처 라이브러리 추가
 import html2canvas from 'html2canvas';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
@@ -14,11 +13,14 @@ export default function MyPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('독서가');
   
+  // ⭐️ [NEW] 내 팔로워/팔로잉 상태 추가
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
+  
   const [myQuotes, setMyQuotes] = useState<any[]>([]);
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState({ text: '', book: '', author: '' });
-  // ⭐️ [NEW] 이미지로 다운로드할 영역을 가리키는 Ref
   const cardRef = useRef<HTMLDivElement>(null);
 
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -28,7 +30,6 @@ export default function MyPage() {
     passwordConfirm: ''
   });
 
-  // ⭐️ [NEW] 신규 기능 상태들
   const [receipt, setReceipt] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [mbtiResult, setMbtiResult] = useState<any>(null);
@@ -57,9 +58,13 @@ export default function MyPage() {
       return;
     }
 
-    // ⭐️ 데이터 동시 다발적 불러오기
     if (token) {
       const headers = { 'Authorization': `Bearer ${token}` };
+
+      // 0. 내 프로필 정보 (팔로워/팔로잉 등) 불러오기
+      // (백엔드에 GET /api/users/my-profile 같은 API가 있다면 연결, 지금은 임시 데이터)
+      setFollowers(12);
+      setFollowing(18);
 
       // 1. 내 수집 문장
       fetch(`${API_BASE_URL}/annotations/my`, { headers })
@@ -94,13 +99,12 @@ export default function MyPage() {
     setIsExportModalOpen(true);
   };
 
-  // ⭐️ [NEW] 화면 캡처 후 이미지 다운로드 기능
   const handleDownloadCard = async () => {
     if (!cardRef.current) return;
     try {
       const canvas = await html2canvas(cardRef.current, { 
-        backgroundColor: null, // 투명 배경 유지
-        scale: 2 // 고화질로 캡처
+        backgroundColor: null,
+        scale: 2
       });
       const link = document.createElement('a');
       link.download = 'my_text_hip.png';
@@ -176,7 +180,6 @@ export default function MyPage() {
     }
   };
 
-  // ⭐️ [NEW] MBTI 제출 함수
   const handleMbtiSubmit = async () => {
     if (mbtiAnswers.filter(Boolean).length < 4) return alert("모든 질문에 답해주세요!");
     const token = getToken();
@@ -200,7 +203,6 @@ export default function MyPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans relative">
       
-      {/* 상단 헤더 */}
       <header className="bg-white px-6 py-4 flex items-center justify-between border-b border-gray-100 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center space-x-4">
           <Link href="/" className="text-gray-400 hover:text-gray-900 transition">
@@ -240,11 +242,17 @@ export default function MyPage() {
                   </span>
                 )}
               </h2>
-              {/* API에서 받은 실제 권수로 연동 */}
-              <p className="text-gray-500 text-sm">이번 달은 총 <span className="text-gray-900 font-bold underline">{receipt?.totalReadBooks || 0}권</span>의 책과 만났어요.</p>
+              
+              {/* ⭐️ [UPDATE] 팔로워 / 팔로잉 UI 추가 */}
+              <div className="flex space-x-4 mb-2 text-xs font-bold text-gray-500">
+                <span>팔로워 <strong className="text-black">{followers}</strong></span>
+                <span>팔로잉 <strong className="text-black">{following}</strong></span>
+              </div>
+
+              <p className="text-gray-500 text-xs">이번 달은 총 <span className="text-gray-900 font-bold underline">{receipt?.totalReadBooks || 0}권</span>의 책과 만났어요.</p>
               
               {!mbtiResult && (
-                <button onClick={() => setIsMbtiModalOpen(true)} className="mt-2 text-xs font-bold text-blue-500 hover:underline">
+                <button onClick={() => setIsMbtiModalOpen(true)} className="mt-2 text-[10px] font-bold text-blue-500 hover:underline">
                   👉 내 독서 성향 테스트하기
                 </button>
               )}
@@ -265,11 +273,8 @@ export default function MyPage() {
 
         {/* 2 & 3. 독서 영수증 & 통계 대시보드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-           
-           {/* ⭐️ [NEW] 영수증 (기존 캘린더 대체 또는 병합 느낌으로 적용) */}
            <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden flex flex-col items-center">
              <h3 className="text-lg font-black tracking-tight mb-6 self-start w-full">🧾 이번 달 독서 영수증</h3>
-             
              {receipt ? (
                <div className="w-full max-w-xs bg-white border border-gray-200 shadow-md p-6 relative" style={{ backgroundImage: 'radial-gradient(circle at 10px 0, transparent 10px, #f9fafb 11px)', backgroundSize: '100% 20px', backgroundRepeat: 'no-repeat', backgroundPosition: 'top' }}>
                  <div className="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4 mt-2">
@@ -308,7 +313,6 @@ export default function MyPage() {
              )}
            </section>
 
-           {/* ⭐️ [NEW] 월간 독서량 통계 (기존 주간 통계 대신 API 연동) */}
            <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col">
              <h3 className="text-lg font-black mb-1 tracking-tight">📊 월간 독서량 추이</h3>
              <p className="text-[10px] text-gray-400 font-black mb-8 uppercase tracking-widest">Unit: Page</p>
@@ -335,7 +339,7 @@ export default function MyPage() {
            </section>
         </div>
 
-        {/* 4. 나의 문집 수집 (기존 코드 유지) */}
+        {/* 4. 나의 문집 수집 */}
         <section>
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-black italic tracking-tighter">My Collection</h3>
@@ -367,7 +371,6 @@ export default function MyPage() {
           </div>
         </section>
 
-        {/* 바닥글 (유지) */}
         <footer className="mt-24 pt-12 border-t border-gray-100 flex flex-col items-center">
           <button onClick={handleLogout} className="text-[10px] font-black text-gray-400 hover:text-black uppercase tracking-widest transition-colors mb-12">Sign Out</button>
           
@@ -381,10 +384,8 @@ export default function MyPage() {
         </footer>
       </main>
 
-      {/* 프로필 수정 모달 (유지) */}
       {isEditProfileOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-           {/* ... 기존 코드 ... */}
            <div className="w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
              <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
                <h3 className="text-lg font-black tracking-tighter uppercase">Edit Profile</h3>
@@ -412,7 +413,6 @@ export default function MyPage() {
         </div>
       )}
 
-      {/* ⭐️ [NEW] MBTI 테스트 모달 */}
       {isMbtiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8">
@@ -457,14 +457,12 @@ export default function MyPage() {
         </div>
       )}
 
-      {/* ⭐️ [UPDATE] 인스타그램 공유 모달 (+ html2canvas 적용) */}
       {isExportModalOpen && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in zoom-in duration-300">
           <button className="absolute top-8 right-8 text-white/50 hover:text-white transition" onClick={() => setIsExportModalOpen(false)}>
             <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
           
-          {/* ⭐️ 캡처될 영역에 ref 연결 */}
           <div ref={cardRef} className="relative w-full max-w-[320px] aspect-[9/16] bg-[#0A0A0A] rounded-[3rem] shadow-[0_0_50px_rgba(255,255,255,0.1)] flex flex-col items-center justify-center p-8 overflow-hidden border border-white/10">
              <div className="absolute inset-0 bg-gradient-to-br from-gray-800/20 via-transparent to-black"></div>
              <div className="relative z-10 w-full bg-white/5 backdrop-blur-2xl border border-white/10 p-10 rounded-[2rem] shadow-2xl">
@@ -485,7 +483,7 @@ export default function MyPage() {
           <div className="mt-12 flex flex-col items-center space-y-4 w-full max-w-[320px]">
             <button 
               className="w-full bg-white text-black font-black py-5 rounded-full hover:scale-105 transition-all shadow-2xl flex items-center justify-center space-x-3"
-              onClick={handleDownloadCard} // ⭐️ 실제 다운로드 함수 연결
+              onClick={handleDownloadCard} 
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
               <span className="uppercase text-[11px] tracking-widest">Save to Gallery</span>
