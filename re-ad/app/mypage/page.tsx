@@ -13,10 +13,11 @@ export default function MyPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('독서가');
   
-  // ⭐️ [NEW] 내 팔로워/팔로잉 상태 추가
+  // 📍 초기값을 0으로 설정 (추후 내 프로필 조회 API를 연결하면 setFollowers(data.followers) 등으로 업데이트하세요!)
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   
+  // 📍 더미 데이터 제거, 빈 배열로 시작
   const [myQuotes, setMyQuotes] = useState<any[]>([]);
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -61,36 +62,49 @@ export default function MyPage() {
     if (token) {
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      // 0. 내 프로필 정보 (팔로워/팔로잉 등) 불러오기
-      // (백엔드에 GET /api/users/my-profile 같은 API가 있다면 연결, 지금은 임시 데이터)
-      setFollowers(12);
-      setFollowing(18);
-
-      // 1. 내 수집 문장
+      // 📍 1. 내 수집 문장 (가짜 데이터 넣던 로직 삭제)
       fetch(`${API_BASE_URL}/annotations/my`, { headers })
         .then(res => res.json())
         .then(data => {
-          if(Array.isArray(data) && data.length > 0) setMyQuotes(data);
-          else {
-            setMyQuotes([
-              { _id: '1', quote: "다정한 것이 살아남는다. 그것은 진화의 역사에서 가장 위대한 무기였다.", bookId: { title: "다정한 것이 살아남는다" }, author: "브라이언 헤어" },
-              { _id: '2', quote: "우리는 모두 별빛으로 만들어진 존재들이다.", bookId: { title: "코스모스" }, author: "칼 세이건" }
-            ]);
+          if (Array.isArray(data)) {
+            setMyQuotes(data);
+          } else {
+            setMyQuotes([]);
           }
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+          console.error("수집 문장 로드 실패:", err);
+          setMyQuotes([]);
+        });
 
       // 2. 독서 영수증 (2026년 05월 기준)
       fetch(`${API_BASE_URL}/reading-logs/receipt?year=2026&month=05`, { headers })
         .then(res => res.json())
         .then(data => setReceipt(data))
-        .catch(err => console.error(err));
+        .catch(err => console.error("영수증 로드 실패:", err));
 
       // 3. 독서 통계
       fetch(`${API_BASE_URL}/reading-logs/stats`, { headers })
         .then(res => res.json())
         .then(data => setStats(data))
-        .catch(err => console.error(err));
+        .catch(err => console.error("통계 로드 실패:", err));
+
+      // 4. 내 프로필 정보 (MBTI, 팔로워 등) - 백엔드 API가 있다면 여기에 추가!
+      fetch(`${API_BASE_URL}/users/my-profile`, { headers })
+        .then(res => {
+          if(res.ok) return res.json();
+          throw new Error('프로필 API 미구현 또는 에러');
+        })
+        .then(data => {
+          if(data) {
+            setFollowers(data.followersCount || 0);
+            setFollowing(data.followingCount || 0);
+            if(data.mbti) setMbtiResult({ mbti: data.mbti });
+          }
+        })
+        .catch(() => {
+          // 아직 API가 없다면 조용히 무시 (초기값 0 유지)
+        });
     }
   }, []);
 
@@ -152,9 +166,11 @@ export default function MyPage() {
   const handleEditProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getToken();
+    
     if (editFormData.password && editFormData.password !== editFormData.passwordConfirm) {
-      return alert("새 비밀번호가 일치하지 않습니다.");
+      return alert("새 비밀번호가 일치하지 않습니다. 다시 확인해주세요.");
     }
+    
     if (!editFormData.name.trim()) {
       return alert("닉네임을 입력해주세요.");
     }
@@ -171,6 +187,7 @@ export default function MyPage() {
         if(sessionStorage.getItem('userName')) sessionStorage.setItem('userName', editFormData.name);
         setUserName(editFormData.name);
         setIsEditProfileOpen(false);
+        setEditFormData(prev => ({ ...prev, password: '', passwordConfirm: '' }));
         alert("프로필 정보가 성공적으로 수정되었습니다!");
       } else {
         alert("프로필 수정에 실패했습니다.");
@@ -214,13 +231,13 @@ export default function MyPage() {
 
       <main className="mx-auto max-w-5xl px-6 mt-8 space-y-10">
         
-        {/* 1. 프로필 & 요약 섹션 */}
+        {/* 프로필 & 요약 섹션 */}
         <section className="flex flex-col md:flex-row items-center justify-between bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group gap-6">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
           
           <button 
             onClick={() => {
-              setEditFormData(prev => ({ ...prev, name: userName }));
+              setEditFormData(prev => ({ ...prev, name: userName, password: '', passwordConfirm: '' }));
               setIsEditProfileOpen(true);
             }}
             className="absolute top-6 right-6 text-[10px] font-black tracking-widest text-gray-400 hover:text-black transition flex items-center space-x-1 z-10"
@@ -243,7 +260,6 @@ export default function MyPage() {
                 )}
               </h2>
               
-              {/* ⭐️ [UPDATE] 팔로워 / 팔로잉 UI 추가 */}
               <div className="flex space-x-4 mb-2 text-xs font-bold text-gray-500">
                 <span>팔로워 <strong className="text-black">{followers}</strong></span>
                 <span>팔로잉 <strong className="text-black">{following}</strong></span>
@@ -271,7 +287,7 @@ export default function MyPage() {
           </div>
         </section>
 
-        {/* 2 & 3. 독서 영수증 & 통계 대시보드 */}
+        {/* 독서 영수증 & 통계 대시보드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
            <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden flex flex-col items-center">
              <h3 className="text-lg font-black tracking-tight mb-6 self-start w-full">🧾 이번 달 독서 영수증</h3>
@@ -339,36 +355,48 @@ export default function MyPage() {
            </section>
         </div>
 
-        {/* 4. 나의 문집 수집 */}
+        {/* 나의 문집 수집 */}
         <section>
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-black italic tracking-tighter">My Collection</h3>
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{myQuotes.length} Quotes</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {myQuotes.map((q) => (
-              <div key={q._id} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all relative group flex flex-col justify-between h-[320px]">
-                <div>
-                  <div className="text-3xl font-serif text-gray-100 absolute top-4 left-6">"</div>
-                  <p className="font-serif text-gray-800 leading-relaxed mb-4 line-clamp-6 relative z-10 break-keep">
-                    {q.quote || q.content}
-                  </p>
+          
+          {/* 📍 문집 데이터가 0개일 때 빈 화면 예쁘게 보여주기 */}
+          {myQuotes.length === 0 ? (
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 py-20 text-center flex flex-col items-center">
+              <span className="text-4xl mb-4">✍️</span>
+              <p className="text-gray-400 font-bold">아직 수집한 영감 문장이 없습니다.</p>
+              <Link href="/annotations" className="mt-4 px-6 py-2 bg-black text-white text-xs font-black rounded-full hover:bg-gray-800 transition shadow-md">
+                필사 갤러리 구경가기
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {myQuotes.map((q) => (
+                <div key={q._id} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all relative group flex flex-col justify-between h-[320px]">
+                  <div>
+                    <div className="text-3xl font-serif text-gray-100 absolute top-4 left-6">"</div>
+                    <p className="font-serif text-gray-800 leading-relaxed mb-4 line-clamp-6 relative z-10 break-keep">
+                      {q.quote || q.content}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-black font-black mb-6 uppercase tracking-tight truncate border-l-2 border-black pl-3">
+                      {q.bookId?.title || q.bookTitle || 'Unknown Book'}
+                    </p>
+                    <button 
+                      onClick={() => openExportModal(q.quote || q.content, q.bookId?.title || q.bookTitle || '책', q.author || q.authorName || '작자 미상')}
+                      className="w-full py-3.5 bg-gray-50 text-gray-900 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-black hover:text-white transition flex items-center justify-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                      <span>Share Story</span>
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] text-black font-black mb-6 uppercase tracking-tight truncate border-l-2 border-black pl-3">
-                    {q.bookId?.title || q.bookTitle || 'Unknown Book'}
-                  </p>
-                  <button 
-                    onClick={() => openExportModal(q.quote || q.content, q.bookId?.title || q.bookTitle || '책', q.author || q.authorName || '작자 미상')}
-                    className="w-full py-3.5 bg-gray-50 text-gray-900 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-black hover:text-white transition flex items-center justify-center space-x-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                    <span>Share Story</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <footer className="mt-24 pt-12 border-t border-gray-100 flex flex-col items-center">
@@ -384,6 +412,7 @@ export default function MyPage() {
         </footer>
       </main>
 
+      {/* 프로필 수정 모달 */}
       {isEditProfileOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
            <div className="w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
@@ -403,16 +432,24 @@ export default function MyPage() {
                  <label className="block text-[10px] font-black text-gray-400 mb-1 uppercase">Nickname</label>
                  <input type="text" value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black font-bold transition" />
                </div>
+               
                <div>
-                 <label className="block text-[10px] font-black text-gray-400 mb-1 uppercase">New Password</label>
-                 <input type="password" value={editFormData.password} onChange={(e) => setEditFormData({...editFormData, password: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black transition" />
+                 <label className="block text-[10px] font-black text-gray-400 mb-1 uppercase">New Password <span className="text-gray-300 font-normal lowercase">(선택)</span></label>
+                 <input type="password" value={editFormData.password} placeholder="변경할 경우에만 입력" onChange={(e) => setEditFormData({...editFormData, password: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black transition" />
                </div>
+               
+               <div>
+                 <label className="block text-[10px] font-black text-gray-400 mb-1 uppercase">Confirm Password</label>
+                 <input type="password" value={editFormData.passwordConfirm} placeholder="비밀번호 재입력" onChange={(e) => setEditFormData({...editFormData, passwordConfirm: e.target.value})} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black transition" />
+               </div>
+
                <button type="submit" className="w-full mt-6 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition shadow-lg uppercase tracking-widest text-xs">Save Changes</button>
              </form>
            </div> 
         </div>
       )}
 
+      {/* MBTI 모달 */}
       {isMbtiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8">
@@ -457,6 +494,7 @@ export default function MyPage() {
         </div>
       )}
 
+      {/* 공유 모달 */}
       {isExportModalOpen && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in zoom-in duration-300">
           <button className="absolute top-8 right-8 text-white/50 hover:text-white transition" onClick={() => setIsExportModalOpen(false)}>
