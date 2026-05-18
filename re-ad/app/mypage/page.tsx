@@ -13,11 +13,9 @@ export default function MyPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('독서가');
   
-  // 📍 초기값을 0으로 설정 (추후 내 프로필 조회 API를 연결하면 setFollowers(data.followers) 등으로 업데이트하세요!)
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   
-  // 📍 더미 데이터 제거, 빈 배열로 시작
   const [myQuotes, setMyQuotes] = useState<any[]>([]);
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -44,11 +42,22 @@ export default function MyPage() {
     { q: "책을 다 읽고 난 후 나는?", a: ["바로 다음 책을 고른다", "깊은 여운에 빠져 사색한다", "친구에게 리뷰를 공유한다"] }
   ];
 
-  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') || sessionStorage.getItem('token') : null;
+  // 📍 [핵심 수정] 가짜 토큰을 걸러내는 완벽한 방어막으로 교체!
+  const getSafeToken = () => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
+    // 토큰이 아예 없거나, 글자로 'undefined', 'null'이라고 저장된 경우 다 걸러냄
+    if (!token || token === 'undefined' || token === 'null') {
+      return null;
+    }
+    return token;
+  };
+
   const getStoredUserName = () => typeof window !== 'undefined' ? localStorage.getItem('userName') || sessionStorage.getItem('userName') : null;
 
   useEffect(() => {
-    const token = getToken();
+    const token = getSafeToken(); // 📍 여기도 교체
     const storedName = getStoredUserName();
     
     if (token && storedName && storedName !== 'undefined') {
@@ -62,7 +71,6 @@ export default function MyPage() {
     if (token) {
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      // 📍 1. 내 수집 문장 (가짜 데이터 넣던 로직 삭제)
       fetch(`${API_BASE_URL}/annotations/my`, { headers })
         .then(res => res.json())
         .then(data => {
@@ -77,19 +85,16 @@ export default function MyPage() {
           setMyQuotes([]);
         });
 
-      // 2. 독서 영수증 (2026년 05월 기준)
       fetch(`${API_BASE_URL}/reading-logs/receipt?year=2026&month=05`, { headers })
         .then(res => res.json())
         .then(data => setReceipt(data))
         .catch(err => console.error("영수증 로드 실패:", err));
 
-      // 3. 독서 통계
       fetch(`${API_BASE_URL}/reading-logs/stats`, { headers })
         .then(res => res.json())
         .then(data => setStats(data))
         .catch(err => console.error("통계 로드 실패:", err));
 
-      // 4. 내 프로필 정보 (MBTI, 팔로워 등) - 백엔드 API가 있다면 여기에 추가!
       fetch(`${API_BASE_URL}/users/my-profile`, { headers })
         .then(res => {
           if(res.ok) return res.json();
@@ -102,9 +107,7 @@ export default function MyPage() {
             if(data.mbti) setMbtiResult({ mbti: data.mbti });
           }
         })
-        .catch(() => {
-          // 아직 API가 없다면 조용히 무시 (초기값 0 유지)
-        });
+        .catch(() => {});
     }
   }, []);
 
@@ -144,7 +147,9 @@ export default function MyPage() {
   };
 
   const handleWithdraw = async () => {
-    const token = getToken();
+    const token = getSafeToken(); // 📍 여기도 교체
+    if (!token) return alert("로그인이 만료되었습니다.");
+
     if (window.confirm("정말 탈퇴하시겠습니까? 기록된 모든 독서 데이터가 삭제되며 복구할 수 없습니다.")) {
       try {
         await fetch(`${API_BASE_URL}/users/withdraw`, {
@@ -165,7 +170,13 @@ export default function MyPage() {
 
   const handleEditProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = getToken();
+    const token = getSafeToken(); // 📍 문제의 원인! 여기를 교체했습니다.
+    
+    if (!token) {
+      alert("로그인이 만료되었습니다. 다시 로그인 후 시도해주세요.");
+      router.push('/login');
+      return;
+    }
     
     if (editFormData.password && editFormData.password !== editFormData.passwordConfirm) {
       return alert("새 비밀번호가 일치하지 않습니다. 다시 확인해주세요.");
@@ -178,7 +189,7 @@ export default function MyPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/users/profile`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, // 📍 이제 튼튼한 토큰이 들어갑니다!
         body: JSON.stringify({ nickname: editFormData.name, newPassword: editFormData.password || undefined })
       });
 
@@ -199,7 +210,10 @@ export default function MyPage() {
 
   const handleMbtiSubmit = async () => {
     if (mbtiAnswers.filter(Boolean).length < 4) return alert("모든 질문에 답해주세요!");
-    const token = getToken();
+    const token = getSafeToken(); // 📍 여기도 교체
+    
+    if (!token) return alert("로그인이 만료되었습니다.");
+
     try {
       const res = await fetch(`${API_BASE_URL}/users/mbti`, {
         method: 'POST',
@@ -362,7 +376,6 @@ export default function MyPage() {
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{myQuotes.length} Quotes</span>
           </div>
           
-          {/* 📍 문집 데이터가 0개일 때 빈 화면 예쁘게 보여주기 */}
           {myQuotes.length === 0 ? (
             <div className="bg-white rounded-[2.5rem] border border-gray-100 py-20 text-center flex flex-col items-center">
               <span className="text-4xl mb-4">✍️</span>

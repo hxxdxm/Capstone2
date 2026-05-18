@@ -49,10 +49,17 @@ export default function RoomDetailPage() {
   const [currentMessage, setCurrentMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
-
+  // ⭐️ 안전한 토큰 추출 함수 (유지)
+  const getSafeToken = () => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token || token === 'undefined' || token === 'null') return null;
+    return token;
+  };
+  
+  // ⭐️ 백엔드와 통신할 때 getSafeToken을 사용하도록 변경
   const getMyId = () => {
-    const token = getToken();
+    const token = getSafeToken();
     if (!token) return null;
     try {
       const payload = JSON.parse(window.atob(token.split('.')[1]));
@@ -79,7 +86,6 @@ export default function RoomDetailPage() {
       setIsJoined(amIIn);
       setRoomData(data);
       
-      // ⭐️ 백엔드가 description으로 줄 수도 있고 roomDesc로 줄 수도 있으니 둘 다 커버!
       setEditRoomDesc(data.description || data.roomDesc || ''); 
       setIsLoading(false);
     } catch (err) {
@@ -90,7 +96,7 @@ export default function RoomDetailPage() {
 
   const handleDeleteRoom = async () => {
     if (!confirm("정말로 이 모임방을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.")) return;
-    const token = getToken();
+    const token = getSafeToken(); // 📍 적용
     try {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
         method: 'DELETE',
@@ -103,7 +109,7 @@ export default function RoomDetailPage() {
   };
 
   const executeJoin = async (password: string = '') => {
-    const token = getToken();
+    const token = getSafeToken(); // 📍 적용
     if (!token) { alert("로그인이 필요합니다."); router.push('/login'); return; }
     try {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/join`, {
@@ -122,9 +128,8 @@ export default function RoomDetailPage() {
     } catch (error) { alert('서버 오류'); }
   };
 
-  // ⭐️ [NEW] 백엔드 팀원이 알려준 형식대로 description 을 수정해서 보냅니다!
   const handleUpdateDesc = async () => {
-    const token = getToken();
+    const token = getSafeToken(); // 📍 적용
     if (!token) return alert("로그인이 필요합니다.");
     
     try {
@@ -134,12 +139,10 @@ export default function RoomDetailPage() {
           'Content-Type': 'application/json', 
           'Authorization': `Bearer ${token}` 
         },
-        // ⭐️ "roomDesc"가 아니라 "description" 이라는 이름표로 보냅니다!
         body: JSON.stringify({ description: editRoomDesc })
       });
       
       if (res.ok) {
-        // 성공 시 화면의 데이터도 즉시 갈아끼워줍니다.
         setRoomData({ ...roomData, description: editRoomDesc, roomDesc: editRoomDesc });
         setIsEditingInfo(false);
       } else {
@@ -150,7 +153,7 @@ export default function RoomDetailPage() {
     }
   };
 
-  // --- 피드 핸들러 ---
+  // --- 피드 핸들러 (유지) ---
   const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -201,17 +204,32 @@ export default function RoomDetailPage() {
   // --- 채팅 핸들러 및 useEffect ---
   useEffect(() => {
     if (!isJoined || activeTab !== 'chat') return;
+    
+    // ⭐️ 1. 과거 채팅 불러올 때 토큰 헤더에 담기 (백엔드 에러 방지)
+    const token = getSafeToken();
+    if (!token) {
+      console.warn("토큰이 없어 과거 채팅을 불러오지 못했습니다.");
+      return;
+    }
 
-    fetch(`${API_BASE_URL}/chats/${roomId}`)
+    fetch(`${API_BASE_URL}/chats/${roomId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}` // 📍 토큰 추가!
+      }
+    })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setChats(data);
       })
       .catch(err => console.error("과거 채팅 로드 실패:", err));
 
+    // ⭐️ 2. 소켓 연결 시에도 안전한 토큰 사용 (getSafeToken 적용)
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
-      auth: { token: getToken() }
+      auth: { token: token }, // 📍 적용
+      extraHeaders: {
+        Authorization: `Bearer ${token}` // 📍 혹시 몰라 헤더에도 챙겨줍니다
+      }
     });
     setSocket(newSocket);
 
@@ -324,7 +342,6 @@ export default function RoomDetailPage() {
                   </div>
                 ) : (
                   <p className="text-gray-800 font-bold leading-relaxed text-lg whitespace-pre-wrap break-keep">
-                    {/* ⭐️ GET 요청으로 들어온 키가 description일 수도 있으니 안전하게 둘 다 출력 */}
                     {roomData.description || roomData.roomDesc || "작성된 소개글이 없습니다."}
                   </p>
                 )}

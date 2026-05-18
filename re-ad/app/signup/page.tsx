@@ -10,22 +10,20 @@ const API_BASE_URL = 'http://13.124.191.57:5000/api';
 export default function SignupPage() {
   const router = useRouter();
   
-  // 폼 데이터
   const [formData, setFormData] = useState({
     email: '',
     nickname: '',
     password: '',
     confirmPassword: '',
-    phone: ''
+    phone: '' // 선택 항목
   });
 
-  // 📍 전화번호 인증 관련 상태
+  // 📍 이메일 인증 관련 상태
   const [authCode, setAuthCode] = useState('');
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(180); // 3분 = 180초
+  const [timeLeft, setTimeLeft] = useState(300); // 📍 5분 = 300초
 
-  // 📍 타이머 로직
   useEffect(() => {
     let timerId: NodeJS.Timeout;
     if (isCodeSent && !isVerified && timeLeft > 0) {
@@ -33,59 +31,69 @@ export default function SignupPage() {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0) {
-      setIsCodeSent(false); // 시간 초과 시 다시 전송해야 함
+      setIsCodeSent(false); 
     }
     return () => clearInterval(timerId);
   }, [isCodeSent, isVerified, timeLeft]);
 
-  // 타이머 표시 포맷 (MM:SS)
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  // 📍 1. 인증번호 전송 함수
+  // 📍 1. 인증번호 전송 함수 (이메일로 변경)
   const handleSendAuthCode = async () => {
-    if (!formData.phone || formData.phone.length < 10) {
-      alert("올바른 핸드폰 번호를 입력해주세요. (기호 없이 숫자만)");
+    if (!formData.email.includes('@')) {
+      alert("올바른 이메일 형식을 입력해주세요.");
       return;
     }
 
-    // TODO: 백엔드 API 호출 (`/api/auth/send-sms`)
-    /*
-    const res = await fetch(`${API_BASE_URL}/auth/send-sms`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: formData.phone })
-    });
-    if(!res.ok) return alert("전송 실패");
-    */
-
-    alert("입력하신 번호로 인증번호 6자리가 전송되었습니다. (현재는 UI 테스트 모드입니다)");
-    setIsCodeSent(true);
-    setIsVerified(false);
-    setTimeLeft(180); // 3분 타이머 시작
+    try {
+      // 📍 백엔드 명세대로 호출 (주소는 sms지만 내용은 email)
+      const res = await fetch(`${API_BASE_URL}/auth/send-sms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email })
+      });
+      
+      if (res.ok) {
+        alert("입력하신 이메일로 인증번호 6자리가 발송되었습니다. 메일함을 확인해주세요!");
+        setIsCodeSent(true);
+        setIsVerified(false);
+        setTimeLeft(300); // 5분 타이머 시작
+      } else {
+        alert("인증번호 발송에 실패했습니다. 이미 가입된 이메일인지 확인해주세요.");
+      }
+    } catch (error) {
+      alert("서버 통신 오류가 발생했습니다.");
+    }
   };
 
   // 📍 2. 인증번호 확인 함수
   const handleVerifyCode = async () => {
     if (!authCode) return alert("인증번호를 입력해주세요.");
 
-    // TODO: 백엔드 API 호출 (`/api/auth/verify-sms`)
-    /*
-    const res = await fetch(`${API_BASE_URL}/auth/verify-sms`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: formData.phone, code: authCode })
-    });
-    if(!res.ok) return alert("인증번호가 일치하지 않습니다.");
-    */
-
-    // 임시 테스트용 조건 (아무 번호나 넣어도 성공하게 둠)
-    alert("인증이 완료되었습니다!");
-    setIsVerified(true);
-    setIsCodeSent(false);
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/verify-sms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, code: authCode })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.verified) {
+          alert("이메일 인증이 완료되었습니다!");
+          setIsVerified(true);
+          setIsCodeSent(false);
+        }
+      } else {
+        alert("인증번호가 일치하지 않거나 만료되었습니다.");
+      }
+    } catch (error) {
+      alert("서버 통신 오류가 발생했습니다.");
+    }
   };
 
   // 📍 3. 최종 회원가입 함수
@@ -93,7 +101,7 @@ export default function SignupPage() {
     e.preventDefault();
 
     if (!isVerified) {
-      alert("전화번호 인증을 완료해주세요!");
+      alert("이메일 인증을 먼저 완료해주세요!");
       return;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -101,9 +109,30 @@ export default function SignupPage() {
       return;
     }
 
-    // TODO: 실제 회원가입 API 통신 로직
-    alert("회원가입이 완료되었습니다!");
-    router.push('/login');
+    try {
+      // 📍 백엔드 회원가입 API 호출 (경로는 백엔드 명세에 맞춰 수정하세요)
+      const res = await fetch(`${API_BASE_URL}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          nickname: formData.nickname,
+          password: formData.password,
+          // 전화번호가 비어있지 않으면 같이 보냄
+          phone: formData.phone || undefined 
+        })
+      });
+
+      if (res.ok) {
+        alert("회원가입이 완료되었습니다! 로그인해주세요.");
+        router.push('/login');
+      } else {
+        const data = await res.json();
+        alert(`회원가입 실패: ${data.message || '다시 시도해주세요.'}`);
+      }
+    } catch (error) {
+      alert("서버와 통신할 수 없습니다.");
+    }
   };
 
   return (
@@ -126,29 +155,16 @@ export default function SignupPage() {
 
           <form onSubmit={handleSignup} className="space-y-6">
             
-            {/* 이메일 */}
+            {/* 📍 이메일 인증 영역으로 변경 */}
             <div>
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Email</label>
-              <input type="email" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" placeholder="이메일 주소" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
-            </div>
-
-            {/* 닉네임 */}
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Nickname</label>
-              <input type="text" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" placeholder="사용할 닉네임 (예: 독서왕)" value={formData.nickname} onChange={(e) => setFormData({...formData, nickname: e.target.value})} required />
-            </div>
-
-            {/* 📍 전화번호 인증 영역 (핵심!) */}
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Phone Verification</label>
+              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Email Verification</label>
               <div className="flex space-x-3">
                 <input 
-                  type="text" 
-                  maxLength={11}
+                  type="email" 
                   className="flex-1 border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent disabled:text-gray-400" 
-                  placeholder="- 없이 숫자만 입력" 
-                  value={formData.phone} 
-                  onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/[^0-9]/g, '')})} 
+                  placeholder="인증받을 이메일 주소" 
+                  value={formData.email} 
+                  onChange={(e) => setFormData({...formData, email: e.target.value})} 
                   disabled={isVerified}
                   required 
                 />
@@ -163,15 +179,15 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* 📍 인증번호 입력 영역 (전송 버튼을 눌렀을 때만 나타남) */}
+            {/* 인증번호 입력 영역 (전송 버튼을 눌렀을 때만 나타남) */}
             {isCodeSent && !isVerified && (
               <div className="flex space-x-3 animate-in fade-in slide-in-from-top-2">
                 <div className="flex-1 relative">
                   <input 
                     type="text" 
                     maxLength={6}
-                    className="w-full border-b-2 border-blue-500 py-3 pl-2 pr-12 outline-none font-bold text-black bg-blue-50/30 transition" 
-                    placeholder="인증번호 6자리 입력" 
+                    className="w-full border-b-2 border-blue-500 py-3 pl-2 pr-12 outline-none font-bold text-black bg-blue-50/30 transition tracking-widest" 
+                    placeholder="인증번호 6자리" 
                     value={authCode} 
                     onChange={(e) => setAuthCode(e.target.value.replace(/[^0-9]/g, ''))} 
                   />
@@ -189,6 +205,12 @@ export default function SignupPage() {
               </div>
             )}
 
+            {/* 닉네임 */}
+            <div>
+              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Nickname</label>
+              <input type="text" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" placeholder="사용할 닉네임 (예: 독서왕)" value={formData.nickname} onChange={(e) => setFormData({...formData, nickname: e.target.value})} required />
+            </div>
+
             {/* 비밀번호 */}
             <div className="pt-2">
               <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Password</label>
@@ -199,6 +221,21 @@ export default function SignupPage() {
             <div>
               <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Confirm Password</label>
               <input type="password" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" placeholder="비밀번호 확인" value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} required />
+            </div>
+
+            {/* 📍 전화번호 (선택 항목으로 변경됨) */}
+            <div>
+              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">
+                Phone <span className="text-gray-400 lowercase font-bold tracking-normal">(선택)</span>
+              </label>
+              <input 
+                type="text" 
+                maxLength={11}
+                className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" 
+                placeholder="- 없이 숫자만 입력 (예: 01012345678)" 
+                value={formData.phone} 
+                onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/[^0-9]/g, '')})} 
+              />
             </div>
 
             <button 
