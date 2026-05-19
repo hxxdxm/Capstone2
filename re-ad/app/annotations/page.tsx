@@ -94,39 +94,32 @@ export default function ExhibitionPage() {
   const handleSubmitPost = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getToken();
+    if (!token) return alert("로그인이 필요합니다.");
+
+    // FormData를 사용해야 파일(이미지)과 텍스트 데이터를 한 번에 보낼 수 있습니다!
+    const formData = new FormData();
+    formData.append('quote', newPost.quote);
+    formData.append('bookTitle', newPost.book);
+    formData.append('color', newPost.style);
     
-    if (!token) {
-      alert("로그인이 필요합니다.");
-      return;
+    // 파일이 선택되었다면 추가
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput?.files?.[0]) {
+      formData.append('image', fileInput.files[0]);
     }
-
-    if (!newPost.quote || !newPost.book) {
-      alert("문장과 책 제목은 필수입니다.");
-      return;
-    }
-
-    const payload = {
-      userId: getMyId(),
-      annotationType: 'QUOTE_TEXT',
-      quote: newPost.quote,
-      color: newPost.style 
-    };
 
     try {
       const res = await fetch(`${API_BASE_URL}/annotations`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        headers: { 'Authorization': `Bearer ${token}` }, // FormData는 Content-Type을 자동 설정해줍니다
+        body: formData
       });
 
       if (res.ok) {
         alert("전시회에 문장이 성공적으로 걸렸습니다! 🎉");
-        setIsWriteModalOpen(false); 
-        setNewPost({ quote: '', book: '', author: '', style: 'bg-white text-gray-900 border-gray-200', imagePreview: '' }); 
-        fetchExhibitions(); 
+        setIsWriteModalOpen(false);
+        setNewPost({ quote: '', book: '', author: '', style: 'bg-white text-gray-900 border-gray-200', imagePreview: '' });
+        fetchExhibitions();
       } else {
         alert("등록에 실패했습니다.");
       }
@@ -281,7 +274,7 @@ export default function ExhibitionPage() {
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-2">기억하고 싶은 문장</label>
                 <textarea 
-                  placeholder="당신의 영혼을 흔든 문장을 적어주세요." 
+                  placeholder="당신의 마음에 들었던 문장을 적어주세요." 
                   rows={3}
                   value={newPost.quote}
                   onChange={(e) => setNewPost({...newPost, quote: e.target.value})}
@@ -311,13 +304,19 @@ export default function ExhibitionPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 mb-2">텍스트 테마 선택</label>
-                <div className="grid grid-cols-3 gap-3">
-                  <button type="button" onClick={() => setNewPost({...newPost, style: 'bg-white text-gray-900 border-gray-200'})} className="h-10 rounded-xl border bg-white text-xs font-bold">순백</button>
-                  <button type="button" onClick={() => setNewPost({...newPost, style: 'bg-gray-900 text-white border-gray-900'})} className="h-10 rounded-xl border bg-gray-900 text-white text-xs font-bold">심연</button>
-                  <button type="button" onClick={() => setNewPost({...newPost, style: 'bg-[#FDFBF7] text-gray-800 border-orange-100'})} className="h-10 rounded-xl border bg-[#FDFBF7] text-xs font-bold">미색</button>
+                <label className="block text-xs font-bold text-gray-500 mb-2">이미지 업로드 (선택)</label>
+                <div className="flex items-center space-x-4">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-gray-100 file:text-black file:font-black hover:file:bg-gray-200"
+                  />
                 </div>
-              </div>
+                {newPost.imagePreview && (
+                  <img src={newPost.imagePreview} alt="preview" className="mt-4 h-24 rounded-xl shadow-sm" />
+                )}
+              </div>    
               <button type="submit" className="w-full mt-4 bg-black text-white font-black py-4 rounded-xl hover:bg-gray-800 transition tracking-widest">전시하기</button>
             </form>
           </div>
