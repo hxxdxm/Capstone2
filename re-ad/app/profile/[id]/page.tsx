@@ -8,90 +8,120 @@ const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function OtherUserProfilePage() {
   const router = useRouter();
-  const params = useParams(); // 📍 주소창에 있는 [id] 값을 빼오는 Next.js 훅
-  const targetUserId = params.id; // 상대방의 ID
+  const params = useParams();
+  const targetUserId = params?.id as string;
 
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<any>(null);
   
-  // 팔로우 상태 관리 (Optimistic UI 적용을 위함)
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
-  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') || sessionStorage.getItem('token') : null;
+  const getSafeToken = () => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token || token === 'undefined' || token === 'null') return null;
+    if (token.split('.').length !== 3) return null;
+    return token;
+  };
+
+  const getMyId = () => {
+    const token = getSafeToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(window.atob(token.split('.')[1]));
+      return payload.id || payload.userId || payload._id || payload.user_id;
+    } catch (e) { return null; }
+  };
+
+  // 📍 [핵심 수정] 헤더 객체를 안전하게 만드는 함수
+  const getHeaders = () => {
+    const token = getSafeToken();
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  };
 
   useEffect(() => {
     if (targetUserId) {
-      fetchUserProfile();
+      fetchAllProfileData();
     }
   }, [targetUserId]);
 
-  const fetchUserProfile = async () => {
-    const token = getToken();
-    try {
-      // 📍 백엔드 팀원분이 뚫어주신 상대방 프로필 조회 API 호출
-      const res = await fetch(`${API_BASE_URL}/users/${targetUserId}/profile`, {
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
-      });
+  const fetchAllProfileData = async () => {
+    const headers = getHeaders();
+    const myId = getMyId();
 
-      if (res.ok) {
-        const data = await res.json();
-        setProfileData(data);
-        
-        // 백엔드에서 내려주는 데이터에 맞춰 초기 상태 세팅 (명세에 따라 키값은 달라질 수 있습니다)
-        setIsFollowing(data.isFollowing || false);
-        setFollowerCount(data.followersCount || 0);
+    try {
+      const profileRes = await fetch(`${API_BASE_URL}/users/${targetUserId}/profile`, { headers });
+      if (profileRes.ok) {
+        setProfileData(await profileRes.json());
       } else {
-        alert("프로필을 불러올 수 없습니다.");
+        alert("존재하지 않는 유저입니다.");
         router.push('/');
+        return;
+      }
+
+      const followersRes = await fetch(`${API_BASE_URL}/users/${targetUserId}/followers`, { headers });
+      if (followersRes.ok) {
+        const followersList = await followersRes.json();
+        setFollowersCount(followersList.length);
+        if (myId) {
+          const amIFollowing = followersList.some((user: any) => user._id === myId);
+          setIsFollowing(amIFollowing);
+        }
+      }
+
+      const followingRes = await fetch(`${API_BASE_URL}/users/${targetUserId}/following`, { headers });
+      if (followingRes.ok) {
+        const followingList = await followingRes.json();
+        setFollowingCount(followingList.length);
       }
     } catch (error) {
-      console.error("프로필 조회 에러:", error);
+      console.error("프로필 데이터 로드 에러:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 📍 팔로우/언팔로우 토글 로직
   const handleToggleFollow = async () => {
-    const token = getToken();
+    const token = getSafeToken();
     if (!token) {
       alert("로그인 후 팔로우할 수 있습니다.");
       return router.push('/login');
     }
 
-    // 화면부터 즉시 변경 (Optimistic UI)
-    const previousIsFollowing = isFollowing;
-    const previousFollowerCount = followerCount;
+    const prevIsFollowing = isFollowing;
+    const prevCount = followersCount;
 
     setIsFollowing(!isFollowing);
-    setFollowerCount((prev) => isFollowing ? prev - 1 : prev + 1);
+    setFollowersCount(isFollowing ? prevCount - 1 : prevCount + 1);
 
     try {
       const res = await fetch(`${API_BASE_URL}/users/${targetUserId}/follow`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
 
-      if (!res.ok) {
-        // 서버에서 에러가 나면 원래대로 복구
-        setIsFollowing(previousIsFollowing);
-        setFollowerCount(previousFollowerCount);
+      if (res.ok) {
+        const data = await res.json();
+        setIsFollowing(data.isFollowing);
+      } else {
+        setIsFollowing(prevIsFollowing);
+        setFollowersCount(prevCount);
         alert("팔로우 처리에 실패했습니다.");
       }
     } catch (error) {
-      setIsFollowing(previousIsFollowing);
-      setFollowerCount(previousFollowerCount);
+      setIsFollowing(prevIsFollowing);
+      setFollowersCount(prevCount);
       alert("서버와 통신할 수 없습니다.");
     }
   };
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">프로필을 불러오는 중...</div>;
-  }
-
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">프로필을 불러오는 중...</div>;
   if (!profileData) return null;
 
   return (
@@ -99,8 +129,6 @@ export default function OtherUserProfilePage() {
       <Header />
 
       <main className="mx-auto max-w-4xl px-6 mt-12">
-        
-        {/* 상단 프로필 카드 & 팔로우 버튼 */}
         <section className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
           
           <div className="flex items-center space-x-6 relative z-10">
@@ -110,35 +138,35 @@ export default function OtherUserProfilePage() {
             <div>
               <h2 className="text-3xl font-black mb-2 flex items-center space-x-3">
                 <span>{profileData.nickname}</span>
-                {profileData.mbti && (
+                {profileData.readingMbti && (
                   <span className="px-2 py-1 bg-purple-100 text-purple-600 text-[10px] uppercase tracking-widest rounded-md border border-purple-200">
-                    {profileData.mbti}
+                    {profileData.readingMbti}
                   </span>
                 )}
               </h2>
               <div className="flex space-x-4 text-sm font-bold text-gray-500">
-                <span>팔로워 <strong className="text-black">{followerCount}</strong></span>
-                <span>팔로잉 <strong className="text-black">{profileData.followingCount || 0}</strong></span>
+                <span>팔로워 <strong className="text-black">{followersCount}</strong></span>
+                <span>팔로잉 <strong className="text-black">{followingCount}</strong></span>
               </div>
             </div>
           </div>
 
           <div className="relative z-10 w-full md:w-auto">
-            <button 
-              onClick={handleToggleFollow}
-              className={`w-full md:w-auto px-10 py-4 rounded-full font-black text-sm transition-all duration-300 shadow-md ${
-                isFollowing 
-                  ? 'bg-white text-black border-2 border-black hover:bg-gray-50'
-                  : 'bg-black text-white border-2 border-black hover:bg-gray-800'
-              }`}
-            >
-              {isFollowing ? '팔로잉' : '팔로우하기'}
-            </button>
+            {getMyId() !== targetUserId && (
+              <button 
+                onClick={handleToggleFollow}
+                className={`w-full md:w-auto px-10 py-4 rounded-full font-black text-sm transition-all duration-300 shadow-md ${
+                  isFollowing 
+                    ? 'bg-white text-black border-2 border-black hover:bg-gray-50'
+                    : 'bg-black text-white border-2 border-black hover:bg-gray-800'
+                }`}
+              >
+                {isFollowing ? '팔로잉' : '팔로우하기'}
+              </button>
+            )}
           </div>
-
         </section>
 
-        {/* 하단: 이 유저가 수집한 문장들 */}
         <section className="mt-12">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-black italic tracking-tighter">Collection</h3>
@@ -169,7 +197,6 @@ export default function OtherUserProfilePage() {
             </div>
           )}
         </section>
-
       </main>
     </div>
   );

@@ -11,7 +11,7 @@ export default function MyPage() {
   const router = useRouter();
   
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('독서가');
+  const [userName, setUserName] = useState('');
   
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
@@ -42,12 +42,11 @@ export default function MyPage() {
     { q: "책을 다 읽고 난 후 나는?", a: ["바로 다음 책을 고른다", "깊은 여운에 빠져 사색한다", "친구에게 리뷰를 공유한다"] }
   ];
 
-  // 📍 [핵심 수정] 가짜 토큰을 걸러내는 완벽한 방어막으로 교체!
+  // 📍 가짜 토큰을 걸러내는 완벽한 방어막
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     
-    // 토큰이 아예 없거나, 글자로 'undefined', 'null'이라고 저장된 경우 다 걸러냄
     if (!token || token === 'undefined' || token === 'null') {
       return null;
     }
@@ -57,7 +56,7 @@ export default function MyPage() {
   const getStoredUserName = () => typeof window !== 'undefined' ? localStorage.getItem('userName') || sessionStorage.getItem('userName') : null;
 
   useEffect(() => {
-    const token = getSafeToken(); // 📍 여기도 교체
+    const token = getSafeToken(); 
     const storedName = getStoredUserName();
     
     if (token && storedName && storedName !== 'undefined') {
@@ -71,6 +70,7 @@ export default function MyPage() {
     if (token) {
       const headers = { 'Authorization': `Bearer ${token}` };
 
+      // 1. 수집 문장
       fetch(`${API_BASE_URL}/annotations/my`, { headers })
         .then(res => res.json())
         .then(data => {
@@ -85,16 +85,19 @@ export default function MyPage() {
           setMyQuotes([]);
         });
 
+      // 2. 영수증
       fetch(`${API_BASE_URL}/reading-logs/receipt?year=2026&month=05`, { headers })
         .then(res => res.json())
         .then(data => setReceipt(data))
         .catch(err => console.error("영수증 로드 실패:", err));
 
+      // 3. 통계
       fetch(`${API_BASE_URL}/reading-logs/stats`, { headers })
         .then(res => res.json())
         .then(data => setStats(data))
         .catch(err => console.error("통계 로드 실패:", err));
 
+      // 4. 📍 [핵심 수정] 내 프로필 정보 및 닉네임 동기화
       fetch(`${API_BASE_URL}/users/my-profile`, { headers })
         .then(res => {
           if(res.ok) return res.json();
@@ -102,6 +105,17 @@ export default function MyPage() {
         })
         .then(data => {
           if(data) {
+            // 서버에서 받은 진짜 닉네임이 있다면 덮어씌웁니다!
+            if (data.nickname) {
+              setUserName(data.nickname);
+              // 로컬/세션 스토리지도 최신 닉네임으로 업데이트
+              if (localStorage.getItem('token')) {
+                localStorage.setItem('userName', data.nickname);
+              } else if (sessionStorage.getItem('token')) {
+                sessionStorage.setItem('userName', data.nickname);
+              }
+            }
+            
             setFollowers(data.followersCount || 0);
             setFollowing(data.followingCount || 0);
             if(data.mbti) setMbtiResult({ mbti: data.mbti });
@@ -147,7 +161,7 @@ export default function MyPage() {
   };
 
   const handleWithdraw = async () => {
-    const token = getSafeToken(); // 📍 여기도 교체
+    const token = getSafeToken(); 
     if (!token) return alert("로그인이 만료되었습니다.");
 
     if (window.confirm("정말 탈퇴하시겠습니까? 기록된 모든 독서 데이터가 삭제되며 복구할 수 없습니다.")) {
@@ -170,7 +184,7 @@ export default function MyPage() {
 
   const handleEditProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = getSafeToken(); // 📍 문제의 원인! 여기를 교체했습니다.
+    const token = getSafeToken(); 
     
     if (!token) {
       alert("로그인이 만료되었습니다. 다시 로그인 후 시도해주세요.");
@@ -189,7 +203,7 @@ export default function MyPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/users/profile`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, // 📍 이제 튼튼한 토큰이 들어갑니다!
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ nickname: editFormData.name, newPassword: editFormData.password || undefined })
       });
 
@@ -210,7 +224,7 @@ export default function MyPage() {
 
   const handleMbtiSubmit = async () => {
     if (mbtiAnswers.filter(Boolean).length < 4) return alert("모든 질문에 답해주세요!");
-    const token = getSafeToken(); // 📍 여기도 교체
+    const token = getSafeToken(); 
     
     if (!token) return alert("로그인이 만료되었습니다.");
 
@@ -262,7 +276,7 @@ export default function MyPage() {
 
           <div className="flex items-center space-x-6 relative z-10 w-full md:w-auto">
             <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center text-white text-2xl font-black shadow-lg flex-shrink-0">
-              {userName[0]}
+              {userName ? userName[0] : '👤'}
             </div>
             <div>
               <h2 className="text-2xl font-black mb-1 flex items-center space-x-2">
@@ -438,7 +452,7 @@ export default function MyPage() {
              <form onSubmit={handleEditProfile} className="p-8 space-y-5">
                <div className="flex justify-center mb-8">
                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-2xl font-black shadow-xl">
-                   {editFormData.name ? editFormData.name[0] : userName[0]}
+                   {editFormData.name ? editFormData.name[0] : (userName ? userName[0] : '👤')}
                  </div>
                </div>
                <div>
