@@ -59,14 +59,14 @@ export default function ExhibitionPage() {
             initialLikedIds.push(apiItem._id);
           }
 
-          const hasImage = apiItem.imageUrl || apiItem.image_url;
+          const imageUrl = apiItem.imageUrl || apiItem.image_url;
           return {
-            id: apiItem._id, 
-            type: hasImage ? "image" : "text",
-            image: hasImage,
+            id: apiItem._id,
+            type: imageUrl ? "image" : "text",
+            image: imageUrl,
             quote: apiItem.quote || apiItem.content,
             book: apiItem.bookId?.title || '도서',
-            author: '작자미상', 
+            author: '작자미상',
             user: apiItem.userId?.nickname || '익명',
             likes: apiItem.likes?.length || 0,
             bg: apiItem.color || "bg-white text-gray-900 border-gray-200"
@@ -202,7 +202,11 @@ export default function ExhibitionPage() {
                   >
                     {item.type === 'image' ? (
                       <div className="relative aspect-[4/5] bg-gray-900">
-                        <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700" style={{ backgroundImage: `url(${item.image})` }}></div>
+                        <img
+                          src={item.image}
+                          alt="annotation"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
                         <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
                           <p className="font-serif text-lg leading-relaxed italic mb-6 break-keep whitespace-pre-line shadow-black drop-shadow-md">"{item.quote}"</p>
