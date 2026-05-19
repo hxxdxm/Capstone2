@@ -49,22 +49,35 @@ export default function RoomDetailPage() {
   const [currentMessage, setCurrentMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // ⭐️ 안전한 토큰 추출 함수 (유지)
+  // 📍 1. [궁극의 방어막] 가짜 토큰을 형태(3등분)로 완벽하게 걸러냅니다!
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
     if (!token || token === 'undefined' || token === 'null') return null;
+    
+    // 진짜 JWT 토큰은 aaaa.bbbb.cccc 처럼 점(.)이 2개 들어가서 3조각으로 나뉩니다.
+    if (token.split('.').length !== 3) {
+      console.error("유효하지 않은 가짜 토큰 발견! 삭제합니다:", token);
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+      return null;
+    }
+    
     return token;
   };
   
-  // ⭐️ 백엔드와 통신할 때 getSafeToken을 사용하도록 변경
+  // 📍 2. [호환성 100%] 백엔드가 ID를 무슨 이름으로 지었든 다 찾아냅니다!
   const getMyId = () => {
     const token = getSafeToken();
     if (!token) return null;
     try {
       const payload = JSON.parse(window.atob(token.split('.')[1]));
-      return payload.id || payload.userId;
-    } catch (e) { return null; }
+      return payload.id || payload.userId || payload._id || payload.user_id;
+    } catch (e) { 
+      console.error("토큰 해독 중 에러:", e);
+      return null; 
+    }
   };
 
   const getMyName = () => typeof window !== 'undefined' ? (localStorage.getItem('userName') || sessionStorage.getItem('userName')) : '익명';
@@ -96,7 +109,8 @@ export default function RoomDetailPage() {
 
   const handleDeleteRoom = async () => {
     if (!confirm("정말로 이 모임방을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.")) return;
-    const token = getSafeToken(); // 📍 적용
+    const token = getSafeToken();
+    if (!token) return alert("다시 로그인해주세요!");
     try {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`, {
         method: 'DELETE',
@@ -109,8 +123,8 @@ export default function RoomDetailPage() {
   };
 
   const executeJoin = async (password: string = '') => {
-    const token = getSafeToken(); // 📍 적용
-    if (!token) { alert("로그인이 필요합니다."); router.push('/login'); return; }
+    const token = getSafeToken();
+    if (!token) { alert("로그인이 필요합니다. 다시 로그인해주세요."); router.push('/login'); return; }
     try {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/join`, {
         method: 'POST',
@@ -129,7 +143,7 @@ export default function RoomDetailPage() {
   };
 
   const handleUpdateDesc = async () => {
-    const token = getSafeToken(); // 📍 적용
+    const token = getSafeToken();
     if (!token) return alert("로그인이 필요합니다.");
     
     try {
@@ -153,7 +167,6 @@ export default function RoomDetailPage() {
     }
   };
 
-  // --- 피드 핸들러 (유지) ---
   const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -201,20 +214,18 @@ export default function RoomDetailPage() {
     setCommentInputs({ ...commentInputs, [postId]: '' }); 
   };
 
-  // --- 채팅 핸들러 및 useEffect ---
   useEffect(() => {
     if (!isJoined || activeTab !== 'chat') return;
     
-    // ⭐️ 1. 과거 채팅 불러올 때 토큰 헤더에 담기 (백엔드 에러 방지)
     const token = getSafeToken();
     if (!token) {
       console.warn("토큰이 없어 과거 채팅을 불러오지 못했습니다.");
-      return;
+      return; // 가짜 토큰이면 백엔드 요청 아예 안 보냄
     }
 
     fetch(`${API_BASE_URL}/chats/${roomId}`, {
       headers: {
-        'Authorization': `Bearer ${token}` // 📍 토큰 추가!
+        'Authorization': `Bearer ${token}`
       }
     })
       .then(res => res.json())
@@ -223,12 +234,11 @@ export default function RoomDetailPage() {
       })
       .catch(err => console.error("과거 채팅 로드 실패:", err));
 
-    // ⭐️ 2. 소켓 연결 시에도 안전한 토큰 사용 (getSafeToken 적용)
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
-      auth: { token: token }, // 📍 적용
+      auth: { token: token },
       extraHeaders: {
-        Authorization: `Bearer ${token}` // 📍 혹시 몰라 헤더에도 챙겨줍니다
+        Authorization: `Bearer ${token}`
       }
     });
     setSocket(newSocket);
@@ -248,10 +258,14 @@ export default function RoomDetailPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chats, activeTab]);
 
+  // 📍 3. [사이다 알림창] 왜 전송이 안 되는지 확실하게 짚어주는 기능 추가!
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     const myId = getMyId();
-    if (!socket || !currentMessage.trim() || !myId) return;
+    
+    if (!socket) return alert("소켓 서버와 연결되지 않았습니다. 새로고침 해주세요!");
+    if (!currentMessage.trim()) return alert("메시지를 입력하세요.");
+    if (!myId) return alert("내 계정 정보를 찾을 수 없습니다. (재로그인 필요!)");
 
     socket.emit('sendMessage', {
       roomId: roomId,
@@ -439,7 +453,7 @@ export default function RoomDetailPage() {
                     placeholder="메시지를 입력하세요..."
                     className="flex-1 bg-gray-100 border-none rounded-full px-6 py-3 text-sm font-bold text-black focus:ring-2 focus:ring-black outline-none transition"
                   />
-                  <button type="submit" disabled={!currentMessage.trim()} className="bg-black text-white p-3 rounded-full hover:scale-105 active:scale-95 transition shadow-lg disabled:bg-gray-300">
+                  <button type="submit" className="bg-black text-white p-3 rounded-full hover:scale-105 active:scale-95 transition shadow-lg disabled:bg-gray-300">
                     <svg className="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                   </button>
                 </form>

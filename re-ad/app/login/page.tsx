@@ -18,24 +18,56 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 📍 실제 백엔드 연동 시 fetch() 로직이 들어갈 자리
-    if (formData.email && formData.password) {
-      
-      // 로그인 유지 체크 여부에 따라 저장소 분리
-      if (keepLoggedIn) {
-        // 체크 O: 브라우저를 꺼도 유지되는 localStorage에 저장
-        localStorage.setItem('token', 'dummy-token-1234');
-        localStorage.setItem('userName', '하민');
-      } else {
-        // 체크 X: 브라우저 끄면 날아가는 sessionStorage에 저장
-        sessionStorage.setItem('token', 'dummy-token-1234');
-        sessionStorage.setItem('userName', '하민');
-      }
+    if (!formData.email || !formData.password) {
+      alert("이메일과 비밀번호를 모두 입력해주세요.");
+      return;
+    }
 
-      alert("로그인 성공! 환영합니다.");
-      
-      // 헤더 상태 업데이트를 위해 강제 이동 (새로고침)
-      window.location.href = '/';
+    try {
+      // 1. 📍 백엔드 로그인 API로 이메일과 비밀번호 전송
+      const res = await fetch(`${API_BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        
+        // 2. 📍 백엔드에서 준 응답 데이터에서 토큰과 닉네임 꺼내기
+        // (주의: 백엔드에서 토큰을 'token'으로 주는지 'accessToken'으로 주는지에 따라 달라질 수 있습니다!)
+        const token = data.token || data.accessToken;
+        const userName = data.nickname || data.userName || '독서가';
+
+        if (!token) {
+          alert("서버 통신은 성공했으나 토큰을 찾을 수 없습니다. (백엔드 응답 키값 확인 필요)");
+          return;
+        }
+
+        // 3. 📍 로그인 유지 체크 여부에 따라 브라우저 창고에 안전하게 저장
+        if (keepLoggedIn) {
+          // 체크 O: 브라우저를 꺼도 유지되는 localStorage에 저장
+          localStorage.setItem('token', token);
+          localStorage.setItem('userName', userName);
+        } else {
+          // 체크 X: 브라우저 끄면 날아가는 sessionStorage에 저장
+          sessionStorage.setItem('token', token);
+          sessionStorage.setItem('userName', userName);
+        }
+
+        alert("로그인 성공! 환영합니다.");
+        
+        // 4. 📍 헤더 상태 업데이트를 위해 강제 이동 (새로고침)
+        window.location.href = '/';
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`로그인 실패: ${errorData.message || '이메일 또는 비밀번호를 다시 확인해주세요.'}`);
+      }
+    } catch (error) {
+      alert("서버와 통신할 수 없습니다.");
     }
   };
 
@@ -87,7 +119,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* 📍 로그인 상태 유지 체크박스 영역 추가 */}
+            {/* 로그인 상태 유지 체크박스 영역 */}
             <div className="flex items-center pt-2">
               <input 
                 type="checkbox" 
