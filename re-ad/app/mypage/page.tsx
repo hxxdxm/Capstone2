@@ -81,10 +81,35 @@ export default function MyPage() {
     if (token) {
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      fetch(`${API_BASE_URL}/annotations/my`, { headers })
-        .then(res => res.json())
-        .then(data => setMyQuotes(Array.isArray(data) ? data : []))
-        .catch(() => setMyQuotes([]));
+      // 내 userId 추출 (좋아요 필터링용)
+      let myUserId: string | null = null;
+      try {
+        const payload = JSON.parse(window.atob(token.split('.')[1]));
+        myUserId = payload.id || payload.userId || payload._id || null;
+      } catch { }
+
+      // 1) 내가 직접 작성한 필사 + 2) 내가 ❤️ 좋아요(수집)한 필사 병합
+      Promise.all([
+        fetch(`${API_BASE_URL}/annotations/my`, { headers }).then(r => r.json()).catch(() => []),
+        fetch(`${API_BASE_URL}/annotations/exhibition`).then(r => r.json()).catch(() => [])
+      ]).then(([myData, exhibitionData]) => {
+        const myOwn: any[] = Array.isArray(myData) ? myData.map((q: any) => ({ ...q, _source: 'own' })) : [];
+        const myOwnIds = new Set(myOwn.map((q: any) => q._id));
+
+        // exhibition에서 내가 좋아요한 것 (본인 글 중복 제외)
+        const liked: any[] = Array.isArray(exhibitionData) && myUserId
+          ? exhibitionData
+              .filter((item: any) =>
+                Array.isArray(item.likes) &&
+                item.likes.includes(myUserId) &&
+                !myOwnIds.has(item._id)
+              )
+              .map((item: any) => ({ ...item, _source: 'liked' }))
+          : [];
+
+        setMyQuotes([...myOwn, ...liked]);
+      });
+
 
       fetchReadingData(token);
 
@@ -386,9 +411,18 @@ export default function MyPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {myQuotes.map((q) => (
                 <div key={q._id} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all relative group flex flex-col justify-between h-[320px]">
+                  {/* 출처 뱃지 */}
+                  <span className={`absolute top-4 right-4 text-[9px] font-black px-2 py-0.5 rounded-full tracking-widest ${
+                    q._source === 'liked'
+                      ? 'bg-red-50 text-red-400 border border-red-100'
+                      : 'bg-gray-100 text-gray-400 border border-gray-200'
+                  }`}>
+                    {q._source === 'liked' ? '❤️ 수집' : '✍️ 작성'}
+                  </span>
+
                   <div>
                     <div className="text-3xl font-serif text-gray-100 absolute top-4 left-6">"</div>
-                    <p className="font-serif text-gray-800 leading-relaxed mb-4 line-clamp-6 relative z-10 break-keep">
+                    <p className="font-serif text-gray-800 leading-relaxed mb-4 line-clamp-6 relative z-10 break-keep pt-4">
                       {q.quote || q.content}
                     </p>
                   </div>
@@ -397,7 +431,7 @@ export default function MyPage() {
                       {q.bookId?.title || q.bookTitle || 'Unknown Book'}
                     </p>
                     <button
-                      onClick={() => openExportModal(q.quote || q.content, q.bookId?.title || q.bookTitle || '책', q.author || q.authorName || '작자 미상')}
+                      onClick={() => openExportModal(q.quote || q.content, q.bookId?.title || q.bookTitle || '책', q.author || q.authorName || q.bookId?.author || '작자 미상')}
                       className="w-full py-3.5 bg-gray-50 text-gray-900 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-black hover:text-white transition flex items-center justify-center space-x-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>

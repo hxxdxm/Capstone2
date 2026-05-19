@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
-export default function SearchPage() {
-  const [keyword, setKeyword] = useState('');
+function SearchPageInner() {
+  const searchParams = useSearchParams();
+  const [keyword, setKeyword] = useState(searchParams.get('q') || '');
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(!!searchParams.get('q'));
 
-  // 📍 철벽 방어막 적용!
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -21,21 +22,15 @@ export default function SearchPage() {
     return token;
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!keyword.trim()) return alert("검색어를 입력해주세요.");
-
+  const runSearch = async (q: string) => {
+    if (!q.trim()) return;
     setIsLoading(true);
     setHasSearched(true);
     const token = getSafeToken();
-
     try {
-      const res = await fetch(`${API_BASE_URL}/users/search?keyword=${encodeURIComponent(keyword)}`, {
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
+      const res = await fetch(`${API_BASE_URL}/users/search?keyword=${encodeURIComponent(q)}`, {
+        headers: { 'Authorization': token ? `Bearer ${token}` : '' }
       });
-
       if (res.ok) {
         const data = await res.json();
         setResults(Array.isArray(data) ? data : []);
@@ -48,6 +43,21 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 헤더 검색창에서 ?q= 파라미터로 이동하면 자동 검색 실행
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q && q.trim()) {
+      setKeyword(q);
+      runSearch(q);
+    }
+  }, [searchParams]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!keyword.trim()) return alert("검색어를 입력해주세요.");
+    await runSearch(keyword);
   };
 
   return (
@@ -137,3 +147,11 @@ export default function SearchPage() {
     </div>
   );
 }
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div></div>}>
+      <SearchPageInner />
+    </Suspense>
+  );
+}
