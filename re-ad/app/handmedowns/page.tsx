@@ -24,6 +24,18 @@ export default function HandMeDownsPage() {
 
   const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
 
+  const getTradeTypeLabel = (tradeType: string) => {
+    if (tradeType === 'SHARE') return '나눔';
+    if (tradeType === 'EXCHANGE') return '교환';
+    return tradeType;
+  };
+
+  const getTradeTypeValue = (label: string) => {
+    if (label === '나눔') return 'SHARE';
+    if (label === '교환') return 'EXCHANGE';
+    return label;
+  };
+
   // 📍 사진 선택 핸들러
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,53 +48,76 @@ export default function HandMeDownsPage() {
     }
   };
 
-  useEffect(() => {
-    // 임시 더미 데이터 (구조 확인용)
-    const dummyData = [
-      {
-        id: 1,
-        title: "다정한 것이 살아남는다",
-        author: "브라이언 헤어",
-        condition: "거의 새 것",
-        tradeType: "나눔",
-        provider: "독서광",
-        imageUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800",
-        description: "두 번 읽고 깨끗하게 보관했습니다.",
-        createdAt: new Date().toISOString()
+  const fetchItems = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/handmedowns`);
+      if (!res.ok) throw new Error('목록 로드 실패');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setItems(data);
+      } else {
+        setItems([]);
       }
-    ];
-
-    setTimeout(() => {
-      setItems(dummyData);
+    } catch (error) {
+      console.error('물려주기 목록 로드 실패:', error);
+      setItems([]);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
+  };
+
+  useEffect(() => {
+    fetchItems();
   }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!getToken()) return alert("로그인 후 등록할 수 있습니다.");
-    
-    // 📍 사진이 필수라면 체크
-    if (!formData.imagePreview) {
-      alert("책 상태를 확인할 수 있는 사진을 등록해주세요!");
-      return;
-    }
 
-    // [참고] 백엔드에 보낼 때는 사진이 포함되므로 FormData를 사용해야 할 수 있습니다.
-    // 지금은 UI 확인용으로 알림창만 띄웁니다.
-    alert("도서 상태 사진과 함께 성공적으로 등록되었습니다!");
-    
-    setIsModalOpen(false);
-    // 폼 초기화 (사진 정보까지 싹 비워줌)
-    setFormData({ 
-      title: '', author: '', condition: '거의 새 것', tradeType: '나눔', 
-      description: '', imagePreview: '', imageFile: null 
-    });
+    const token = getToken();
+    if (!token) return alert("로그인 토큰이 없습니다. 다시 로그인해주세요.");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/handmedowns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          bookTitle: formData.title,
+          bookAuthor: formData.author,
+          bookThumbnail: '',
+          comment: formData.description || `${formData.condition} 상태의 책입니다.`,
+          contactLink: '',
+          tradeType: getTradeTypeValue(formData.tradeType)
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.message || '도서 등록에 실패했습니다.');
+        return;
+      }
+
+      const data = await res.json();
+      alert(data.message || '도서 등록이 완료되었습니다!');
+      setIsModalOpen(false);
+      setFormData({ 
+        title: '', author: '', condition: '거의 새 것', tradeType: '나눔', 
+        description: '', imagePreview: '', imageFile: null 
+      });
+      fetchItems();
+    } catch (error) {
+      console.error('등록 중 에러:', error);
+      alert('서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    }
   };
 
   const filteredItems = items.filter(item => {
     if (activeFilter === '전체') return true;
-    return item.tradeType === activeFilter;
+    return getTradeTypeLabel(item.tradeType) === activeFilter;
   });
 
   return (
@@ -133,21 +168,25 @@ export default function HandMeDownsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full">
+              <div key={item._id || item.id} className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full">
                 <div className="h-48 overflow-hidden relative bg-gray-100">
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img
+                    src={item.bookThumbnail || item.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
+                    alt={item.bookTitle || item.title || '책 이미지'}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   <div className="absolute top-4 left-4">
-                    <span className={`px-2 py-1 rounded text-[10px] font-black tracking-widest text-white shadow-sm ${item.tradeType === '나눔' ? 'bg-green-500' : 'bg-purple-500'}`}>
-                      {item.tradeType}
+                    <span className={`px-2 py-1 rounded text-[10px] font-black tracking-widest text-white shadow-sm ${getTradeTypeLabel(item.tradeType) === '나눔' ? 'bg-green-500' : 'bg-purple-500'}`}>
+                      {getTradeTypeLabel(item.tradeType)}
                     </span>
                   </div>
                 </div>
                 <div className="p-6 flex flex-col flex-1">
-                  <h3 className="text-lg font-black mb-1 text-black line-clamp-1">{item.title}</h3>
-                  <p className="text-xs font-bold text-gray-400 mb-4">{item.author}</p>
+                  <h3 className="text-lg font-black mb-1 text-black line-clamp-1">{item.bookTitle || item.title}</h3>
+                  <p className="text-xs font-bold text-gray-400 mb-4">{item.bookAuthor || item.author}</p>
                   <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between text-[10px] font-black text-gray-500">
-                    <span>{item.condition}</span>
-                    <span>By {item.provider}</span>
+                    <span>{item.comment || item.description || item.condition}</span>
+                    <span>By {item.ownerId?.nickname || item.provider || '익명'}</span>
                   </div>
                 </div>
               </div>
