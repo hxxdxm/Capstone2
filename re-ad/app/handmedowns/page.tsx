@@ -75,24 +75,28 @@ export default function HandMeDownsPage() {
     e.preventDefault();
     if (!getToken()) return alert("로그인 후 등록할 수 있습니다.");
 
+    if (!formData.imageFile) {
+      alert("책 상태를 확인할 수 있는 사진을 등록해주세요!");
+      return;
+    }
+
     const token = getToken();
     if (!token) return alert("로그인 토큰이 없습니다. 다시 로그인해주세요.");
 
     try {
+      const payload = new FormData();
+      payload.append('bookTitle', formData.title);
+      payload.append('bookAuthor', formData.author);
+      payload.append('comment', formData.description || `${formData.condition} 상태의 책입니다.`);
+      payload.append('tradeType', getTradeTypeValue(formData.tradeType));
+      payload.append('image', formData.imageFile);
+
       const res = await fetch(`${API_BASE_URL}/handmedowns`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          bookTitle: formData.title,
-          bookAuthor: formData.author,
-          bookThumbnail: '',
-          comment: formData.description || `${formData.condition} 상태의 책입니다.`,
-          contactLink: '',
-          tradeType: getTradeTypeValue(formData.tradeType)
-        })
+        body: payload
       });
 
       if (!res.ok) {
