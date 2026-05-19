@@ -10,6 +10,7 @@ export default function MainPage() {
   const [exhibitions, setExhibitions] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [rankings, setRankings] = useState<any[]>([]); 
+  const [activeFilter, setActiveFilter] = useState('전체');
 
   const banners = [
     {
@@ -80,6 +81,11 @@ export default function MainPage() {
     return () => clearInterval(timer);
   }, [banners.length]);
 
+  const filteredRooms = rooms.filter((room) => {
+    if (activeFilter === '전체') return true;
+    return room.roomType === activeFilter;
+  });
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
       
@@ -147,9 +153,25 @@ export default function MainPage() {
             <Link href="/rooms" className="text-xs font-black border-b-2 border-black pb-1">VIEW ALL</Link>
           </div>
 
+          <div className="flex flex-wrap gap-2 mb-6">
+            {['전체', '온라인', '오프라인'].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-4 py-2 rounded-full text-[10px] font-black transition ${
+                  activeFilter === filter
+                    ? 'bg-black text-white shadow-md'
+                    : 'bg-white text-gray-500 border border-gray-200 hover:border-black hover:text-black'
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {rooms.length > 0 ? (
-              rooms.map((room) => {
+            {filteredRooms.length > 0 ? (
+              filteredRooms.map((room) => {
                 const currentMembers = room.members?.length || 0;
                 const isFull = currentMembers >= (room.maxMembers || 8);
                 

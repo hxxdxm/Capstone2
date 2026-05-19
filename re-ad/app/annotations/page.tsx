@@ -24,7 +24,11 @@ export default function ExhibitionPage() {
     imagePreview: '' 
   });
 
-  const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
+  const getToken = () => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    return token && token !== 'undefined' && token !== 'null' ? token : null;
+  };
   const getMyId = () => {
     const token = getToken();
     if (!token) return null;

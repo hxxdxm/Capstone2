@@ -101,9 +101,17 @@ export default function RoomsPage() {
     }
   };
 
+  const getRoomTypeLabel = (roomType: string) => {
+    if (roomType === 'ONLINE') return '온라인';
+    if (roomType === 'LOCAL') return '오프라인';
+    return roomType;
+  };
+
   const filteredRooms = rooms.filter(room => {
     if (activeFilter === '전체') return true;
-    return room.roomType === activeFilter;
+    if (activeFilter === '온라인') return room.roomType === 'ONLINE';
+    if (activeFilter === '오프라인') return room.roomType === 'LOCAL';
+    return true;
   });
 
   return (
@@ -167,8 +175,8 @@ export default function RoomsPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.roomType === '온라인' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
-                        {room.roomType}
+                      <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.roomType === 'ONLINE' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                        {getRoomTypeLabel(room.roomType)}
                       </span>
                       {room.roomPassword && (
                         <span className="text-gray-400" title="비밀번호 필요">🔒</span>
