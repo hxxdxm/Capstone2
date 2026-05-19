@@ -13,6 +13,12 @@ function SearchPageInner() {
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(!!searchParams.get('q'));
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = 아직 체크 중
+
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    setIsLoggedIn(!!(token && token !== 'undefined' && token !== 'null' && token.split('.').length === 3));
+  }, []);
 
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
@@ -64,7 +70,39 @@ function SearchPageInner() {
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
       <Header />
 
-      <main className="mx-auto max-w-3xl px-6 mt-12">
+      {/* 로그인 상태 체크 중 */}
+      {isLoggedIn === null ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+        </div>
+      ) : !isLoggedIn ? (
+        /* 비로그인 안내 화면 */
+        <main className="mx-auto max-w-3xl px-6 mt-12">
+          <div className="bg-white rounded-[2.5rem] p-12 shadow-sm border border-gray-100 text-center">
+            <span className="text-5xl block mb-6">🔒</span>
+            <h2 className="text-2xl font-black tracking-tighter mb-3">로그인이 필요한 기능입니다.</h2>
+            <p className="text-sm text-gray-400 font-bold mb-8 break-keep">
+              독서 메이트를 찾으려면 먼저 로그인해 주세요.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/login"
+                className="px-8 py-3.5 bg-black text-white font-black text-sm rounded-full hover:bg-gray-800 transition shadow-lg"
+              >
+                로그인하기
+              </Link>
+              <Link
+                href="/signup"
+                className="px-8 py-3.5 bg-gray-100 text-gray-700 font-black text-sm rounded-full hover:bg-gray-200 transition"
+              >
+                회원가입
+              </Link>
+            </div>
+          </div>
+        </main>
+      ) : (
+        /* 로그인 시 기존 검색 UI */
+        <main className="mx-auto max-w-3xl px-6 mt-12">
         <section className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-gray-100 mb-10 text-center">
           <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-6 rounded-full">
             FIND MEMBERS
@@ -144,6 +182,7 @@ function SearchPageInner() {
           )}
         </section>
       </main>
+      )}
     </div>
   );
 }
