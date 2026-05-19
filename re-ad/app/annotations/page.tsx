@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 
-const API_BASE_URL = 'http://13.124.191.57:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : 'http://13.124.191.57:5000/api';
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://13.124.191.57:5000';
 
 export default function ExhibitionPage() {
   const router = useRouter();
@@ -207,7 +208,7 @@ export default function ExhibitionPage() {
                     {item.type === 'image' ? (
                       <div className="relative aspect-[4/5] bg-gray-900">
                         <img
-                          src={item.image}
+                          src={item.image?.startsWith('http') ? item.image : `${IMAGE_BASE_URL}${item.image}`}
                           alt="annotation"
                           className="absolute inset-0 w-full h-full object-cover"
                         />

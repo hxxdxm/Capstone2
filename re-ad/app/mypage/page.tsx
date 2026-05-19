@@ -6,6 +6,25 @@ import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
+const MBTI_STORAGE_KEY = 'mbtiAnswers';
+
+const saveMbtiAnswersToStorage = (answers: number[]) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(MBTI_STORAGE_KEY, JSON.stringify(answers));
+};
+
+const loadMbtiAnswersFromStorage = (): number[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(MBTI_STORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((value: any) => Number(value)).filter((value: number) => [1, 2, 3].includes(value));
+  } catch {
+    return [];
+  }
+};
 
 export default function MyPage() {
   const router = useRouter();
@@ -62,6 +81,10 @@ export default function MyPage() {
     if (token && storedName && storedName !== 'undefined') {
       setIsLoggedIn(true);
       setUserName(storedName);
+      const storedAnswers = loadMbtiAnswersFromStorage();
+      if (storedAnswers.length > 0) {
+        setMbtiAnswers(storedAnswers);
+      }
     } else {
       router.push('/login');
       return;
@@ -85,11 +108,11 @@ export default function MyPage() {
           setMyQuotes([]);
         });
 
-      // 2. 영수증
+      // 2. 독서현황
       fetch(`${API_BASE_URL}/reading-logs/receipt?year=2026&month=05`, { headers })
         .then(res => res.json())
         .then(data => setReceipt(data))
-        .catch(err => console.error("영수증 로드 실패:", err));
+        .catch(err => console.error("현황 로드 실패:", err));
 
       // 3. 통계
       fetch(`${API_BASE_URL}/reading-logs/stats`, { headers })
@@ -118,7 +141,12 @@ export default function MyPage() {
             
             setFollowers(data.followersCount || 0);
             setFollowing(data.followingCount || 0);
-            if(data.mbti) setMbtiResult({ mbti: data.mbti });
+            if(data.mbti) {
+            setMbtiResult({ mbti: data.mbti });
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem(MBTI_STORAGE_KEY);
+            }
+          }
           }
         })
         .catch(() => {});
@@ -239,6 +267,9 @@ export default function MyPage() {
         setMbtiResult(data);
         setIsMbtiModalOpen(false);
         setMbtiAnswers([]);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(MBTI_STORAGE_KEY);
+        }
       }
     } catch (error) {
       alert("MBTI 분석 중 오류가 발생했습니다.");
@@ -494,6 +525,7 @@ export default function MyPage() {
                           const newAnswers = [...mbtiAnswers];
                           newAnswers[qIdx] = aIdx + 1;
                           setMbtiAnswers(newAnswers);
+                          saveMbtiAnswersToStorage(newAnswers);
                         }}
                         className={`text-left px-4 py-3 rounded-xl text-xs font-bold transition-all border ${
                           mbtiAnswers[qIdx] === aIdx + 1 ? 'bg-black text-white border-black shadow-md' : 'bg-white border-gray-200 text-gray-500 hover:border-black'
