@@ -72,6 +72,9 @@ export default function Header() {
         <Link href="/annotations" className={getLinkStyle('/annotations')}>필사</Link>
         <Link href="/rooms" className={getLinkStyle('/rooms')}>모임</Link>
         <Link href="/handmedowns" className={getLinkStyle('/handmedowns')}>나눔</Link>
+        {isLoggedIn && (
+          <Link href="/search" className={getLinkStyle('/search')}>친구찾기</Link>
+        )}
       </nav>
 
       {/* 우측 영역: 검색 + 로그인/마이페이지 */}
