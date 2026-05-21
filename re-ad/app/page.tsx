@@ -12,38 +12,9 @@ export default function MainPage() {
   const [rankings, setRankings] = useState<any[]>([]); 
   const [activeFilter, setActiveFilter] = useState('전체');
 
-  const banners = [
-    {
-      id: 1,
-      image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=2000",
-      tag: "EVENT & EXHIBITION",
-      title: "문장으로 잇는\n우리들의 독서 기록 展",
-      desc: "서촌 한옥 서점 '무목적' (4.15 - 4.25)"
-    },
-    {
-      id: 2,
-      image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=2000",
-      tag: "BOOK TALK",
-      title: "양귀자 작가와 함께하는\n'모순' 북토크",
-      desc: "4월 20일 저녁 7시, 온/오프라인 동시 진행"
-    },
-    {
-      id: 3,
-      image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000",
-      tag: "NOTICE",
-      title: "텍스트힙 수집가라면?\n앱 리뷰 이벤트 참여!",
-      desc: "참가자 전원에게 전용 폰트 증정"
-    }
-  ];
 
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
-  const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
-  const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-    }, 5000);
 
     // 1. [API] 필사 데이터 최신 5개 (📍 백엔드 주소 /annotations/exhibition 으로 완벽 수정)
     fetch(`${API_BASE_URL}/annotations/exhibition`)
@@ -78,8 +49,7 @@ export default function MainPage() {
       })
       .catch(err => console.error("랭킹 로드 실패:", err));
 
-    return () => clearInterval(timer);
-  }, [banners.length]);
+  }, []);
 
   const filteredRooms = rooms.filter((room) => {
     if (activeFilter === '전체') return true;
@@ -91,24 +61,7 @@ export default function MainPage() {
       
       <Header />
 
-      <section className="px-6 py-8 mx-auto max-w-7xl relative group">
-        <div className="relative h-[300px] md:h-[400px] bg-black rounded-3xl overflow-hidden shadow-xl">
-          {banners.map((banner, index) => (
-            <div key={banner.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
-              <div className="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-1000 group-hover:scale-105" style={{ backgroundImage: `url(${banner.image})` }}></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-              <div className="absolute bottom-10 left-10 text-white z-20">
-                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black tracking-widest mb-4">{banner.tag}</span>
-                <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight whitespace-pre-line">{banner.title}</h2>
-                <p className="text-gray-300 text-sm font-medium">{banner.desc}</p>
-              </div>
-            </div>
-          ))}
 
-          <button onClick={prevBanner} className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
-          <button onClick={nextBanner} className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
-        </div>
-      </section>
 
       <section className="px-6 py-10 mx-auto max-w-7xl border-b border-gray-100">
         <div className="flex items-end justify-between mb-8">
