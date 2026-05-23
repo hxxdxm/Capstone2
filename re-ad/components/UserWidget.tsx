@@ -13,7 +13,25 @@ export default function UserWidget() {
     const name = localStorage.getItem('userName') || sessionStorage.getItem('userName') || '';
     if (token && token !== 'undefined' && token !== 'null') {
       setIsLoggedIn(true);
-      setUserName(name);
+      if (name) {
+        setUserName(name);
+      } else {
+        // 닉네임이 저장되어 있지 않으면 API로 사용자 정보 조회
+        fetch('http://13.124.191.57:5000/api/users/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data) {
+              const fetchedName = data.nickname || data.name || data.userName || data.username || '';
+              setUserName(fetchedName);
+              // 스토리지에도 저장
+              if (localStorage.getItem('token')) localStorage.setItem('userName', fetchedName);
+              else sessionStorage.setItem('userName', fetchedName);
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, []);
 

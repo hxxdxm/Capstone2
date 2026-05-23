@@ -78,6 +78,12 @@ export default function MyPage() {
       return;
     }
 
+    // localStorage에 저장된 MBTI 결과 먼저 복원
+    const savedMbti = localStorage.getItem('mbtiResult');
+    if (savedMbti) {
+      try { setMbtiResult(JSON.parse(savedMbti)); } catch { }
+    }
+
     if (token) {
       const headers = { 'Authorization': `Bearer ${token}` };
 
@@ -127,7 +133,12 @@ export default function MyPage() {
             }
             setFollowers(data.followersCount || 0);
             setFollowing(data.followingCount || 0);
-            if (data.mbti) setMbtiResult({ mbti: data.mbti });
+            // 서버 MBTI가 있으면 서버 값 우선 적용 + 로컬에도 저장
+            if (data.mbti) {
+              const serverMbti = { mbti: data.mbti };
+              setMbtiResult(serverMbti);
+              localStorage.setItem('mbtiResult', JSON.stringify(serverMbti));
+            }
           }
         })
         .catch(() => { });
@@ -222,6 +233,8 @@ export default function MyPage() {
       if (res.ok) {
         const data = await res.json();
         setMbtiResult(data);
+        // 결과를 localStorage에 저장해 페이지 재진입 시에도 유지
+        localStorage.setItem('mbtiResult', JSON.stringify(data));
         setIsMbtiModalOpen(false);
         setMbtiAnswers([]);
       }
@@ -391,6 +404,53 @@ export default function MyPage() {
             </div>
           </section>
         </div>
+
+        {/* 독서 MBTI 섹션 */}
+        <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-black tracking-tight">🧠 나의 독서 MBTI</h3>
+              <p className="text-[10px] text-gray-400 font-black mt-1 uppercase tracking-widest">Reading Personality Type</p>
+            </div>
+            {mbtiResult && (
+              <button
+                onClick={() => { setMbtiAnswers([]); setIsMbtiModalOpen(true); }}
+                className="text-[10px] font-black text-gray-400 hover:text-black border border-gray-200 hover:border-black px-4 py-2 rounded-full transition uppercase tracking-widest"
+              >
+                다시 테스트하기
+              </button>
+            )}
+          </div>
+
+          {mbtiResult ? (
+            <div className="flex flex-col sm:flex-row items-center gap-8">
+              {/* 결과 배지 */}
+              <div className="flex-shrink-0 w-32 h-32 rounded-[2rem] bg-gradient-to-br from-purple-100 to-purple-200 border border-purple-200 flex flex-col items-center justify-center shadow-inner">
+                <span className="text-3xl font-black text-purple-700 tracking-tight">{mbtiResult.mbti}</span>
+                <span className="text-[9px] font-black text-purple-400 mt-1 uppercase tracking-widest">독서 유형</span>
+              </div>
+              {/* 설명 */}
+              <div className="flex-1">
+                <p className="text-sm font-black text-gray-800 mb-2">{mbtiResult.title || mbtiResult.mbti} 독서가</p>
+                <p className="text-xs text-gray-500 leading-relaxed break-keep">
+                  {mbtiResult.description || '당신만의 독서 스타일이 분석되었습니다. 더 많은 책과 함께 성장해나가세요!'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center py-8 gap-4">
+              <p className="text-sm font-bold text-gray-400 text-center break-keep">
+                아직 독서 성향 테스트를 하지 않으셨어요.<br />나의 독서 MBTI를 알아보세요!
+              </p>
+              <button
+                onClick={() => { setMbtiAnswers([]); setIsMbtiModalOpen(true); }}
+                className="px-8 py-3 bg-black text-white text-[11px] font-black rounded-full hover:bg-gray-800 transition shadow-md uppercase tracking-widest"
+              >
+                테스트 시작하기
+              </button>
+            </div>
+          )}
+        </section>
 
         {/* 나의 문집 수집 */}
         <section>

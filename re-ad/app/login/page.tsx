@@ -40,7 +40,7 @@ export default function LoginPage() {
         // 2. 📍 백엔드에서 준 응답 데이터에서 토큰과 닉네임 꺼내기
         // (주의: 백엔드에서 토큰을 'token'으로 주는지 'accessToken'으로 주는지에 따라 달라질 수 있습니다!)
         const token = data.token || data.accessToken;
-        const userName = data.nickname || data.userName || '독서가';
+        const userName = data.nickname || data.name || data.userName || data.username || '';
 
         if (!token) {
           alert("서버 통신은 성공했으나 토큰을 찾을 수 없습니다. (백엔드 응답 키값 확인 필요)");
