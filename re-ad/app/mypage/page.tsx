@@ -70,12 +70,14 @@ export default function MyPage() {
     const token = getSafeToken();
     const storedName = getStoredUserName();
 
-    if (token && storedName && storedName !== 'undefined') {
-      setIsLoggedIn(true);
-      setUserName(storedName);
-    } else {
+    if (!token) {
       router.push('/login');
       return;
+    }
+
+    setIsLoggedIn(true);
+    if (storedName && storedName !== 'undefined') {
+      setUserName(storedName);
     }
 
     // localStorage에 저장된 MBTI 결과 먼저 복원

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import UserWidget from '@/components/UserWidget';
 
 export default function Header() {
   const pathname = usePathname();
@@ -32,8 +33,10 @@ export default function Header() {
         <Link href="/search" className={getLinkStyle('/search')}>친구찾기</Link>
       </nav>
 
-      {/* 우측 여백 (UserWidget이 fixed로 대체) */}
-      <div className="flex-1" />
+      {/* 우측 유저 위젯 */}
+      <div className="flex-1 flex justify-end items-center">
+        <UserWidget />
+      </div>
     </header>
   );
 }
