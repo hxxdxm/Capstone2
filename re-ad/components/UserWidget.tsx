@@ -23,7 +23,7 @@ export default function UserWidget() {
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             if (data) {
-              const fetchedName = data.nickname || data.name || data.userName || data.username || '';
+              const fetchedName = data.username || '';
               setUserName(fetchedName);
               // 스토리지에도 저장
               if (localStorage.getItem('token')) localStorage.setItem('userName', fetchedName);
