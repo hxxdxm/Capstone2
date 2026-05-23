@@ -13,26 +13,58 @@ export default function UserWidget() {
   useEffect(() => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const name = localStorage.getItem('userName') || sessionStorage.getItem('userName') || '';
+
     if (token && token !== 'undefined' && token !== 'null') {
       setIsLoggedIn(true);
+
       if (name) {
         setUserName(name);
-      } else {
-        // 닉네임이 저장되어 있지 않으면 API로 사용자 정보 조회
-        fetch('http://13.124.191.57:5000/api/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-          .then(res => res.ok ? res.json() : null)
+        return;
+      }
+
+      // 1) JWT payload에서 닉네임 추출 시도
+      try {
+        const payload = JSON.parse(window.atob(token.split('.')[1]));
+        console.log('🪙 JWT payload:', payload);
+        const jwtName = payload.username || payload.nickname || payload.name || payload.email?.split('@')[0] || '';
+        if (jwtName) {
+          setUserName(jwtName);
+          if (localStorage.getItem('token')) localStorage.setItem('userName', jwtName);
+          else sessionStorage.setItem('userName', jwtName);
+          return;
+        }
+      } catch {}
+
+      // 2) API로 사용자 정보 조회 (여러 엔드포인트 시도)
+      const endpoints = [
+        'http://13.124.191.57:5000/api/users/me',
+        'http://13.124.191.57:5000/api/users/my-profile',
+        'http://13.124.191.57:5000/api/users/profile',
+      ];
+
+      const tryFetch = (idx: number) => {
+        if (idx >= endpoints.length) return;
+        fetch(endpoints[idx], { headers: { 'Authorization': `Bearer ${token}` } })
+          .then(res => {
+            if (!res.ok) { tryFetch(idx + 1); return null; }
+            return res.json();
+          })
           .then(data => {
-            if (data) {
-              const fetchedName = data.username || '';
+            if (!data) return;
+            console.log(`📡 ${endpoints[idx]} 응답:`, data);
+            const user = data.user || data.data || data;
+            const fetchedName =
+              user.username || user.nickname || user.name ||
+              data.username || data.nickname || data.name || '';
+            if (fetchedName) {
               setUserName(fetchedName);
               if (localStorage.getItem('token')) localStorage.setItem('userName', fetchedName);
               else sessionStorage.setItem('userName', fetchedName);
             }
           })
-          .catch(() => {});
-      }
+          .catch(() => tryFetch(idx + 1));
+      };
+      tryFetch(0);
     }
   }, []);
 

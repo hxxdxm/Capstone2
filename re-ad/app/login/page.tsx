@@ -37,10 +37,17 @@ export default function LoginPage() {
       if (res.ok) {
         const data = await res.json();
         
-        // 2. 📍 백엔드에서 준 응답 데이터에서 토큰과 닉네임 꺼내기
-        // (주의: 백엔드에서 토큰을 'token'으로 주는지 'accessToken'으로 주는지에 따라 달라질 수 있습니다!)
-        const token = data.token || data.accessToken;
-        const userName = data.username || '';
+        // 📍 응답 구조 확인용 (브라우저 콘솔 F12 > Console 탭에서 확인)
+        console.log('🔑 로그인 API 응답 전체:', data);
+
+        const token = data.token || data.accessToken || data.access_token;
+        // 가능한 모든 닉네임 필드명 시도 + 중첩 객체(data.user) 내부도 확인
+        const user = data.user || data.data || {};
+        const userName =
+          data.username || data.nickname || data.name ||
+          user.username || user.nickname || user.name || '';
+
+        console.log('👤 추출된 닉네임:', userName);
 
         if (!token) {
           alert("서버 통신은 성공했으나 토큰을 찾을 수 없습니다. (백엔드 응답 키값 확인 필요)");
