@@ -40,7 +40,7 @@ export default function MyPage() {
   const [isMbtiModalOpen, setIsMbtiModalOpen] = useState(false);
   const [mbtiAnswers, setMbtiAnswers] = useState<number[]>([]);
 
-  // 팔로워/팔로잌 목록 모달
+  // 팔로워/팔로잉 목록 모달
   const [followModal, setFollowModal] = useState<{
     open: boolean;
     type: 'followers' | 'following';
@@ -120,12 +120,12 @@ export default function MyPage() {
         // exhibition에서 내가 좋아요한 것 (본인 글 중복 제외)
         const liked: any[] = Array.isArray(exhibitionData) && myUserId
           ? exhibitionData
-              .filter((item: any) =>
-                Array.isArray(item.likes) &&
-                item.likes.includes(myUserId) &&
-                !myOwnIds.has(item._id)
-              )
-              .map((item: any) => ({ ...item, _source: 'liked' }))
+            .filter((item: any) =>
+              Array.isArray(item.likes) &&
+              item.likes.includes(myUserId) &&
+              !myOwnIds.has(item._id)
+            )
+            .map((item: any) => ({ ...item, _source: 'liked' }))
           : [];
 
         setMyQuotes([...myOwn, ...liked]);
@@ -162,17 +162,17 @@ export default function MyPage() {
         fetch(`${API_BASE_URL}/users/${myUserId}/followers`, { headers })
           .then(res => res.json())
           .then(list => { if (Array.isArray(list)) setFollowers(list.length); })
-          .catch(() => {});
-          
+          .catch(() => { });
+
         fetch(`${API_BASE_URL}/users/${myUserId}/following`, { headers })
           .then(res => res.json())
           .then(list => { if (Array.isArray(list)) setFollowing(list.length); })
-          .catch(() => {});
+          .catch(() => { });
       }
     }
   }, []);
 
-  // 팔로워/팔로잌 목록 열기
+  // 팔로워/팔로잉 목록 열기
   const openFollowModal = async (type: 'followers' | 'following') => {
     const token = getSafeToken();
     if (!token) return alert('로그인이 필요합니다.');
@@ -181,7 +181,7 @@ export default function MyPage() {
     try {
       const payload = JSON.parse(window.atob(token.split('.')[1]));
       myUserId = payload.id || payload.userId || payload._id;
-    } catch {}
+    } catch { }
     if (!myUserId) { setFollowModal(prev => ({ ...prev, loading: false })); return; }
     try {
       const res = await fetch(`${API_BASE_URL}/users/${myUserId}/${type}`, {
@@ -358,7 +358,7 @@ export default function MyPage() {
                   style={{ cursor: 'pointer', textDecoration: 'underline dotted' }}
                   onClick={() => openFollowModal('following')}
                 >
-                  팔로잌 <strong>{following}</strong>
+                  팔로잉 <strong>{following}</strong>
                 </span>
               </div>
               <p className="profile-desc">이번 달은 <u>{receipt?.totalReadBooks || 0}권</u>의 책과 만났어요.</p>
@@ -393,7 +393,7 @@ export default function MyPage() {
                     phone = data.phone || data.phoneNumber || '';
                     setProfileDetail(data);
                   }
-                } catch {}
+                } catch { }
               }
               setEditFormData({ name: userName, email, password: '', passwordConfirm: '', phone });
               setIsEditProfileOpen(true);
@@ -454,7 +454,7 @@ export default function MyPage() {
                   </div>
                 );
               }) : (
-                <div style={{width:'100%', textAlign:'center', color:'#8A7A60', fontSize:'13px'}}>통계 데이터가 없습니다.</div>
+                <div style={{ width: '100%', textAlign: 'center', color: '#8A7A60', fontSize: '13px' }}>통계 데이터가 없습니다.</div>
               )}
             </div>
           </section>
@@ -483,7 +483,7 @@ export default function MyPage() {
             </div>
           ) : (
             <div className="mbti-empty">
-              <p style={{color:'#8A7A60', fontSize:'13px', marginBottom:'10px'}}>아직 독서 성향 테스트를 하지 않으셨어요.<br/>나의 독서 MBTI를 알아보세요!</p>
+              <p style={{ color: '#8A7A60', fontSize: '13px', marginBottom: '10px' }}>아직 독서 성향 테스트를 하지 않으셨어요.<br />나의 독서 MBTI를 알아보세요!</p>
               <button className="btn-mbti-start" onClick={() => { setMbtiAnswers([]); setIsMbtiModalOpen(true); }}>테스트 시작하기</button>
             </div>
           )}
@@ -497,9 +497,9 @@ export default function MyPage() {
           </div>
 
           {myQuotes.length === 0 ? (
-            <div style={{textAlign:'center', padding:'40px 0'}}>
-              <div style={{fontSize:'40px', marginBottom:'10px'}}>✍️</div>
-              <p style={{color:'#8A7A60', fontSize:'14px', marginBottom:'20px'}}>아직 수집한 영감 문장이 없습니다.</p>
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>✍️</div>
+              <p style={{ color: '#8A7A60', fontSize: '14px', marginBottom: '20px' }}>아직 수집한 영감 문장이 없습니다.</p>
               <Link href="/annotations" className="btn-record">필사 갤러리 구경가기</Link>
             </div>
           ) : (
@@ -509,7 +509,7 @@ export default function MyPage() {
                   <span className={`collection-source-badge ${q._source === 'liked' ? 'badge-liked' : 'badge-own'}`}>
                     {q._source === 'liked' ? '❤️ 수집' : '✍️ 작성'}
                   </span>
-                  
+
                   <div>
                     <div className="collection-quote-icon">“</div>
                     <div className="collection-quote-text">{q.quote || q.content}</div>
@@ -530,7 +530,7 @@ export default function MyPage() {
         {/* 푸터 */}
         <footer className="mypage-footer">
           <button onClick={handleLogout} className="btn-logout">로그아웃</button>
-          
+
           <div className="danger-zone">
             <h4>Danger Zone</h4>
             <p>회원 탈퇴 시 모든 독서 기록과 수집한 문장이 즉시 삭제되며 복구할 수 없습니다.</p>
@@ -540,7 +540,7 @@ export default function MyPage() {
       </main>
 
       {/* 모달들 (디자인 유지하면서 CSS 클래스로 변경) */}
-      
+
       {/* 프로필 수정 모달 */}
       {isEditProfileOpen && (
         <div className="mypage-modal-backdrop">
@@ -553,7 +553,7 @@ export default function MyPage() {
             </div>
             <div className="mypage-modal-body">
               <form onSubmit={handleEditProfile}>
-                <div style={{display:'flex', justifyContent:'center', marginBottom:'24px'}}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
                   <div className="profile-avatar">
                     {editFormData.name ? editFormData.name[0] : (userName ? userName[0] : '👤')}
                   </div>
@@ -581,7 +581,7 @@ export default function MyPage() {
                 <div className="mypage-form-group">
                   <label className="mypage-form-label">
                     전화번호
-                    <span style={{fontSize:'10px', color:'#BDB09A', fontWeight:600, marginLeft:'6px'}}>(수정 불가)</span>
+                    <span style={{ fontSize: '10px', color: '#BDB09A', fontWeight: 600, marginLeft: '6px' }}>(수정 불가)</span>
                   </label>
                   <input
                     type="text"
@@ -613,7 +613,7 @@ export default function MyPage() {
       {/* MBTI 테스트 모달 */}
       {isMbtiModalOpen && (
         <div className="mypage-modal-backdrop">
-          <div className="mypage-modal" style={{maxWidth:'500px'}}>
+          <div className="mypage-modal" style={{ maxWidth: '500px' }}>
             <div className="mypage-modal-header">
               <h3>독서 성향 테스트</h3>
               <button onClick={() => setIsMbtiModalOpen(false)} className="mypage-modal-close">
@@ -621,11 +621,11 @@ export default function MyPage() {
               </button>
             </div>
             <div className="mypage-modal-body">
-              <div style={{display:'flex', flexDirection:'column', gap:'20px'}}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {mbtiQuestions.map((q, qIdx) => (
                   <div key={qIdx}>
-                    <p style={{fontSize:'13px', fontWeight:700, color:'#3B3224', marginBottom:'10px'}}>Q{qIdx + 1}. {q.q}</p>
-                    <div style={{display:'flex', flexDirection:'column', gap:'8px'}}>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#3B3224', marginBottom: '10px' }}>Q{qIdx + 1}. {q.q}</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {q.a.map((answer, aIdx) => (
                         <button
                           key={aIdx}
@@ -635,11 +635,11 @@ export default function MyPage() {
                             setMbtiAnswers(newAnswers);
                           }}
                           style={{
-                            textAlign:'left', padding:'12px 16px', borderRadius:'12px', fontSize:'12px', fontWeight:600,
+                            textAlign: 'left', padding: '12px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
                             border: mbtiAnswers[qIdx] === aIdx + 1 ? '1.5px solid #7BA05B' : '1px solid #D9CDB8',
                             background: mbtiAnswers[qIdx] === aIdx + 1 ? 'rgba(123,160,91,0.1)' : '#fff',
                             color: mbtiAnswers[qIdx] === aIdx + 1 ? '#5E8542' : '#8A7A60',
-                            cursor:'pointer'
+                            cursor: 'pointer'
                           }}
                         >
                           {answer}
@@ -653,7 +653,7 @@ export default function MyPage() {
                 onClick={handleMbtiSubmit}
                 disabled={mbtiAnswers.filter(Boolean).length < 4}
                 className="btn-submit"
-                style={{marginTop:'24px', opacity: mbtiAnswers.filter(Boolean).length < 4 ? 0.5 : 1, cursor: mbtiAnswers.filter(Boolean).length < 4 ? 'not-allowed' : 'pointer'}}
+                style={{ marginTop: '24px', opacity: mbtiAnswers.filter(Boolean).length < 4 ? 0.5 : 1, cursor: mbtiAnswers.filter(Boolean).length < 4 ? 'not-allowed' : 'pointer' }}
               >
                 결과 확인하기
               </button>
@@ -664,36 +664,36 @@ export default function MyPage() {
 
       {/* 공유 모달 (이미지 다운로드) */}
       {isExportModalOpen && (
-        <div className="mypage-modal-backdrop" style={{background:'rgba(25,15,5,0.85)'}}>
-          <button className="mypage-modal-close" style={{position:'absolute', top:'24px', right:'24px', color:'#F2EDE4'}} onClick={() => setIsExportModalOpen(false)}>
+        <div className="mypage-modal-backdrop" style={{ background: 'rgba(25,15,5,0.85)' }}>
+          <button className="mypage-modal-close" style={{ position: 'absolute', top: '24px', right: '24px', color: '#F2EDE4' }} onClick={() => setIsExportModalOpen(false)}>
             <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
 
-          <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div ref={cardRef} style={{
-              width:'300px', height:'533px', background:'#2C2218', borderRadius:'24px', padding:'32px',
-              position:'relative', display:'flex', flexDirection:'column', justifyContent:'center',
-              boxShadow:'0 20px 40px rgba(0,0,0,0.5)', overflow:'hidden', backgroundImage:'radial-gradient(circle at 10% 20%, rgba(139,175,116,0.15) 0%, transparent 50%)'
+              width: '300px', height: '533px', background: '#2C2218', borderRadius: '24px', padding: '32px',
+              position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden', backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(139,175,116,0.15) 0%, transparent 50%)'
             }}>
-              <div style={{position:'relative', zIndex:10}}>
-                <div style={{fontFamily:"'Noto Serif KR', serif", fontSize:'60px', color:'rgba(255,255,255,0.1)', lineHeight:0.5, marginBottom:'10px'}}>“</div>
-                <p style={{fontFamily:"'Noto Serif KR', serif", fontSize:'18px', color:'#F2EDE4', lineHeight:1.8, fontStyle:'italic', wordBreak:'keep-all', marginBottom:'40px'}}>
+              <div style={{ position: 'relative', zIndex: 10 }}>
+                <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: '60px', color: 'rgba(255,255,255,0.1)', lineHeight: 0.5, marginBottom: '10px' }}>“</div>
+                <p style={{ fontFamily: "'Noto Serif KR', serif", fontSize: '18px', color: '#F2EDE4', lineHeight: 1.8, fontStyle: 'italic', wordBreak: 'keep-all', marginBottom: '40px' }}>
                   {selectedQuote.text}
                 </p>
-                <div style={{textAlign:'right', borderRight:'2px solid rgba(255,255,255,0.2)', paddingRight:'12px'}}>
-                  <div style={{fontSize:'12px', fontWeight:700, color:'#fff'}}>{selectedQuote.book}</div>
-                  <div style={{fontSize:'10px', color:'rgba(255,255,255,0.6)', marginTop:'4px'}}>{selectedQuote.author}</div>
+                <div style={{ textAlign: 'right', borderRight: '2px solid rgba(255,255,255,0.2)', paddingRight: '12px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{selectedQuote.book}</div>
+                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>{selectedQuote.author}</div>
                 </div>
               </div>
-              <div style={{position:'absolute', bottom:'24px', left:'0', width:'100%', textAlign:'center'}}>
-                <span style={{fontSize:'9px', fontWeight:700, color:'rgba(255,255,255,0.3)', letterSpacing:'0.2em'}}>TEXT HIP ARCHIVE</span>
+              <div style={{ position: 'absolute', bottom: '24px', left: '0', width: '100%', textAlign: 'center' }}>
+                <span style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em' }}>TEXT HIP ARCHIVE</span>
               </div>
             </div>
 
             <button onClick={handleDownloadCard} style={{
-              marginTop:'24px', background:'#fff', color:'#3B3224', padding:'14px 24px', borderRadius:'50px',
-              border:'none', fontSize:'12px', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'8px',
-              boxShadow:'0 4px 12px rgba(0,0,0,0.2)'
+              marginTop: '24px', background: '#fff', color: '#3B3224', padding: '14px 24px', borderRadius: '50px',
+              border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
             }}>
               <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
               이미지 저장하기
