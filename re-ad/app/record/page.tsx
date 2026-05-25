@@ -14,7 +14,7 @@ export default function RecordPage() {
         status: '읽는 중',
         rating: 5,
         review: '',
-        isPublic: true
+        isPublic: false
     });
 
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -116,7 +116,7 @@ export default function RecordPage() {
                 status: recordData.status,
                 rating: recordData.rating,
                 review: recordData.review,
-                isPublic: recordData.isPublic,
+                isPublic: false, // 필사 자동 등록 방지
             };
             if (bookId) logBody.bookId = bookId;
 
@@ -134,7 +134,7 @@ export default function RecordPage() {
                     ? `기록이 저장됐습니다! 독서 현황에 "${recordData.title}"이(가) 표시됩니다. 📊`
                     : '기록이 저장됐습니다! (온도/페이지 반영 완료) 📊'
                 );
-                setRecordData({ title: '', author: '', coverImage: '', status: '읽는 중', rating: 5, review: '', isPublic: true });
+                setRecordData({ title: '', author: '', coverImage: '', status: '읽는 중', rating: 5, review: '', isPublic: false });
                 setSelectedBook(null);
                 setReadPages(0);
                 setReadDate(new Date().toISOString().slice(0, 10));
@@ -252,26 +252,16 @@ export default function RecordPage() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">나의 감상 (다른 멤버들과 공유해보세요!)</label>
+                            <label className="form-label">나의 감상</label>
                             <textarea
-                                placeholder="이 책을 읽으며 어떤 생각과 영감을 얻으셨나요?"
+                                placeholder="이 책을 읽으며 어떤 생각과 영감을 얻으셨나요? (나만 볼 수 있어요)"
                                 value={recordData.review}
                                 onChange={(e) => setRecordData({ ...recordData, review: e.target.value })}
                                 className="form-textarea"
                             />
                         </div>
 
-                        <div className="form-footer">
-                            <label className="checkbox-wrap">
-                                <input
-                                    type="checkbox"
-                                    checked={recordData.isPublic}
-                                    onChange={(e) => setRecordData({ ...recordData, isPublic: e.target.checked })}
-                                    className="checkbox-input"
-                                />
-                                <span className="checkbox-label">내 피드에 공개하기</span>
-                            </label>
-
+                        <div className="form-footer" style={{ justifyContent: 'flex-end' }}>
                             <button type="submit" disabled={isSaving} className="btn-submit">
                                 {isSaving ? '저장 중...' : '기록 저장하기'}
                             </button>

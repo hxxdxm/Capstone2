@@ -42,7 +42,7 @@
 }
 
 .ranking-hero-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 36px;
   font-weight: 900;
   color: #3B3224;
@@ -174,7 +174,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 0 0 16px 0;
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 14px;
   font-weight: 900;
   z-index: 2;
@@ -222,7 +222,7 @@
 }
 
 .book-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 15px;
   font-weight: 700;
   color: #3B3224;

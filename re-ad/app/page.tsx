@@ -75,10 +75,10 @@ export default function MainPage() {
       <Header />
 
       <div className="main-grid">
-        
+
         {/* ── 좌측 메인 콘텐츠 ── */}
         <div className="main-content-left">
-          
+
           {/* 1. 필사 전시회 섹션 */}
           <section className="main-section">
             <div className="section-header">

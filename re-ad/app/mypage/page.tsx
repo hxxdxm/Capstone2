@@ -676,8 +676,8 @@ export default function MyPage() {
               boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden', backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(139,175,116,0.15) 0%, transparent 50%)'
             }}>
               <div style={{ position: 'relative', zIndex: 10 }}>
-                <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: '60px', color: 'rgba(255,255,255,0.1)', lineHeight: 0.5, marginBottom: '10px' }}>“</div>
-                <p style={{ fontFamily: "'Noto Serif KR', serif", fontSize: '18px', color: '#F2EDE4', lineHeight: 1.8, fontStyle: 'italic', wordBreak: 'keep-all', marginBottom: '40px' }}>
+                <div style={{ fontFamily: "'Noto Sans KR', sans-serif", fontSize: '60px', color: 'rgba(255,255,255,0.1)', lineHeight: 0.5, marginBottom: '10px' }}>“</div>
+                <p style={{ fontFamily: "'Noto Sans KR', sans-serif", fontSize: '18px', color: '#F2EDE4', lineHeight: 1.8, fontStyle: 'italic', wordBreak: 'keep-all', marginBottom: '40px' }}>
                   {selectedQuote.text}
                 </p>
                 <div style={{ textAlign: 'right', borderRight: '2px solid rgba(255,255,255,0.2)', paddingRight: '12px' }}>
@@ -722,7 +722,7 @@ export default function MyPage() {
           >
             {/* 헤더 */}
             <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #EDE7DA', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: '20px', fontWeight: 900, color: '#3B3224', margin: 0 }}>
+              <h3 style={{ fontFamily: "'Noto Sans KR', sans-serif", fontSize: '20px', fontWeight: 900, color: '#3B3224', margin: 0 }}>
                 {followModal.type === 'followers' ? '팔로워' : '팔로잉'}
               </h3>
               <button
@@ -763,7 +763,7 @@ export default function MyPage() {
                         background: 'linear-gradient(135deg, #3B3224, #5A4A36)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: '#F2EDE4', fontWeight: 900, fontSize: '16px',
-                        fontFamily: "'Noto Serif KR', serif"
+                        fontFamily: "'Noto Sans KR', sans-serif"
                       }}>
                         {displayName[0]}
                       </div>

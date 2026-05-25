@@ -38,7 +38,7 @@
 .badge-online { background: rgba(123,160,91,0.15); color: #5E8542; }
 .badge-offline { background: rgba(196,167,119,0.2); color: #8A7A60; }
 .room-title {
-  font-family: 'Noto Serif KR', serif; font-size: 34px; font-weight: 900;
+   font-size: 34px; font-weight: 900;
   color: #3B3224; line-height: 1.2; margin-bottom: 8px;
 }
 .room-member-count { font-size: 13px; font-weight: 600; color: #8A7A60; }
@@ -82,7 +82,7 @@
 
 /* ── 모임 소개 탭 ── */
 .room-info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.room-info-title { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 900; color: #3B3224; }
+.room-info-title {  font-size: 20px; font-weight: 900; color: #3B3224; }
 .btn-edit-desc { font-size: 11px; font-weight: 700; color: #8A7A60; background: none; border: none; cursor: pointer; text-decoration: underline dotted; }
 .btn-edit-desc:hover { color: #3B3224; }
 .room-desc-text { font-size: 15px; color: #5A4A36; line-height: 1.8; white-space: pre-wrap; word-break: keep-all; }
@@ -124,7 +124,7 @@
   width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(135deg, #3B3224, #5A4A36);
   display: flex; align-items: center; justify-content: center;
-  color: #F2EDE4; font-weight: 900; font-size: 18px; font-family: 'Noto Serif KR', serif;
+  color: #F2EDE4; font-weight: 900; font-size: 18px; 
 }
 .feed-post-author { font-weight: 700; font-size: 14px; color: #3B3224; }
 .feed-post-time { font-size: 10px; color: #BDB09A; margin-top: 2px; }
@@ -165,7 +165,7 @@
   display: flex; align-items: center; gap: 10px;
   background: #FDFAF5; flex-shrink: 0;
 }
-.chat-header-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; color: #3B3224; }
+.chat-header-title {  font-size: 16px; font-weight: 900; color: #3B3224; }
 .chat-header-dot { width: 8px; height: 8px; border-radius: 50%; background: #7BA05B; box-shadow: 0 0 0 3px rgba(123,160,91,0.2); }
 .chat-messages { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; background: #F7F2E9; }
 .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8A7A60; gap: 8px; }
@@ -222,7 +222,7 @@
   display: flex; justify-content: space-between; align-items: center;
   padding: 20px 28px; border-bottom: 1.5px solid #EDE7DA;
 }
-.feed-modal-title { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 900; color: #3B3224; }
+.feed-modal-title {  font-size: 20px; font-weight: 900; color: #3B3224; }
 .feed-modal-close { background: none; border: none; cursor: pointer; color: #8A7A60; font-size: 20px; line-height: 1; }
 .feed-modal-close:hover { color: #3B3224; }
 .feed-modal-body { padding: 24px 28px; }
@@ -246,7 +246,7 @@
 /* ── 비밀번호 모달 ── */
 .pw-modal-backdrop { position: fixed; inset: 0; z-index: 200; background: rgba(59,50,36,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; }
 .pw-modal { background: #FDFAF5; border-radius: 28px; padding: 36px; width: 100%; max-width: 360px; border: 1.5px solid #D9CDB8; box-shadow: 0 16px 40px rgba(0,0,0,0.1); text-align: center; }
-.pw-modal-title { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; color: #3B3224; margin-bottom: 20px; }
+.pw-modal-title {  font-size: 22px; font-weight: 900; color: #3B3224; margin-bottom: 20px; }
 .pw-modal-input { width: 100%; background: #F2EDE4; border: 1.5px solid #E8DFD0; border-radius: 16px; padding: 14px 16px; font-size: 14px; color: #3B3224; outline: none; margin-bottom: 20px; box-sizing: border-box; text-align: center; letter-spacing: 0.2em; transition: border-color 0.2s; }
 .pw-modal-input:focus { border-color: #7BA05B; }
 .pw-modal-btn-row { display: flex; gap: 10px; }

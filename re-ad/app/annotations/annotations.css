@@ -47,7 +47,7 @@
   margin-bottom: 20px;
 }
 .anno-hero-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 38px;
   font-weight: 900;
   color: #3B3224;
@@ -180,7 +180,7 @@
   color: #fff;
 }
 .anno-quote-image {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 14px; line-height: 1.85;
   font-style: italic; margin-bottom: 14px;
   word-break: keep-all; white-space: pre-line;
@@ -200,13 +200,13 @@
 /* 대형 따옴표 장식 */
 .anno-card-text::before {
   content: '\201C';
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 64px; line-height: 0.75;
   color: rgba(123,160,91,0.18);
   display: block; margin-bottom: -4px;
 }
 .anno-quote-text {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 14px; line-height: 1.95;
   font-style: italic; color: #3B3224;
   word-break: keep-all; white-space: pre-line;
@@ -324,7 +324,7 @@
   background: #F2EDE4; border-bottom: 1px dashed #D9CDB8;
 }
 .anno-modal-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 17px; font-weight: 700; color: #3B3224;
 }
 .anno-modal-close {
@@ -351,7 +351,7 @@
   width: 100%; background: #F2EDE4;
   border: 1.5px solid #D9CDB8; border-radius: 14px;
   padding: 12px 14px;
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 13px; font-style: italic; color: #3B3224;
   outline: none; resize: none;
   transition: border-color 0.2s; box-sizing: border-box;
@@ -389,7 +389,7 @@
 }
 .anno-submit-btn {
   width: 100%; padding: 15px;
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 15px; font-weight: 700;
   background: #7BA05B; color: #fff;
   border: none; border-radius: 50px; cursor: pointer;
@@ -424,7 +424,7 @@
   background: #F2EDE4; border-bottom: 1px dashed #D9CDB8; flex-shrink: 0;
 }
 .comment-drawer-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 16px; font-weight: 700; color: #3B3224;
 }
 .comment-close-btn {
@@ -439,7 +439,7 @@
   padding: 12px 20px;
   background: rgba(123,160,91,0.07);
   border-bottom: 1px dashed #D9CDB8;
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 12px; font-style: italic; color: #8A7A60; line-height: 1.6;
   flex-shrink: 0;
   overflow: hidden; display: -webkit-box;
@@ -466,7 +466,7 @@
   width: 30px; height: 30px; border-radius: 50%;
   background: #7BA05B; color: #fff;
   font-size: 12px; font-weight: 700;
-  font-family: 'Noto Serif KR', serif;
+  
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .comment-body { flex: 1; min-width: 0; }

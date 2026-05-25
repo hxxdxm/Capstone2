@@ -76,7 +76,7 @@
   align-items: center;
   justify-content: center;
   color: #F2EDE4;
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 32px;
   font-weight: 900;
   flex-shrink: 0;
@@ -90,7 +90,7 @@
   margin-bottom: 12px;
 }
 .profile-name {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 28px;
   font-weight: 900;
   color: #3B3224;
@@ -187,7 +187,7 @@
   margin-bottom: 24px;
 }
 .profile-collection-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 22px;
   font-weight: 900;
   color: #3B3224;
@@ -224,14 +224,14 @@
   box-shadow: 0 8px 20px rgba(80,60,30,0.05);
 }
 .profile-quote-mark {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 40px;
   color: #E8DFD0;
   line-height: 1;
   margin-bottom: 8px;
 }
 .profile-quote-text {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 14px;
   color: #5A4A36;
   line-height: 1.8;

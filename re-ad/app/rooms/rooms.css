@@ -32,7 +32,7 @@
   margin-bottom: 20px;
 }
 .rooms-hero-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 48px;
   font-weight: 900;
   color: #3B3224;
@@ -157,7 +157,7 @@
 .room-lock-icon { font-size: 14px; opacity: 0.4; }
 
 .room-card-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 20px;
   font-weight: 700;
   color: #3B3224;
@@ -232,7 +232,7 @@
 }
 .rooms-modal-close:hover { color: #3B3224; }
 .rooms-modal h3 {
-  font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 900;
+   font-size: 28px; font-weight: 900;
   color: #3B3224; margin-bottom: 30px; letter-spacing: -1px;
 }
 

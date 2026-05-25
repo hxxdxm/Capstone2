@@ -56,7 +56,6 @@
 }
 
 .section-title {
-  font-family: 'Noto Serif KR', serif;
   font-size: 20px;
   font-weight: 900;
   color: #3B3224;
@@ -145,7 +144,6 @@
   position: absolute;
   top: -12px;
   left: 10px;
-  font-family: 'Noto Serif KR', serif;
   font-size: 72px;
   color: rgba(123, 160, 91, 0.15);
   line-height: 1;
@@ -153,7 +151,6 @@
 }
 
 .exhibition-quote {
-  font-family: 'Noto Serif KR', serif;
   font-size: 12px;
   color: #3B3224;
   text-align: center;
@@ -230,7 +227,6 @@
 }
 
 .rooms-section-title {
-  font-family: 'Noto Serif KR', serif;
   font-size: 18px;
   font-weight: 900;
   color: #3B3224;
@@ -362,7 +358,6 @@ s {
 }
 
 .room-name {
-  font-family: 'Noto Serif KR', serif;
   font-size: 16px;
   font-weight: 700;
   color: #3B3224;
@@ -449,7 +444,6 @@ s {
 }
 
 .ranking-num {
-  font-family: 'Noto Serif KR', serif;
   font-size: 22px;
   font-weight: 900;
   color: #D9CDB8;
@@ -608,7 +602,6 @@ s {
 }
 
 .hm-card-title {
-  font-family: 'Noto Serif KR', serif;
   font-size: 15px;
   font-weight: 700;
   color: #3B3224;

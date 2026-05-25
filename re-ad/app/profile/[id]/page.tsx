@@ -284,7 +284,7 @@ export default function OtherUserProfilePage() {
             onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #EDE7DA', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: '20px', fontWeight: 900, color: '#3B3224', margin: 0 }}>
+              <h3 style={{ fontFamily: "'Noto Sans KR', sans-serif", fontSize: '20px', fontWeight: 900, color: '#3B3224', margin: 0 }}>
                 {followModal.type === 'followers' ? '팔로워' : '팔로잉'}
               </h3>
               <button
@@ -321,7 +321,7 @@ export default function OtherUserProfilePage() {
                         width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
                         background: 'linear-gradient(135deg, #3B3224, #5A4A36)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#F2EDE4', fontWeight: 900, fontSize: '16px', fontFamily: "'Noto Serif KR', serif"
+                        color: '#F2EDE4', fontWeight: 900, fontSize: '16px', fontFamily: "'Noto Sans KR', sans-serif"
                       }}>
                         {displayName[0]}
                       </div>

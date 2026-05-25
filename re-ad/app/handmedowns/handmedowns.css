@@ -32,7 +32,7 @@
   margin-bottom: 20px;
 }
 .handmedowns-hero-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 48px;
   font-weight: 900;
   color: #3B3224;
@@ -170,7 +170,7 @@
   flex: 1;
 }
 .item-title {
-  font-family: 'Noto Serif KR', serif;
+  
   font-size: 16px;
   font-weight: 700;
   color: #3B3224;
@@ -229,7 +229,7 @@
 }
 .handmedowns-modal-close:hover { color: #3B3224; }
 .handmedowns-modal h3 {
-  font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 900;
+   font-size: 28px; font-weight: 900;
   color: #3B3224; margin-bottom: 30px; letter-spacing: -1px;
 }
 
