@@ -1,0 +1,260 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+/* ── 기본 ── */
+.room-detail-page {
+  min-height: 100vh;
+  background: #F2EDE4;
+  background-image:
+    radial-gradient(circle at 85% 10%, rgba(139,175,116,0.10) 0%, transparent 40%),
+    radial-gradient(circle at 10% 90%, rgba(196,167,119,0.12) 0%, transparent 40%);
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #3B3224;
+  padding-bottom: 100px;
+}
+
+/* ── 로딩 ── */
+.room-loading {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: #F2EDE4; font-family: 'Noto Sans KR', sans-serif;
+  color: #8A7A60; font-weight: 700; font-size: 14px;
+}
+
+.room-main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+/* ── 방 헤더 카드 ── */
+.room-header-card {
+  background: #FDFAF5; border: 1.5px solid #D9CDB8; border-radius: 28px;
+  padding: 36px 40px; display: flex; flex-direction: column; gap: 24px;
+  margin-bottom: 32px;
+}
+@media (min-width: 640px) {
+  .room-header-card { flex-direction: row; justify-content: space-between; align-items: flex-end; }
+}
+.room-type-badge {
+  display: inline-block; padding: 5px 14px; border-radius: 20px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.1em; margin-bottom: 12px;
+}
+.badge-online { background: rgba(123,160,91,0.15); color: #5E8542; }
+.badge-offline { background: rgba(196,167,119,0.2); color: #8A7A60; }
+.room-title {
+  font-family: 'Noto Serif KR', serif; font-size: 34px; font-weight: 900;
+  color: #3B3224; line-height: 1.2; margin-bottom: 8px;
+}
+.room-member-count { font-size: 13px; font-weight: 600; color: #8A7A60; }
+.room-header-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn-join-room {
+  padding: 14px 32px; background: #3B3224; color: #F2EDE4;
+  border-radius: 50px; font-size: 13px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.2s; box-shadow: 0 4px 12px rgba(59,50,36,0.2);
+}
+.btn-join-room:hover { background: #2C2218; transform: translateY(-1px); }
+.btn-join-room:disabled { background: #D9CDB8; color: #8A7A60; cursor: not-allowed; transform: none; }
+.btn-delete-room {
+  padding: 12px 20px; background: transparent; color: #D94F4F;
+  border: 1.5px solid rgba(217,79,79,0.3); border-radius: 50px;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.btn-delete-room:hover { background: rgba(217,79,79,0.06); border-color: #D94F4F; }
+
+/* ── 탭 네비 ── */
+.room-tab-nav {
+  display: flex; gap: 4px; margin-bottom: 28px;
+  background: rgba(253,250,245,0.7); border-radius: 20px; padding: 6px;
+  border: 1.5px solid #D9CDB8; width: fit-content;
+}
+.room-tab-btn {
+  padding: 10px 22px; border-radius: 14px; border: none; background: transparent;
+  font-size: 13px; font-weight: 700; color: #8A7A60; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.room-tab-btn.active { background: #3B3224; color: #F2EDE4; box-shadow: 0 2px 8px rgba(59,50,36,0.2); }
+.room-tab-btn:not(.active):hover { color: #3B3224; background: rgba(59,50,36,0.05); }
+
+/* ── 그리드 레이아웃 ── */
+.room-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 1024px) { .room-grid { grid-template-columns: 1fr 340px; } }
+
+/* ── 공통 카드 ── */
+.room-card {
+  background: #FDFAF5; border: 1.5px solid #D9CDB8; border-radius: 24px; padding: 28px;
+}
+
+/* ── 모임 소개 탭 ── */
+.room-info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.room-info-title { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 900; color: #3B3224; }
+.btn-edit-desc { font-size: 11px; font-weight: 700; color: #8A7A60; background: none; border: none; cursor: pointer; text-decoration: underline dotted; }
+.btn-edit-desc:hover { color: #3B3224; }
+.room-desc-text { font-size: 15px; color: #5A4A36; line-height: 1.8; white-space: pre-wrap; word-break: keep-all; }
+.room-desc-textarea {
+  width: 100%; background: #F2EDE4; border: 1.5px solid #E8DFD0;
+  border-radius: 16px; padding: 16px; font-size: 14px; color: #3B3224;
+  outline: none; resize: none; height: 160px; box-sizing: border-box; font-family: 'Noto Sans KR', sans-serif;
+  transition: border-color 0.2s;
+}
+.room-desc-textarea:focus { border-color: #7BA05B; }
+.room-desc-btn-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.btn-cancel-edit { padding: 10px 18px; border: none; background: transparent; color: #8A7A60; font-weight: 700; font-size: 12px; cursor: pointer; border-radius: 12px; }
+.btn-cancel-edit:hover { background: #EDE7DA; }
+.btn-save-edit { padding: 10px 18px; border: none; background: #3B3224; color: #F2EDE4; font-weight: 700; font-size: 12px; cursor: pointer; border-radius: 12px; }
+.btn-save-edit:hover { background: #2C2218; }
+.room-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #D9CDB8; }
+.room-tag { padding: 6px 14px; background: #F2EDE4; color: #5A4A36; font-size: 11px; font-weight: 700; border-radius: 20px; border: 1px solid #D9CDB8; }
+
+/* ── 피드 탭 ── */
+.feed-write-card {
+  background: #3B3224; border-radius: 20px; padding: 16px 20px;
+  display: flex; align-items: center; gap: 14px; cursor: pointer; margin-bottom: 20px;
+  transition: background 0.2s;
+}
+.feed-write-card:hover { background: #2C2218; }
+.feed-write-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center; color: #F2EDE4; font-weight: 900; font-size: 14px; flex-shrink: 0;
+}
+.feed-write-placeholder { flex: 1; color: rgba(242,237,228,0.7); font-size: 13px; font-weight: 600; }
+.feed-write-btn {
+  background: #F2EDE4; color: #3B3224; font-size: 11px; font-weight: 700;
+  padding: 8px 16px; border-radius: 50px; white-space: nowrap;
+}
+
+.feed-post-card { background: #FDFAF5; border: 1.5px solid #D9CDB8; border-radius: 24px; padding: 24px; margin-bottom: 16px; }
+.feed-post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.feed-post-avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #3B3224, #5A4A36);
+  display: flex; align-items: center; justify-content: center;
+  color: #F2EDE4; font-weight: 900; font-size: 18px; font-family: 'Noto Serif KR', serif;
+}
+.feed-post-author { font-weight: 700; font-size: 14px; color: #3B3224; }
+.feed-post-time { font-size: 10px; color: #BDB09A; margin-top: 2px; }
+.feed-post-content { font-size: 14px; color: #5A4A36; line-height: 1.7; margin-bottom: 16px; white-space: pre-wrap; word-break: keep-all; }
+.feed-post-media { margin-bottom: 16px; border-radius: 16px; overflow: hidden; border: 1.5px solid #E8DFD0; }
+.feed-post-media img, .feed-post-media video { width: 100%; max-height: 400px; object-fit: cover; display: block; }
+.feed-post-actions { display: flex; gap: 16px; padding-top: 14px; border-top: 1px dashed #D9CDB8; margin-bottom: 16px; }
+.feed-action-btn { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #8A7A60; background: none; border: none; cursor: pointer; padding: 6px 12px; border-radius: 20px; transition: all 0.15s; }
+.feed-action-btn:hover { background: #F2EDE4; color: #3B3224; }
+.feed-action-btn.liked { color: #D94F4F; }
+
+.feed-comments { background: #F2EDE4; border-radius: 16px; padding: 14px; }
+.feed-comment { display: flex; gap: 10px; margin-bottom: 12px; }
+.feed-comment-avatar { width: 28px; height: 28px; border-radius: 50%; background: #D9CDB8; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #5A4A36; flex-shrink: 0; }
+.feed-comment-bubble { background: #FDFAF5; border: 1px solid #E8DFD0; border-radius: 14px; border-top-left-radius: 4px; padding: 8px 12px; font-size: 12px; }
+.feed-comment-author { font-weight: 800; color: #3B3224; margin-right: 6px; font-size: 11px; }
+.feed-comment-text { color: #5A4A36; }
+.feed-comment-input-row { display: flex; gap: 8px; margin-top: 10px; }
+.feed-comment-input {
+  flex: 1; background: #FDFAF5; border: 1.5px solid #E8DFD0; border-radius: 20px;
+  padding: 10px 16px; font-size: 12px; outline: none; color: #3B3224; font-family: 'Noto Sans KR', sans-serif;
+  transition: border-color 0.2s;
+}
+.feed-comment-input:focus { border-color: #7BA05B; }
+.feed-comment-send {
+  background: #3B3224; color: #F2EDE4; border: none; border-radius: 50%;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s;
+}
+.feed-comment-send:hover { background: #2C2218; }
+
+/* ── 채팅 탭 ── */
+.chat-container {
+  background: #FDFAF5; border: 1.5px solid #D9CDB8; border-radius: 24px;
+  display: flex; flex-direction: column; height: 600px; overflow: hidden;
+}
+.chat-header {
+  padding: 18px 24px; border-bottom: 1.5px solid #EDE7DA;
+  display: flex; align-items: center; gap: 10px;
+  background: #FDFAF5; flex-shrink: 0;
+}
+.chat-header-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 900; color: #3B3224; }
+.chat-header-dot { width: 8px; height: 8px; border-radius: 50%; background: #7BA05B; box-shadow: 0 0 0 3px rgba(123,160,91,0.2); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; background: #F7F2E9; }
+.chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8A7A60; gap: 8px; }
+.chat-empty-icon { font-size: 36px; }
+.chat-empty-text { font-size: 13px; font-weight: 600; }
+.chat-bubble-wrap { display: flex; flex-direction: column; }
+.chat-bubble-wrap.me { align-items: flex-end; }
+.chat-bubble-wrap.other { align-items: flex-start; }
+.chat-sender-name { font-size: 10px; font-weight: 700; color: #8A7A60; margin-bottom: 4px; margin-left: 4px; }
+.chat-bubble {
+  max-width: 72%; padding: 10px 16px; border-radius: 18px; font-size: 13px; font-weight: 600; line-height: 1.5; word-break: break-all;
+}
+.chat-bubble.me { background: #3B3224; color: #F2EDE4; border-bottom-right-radius: 4px; }
+.chat-bubble.other { background: #FDFAF5; color: #3B3224; border: 1.5px solid #D9CDB8; border-bottom-left-radius: 4px; }
+.chat-time { font-size: 9px; color: #BDB09A; margin-top: 4px; padding: 0 4px; }
+.chat-input-bar { padding: 14px 16px; background: #FDFAF5; border-top: 1.5px solid #EDE7DA; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+.chat-input {
+  flex: 1; background: #F2EDE4; border: 1.5px solid #E8DFD0; border-radius: 20px;
+  padding: 12px 18px; font-size: 13px; outline: none; color: #3B3224;
+  font-family: 'Noto Sans KR', sans-serif; transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: #7BA05B; }
+.chat-send-btn {
+  background: #3B3224; color: #F2EDE4; border: none; border-radius: 50%;
+  width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+}
+.chat-send-btn:hover { background: #2C2218; transform: scale(1.05); }
+.chat-send-btn:disabled { background: #D9CDB8; cursor: not-allowed; transform: none; }
+
+/* ── 사이드바 ── */
+.room-sidebar-card {
+  background: #FDFAF5; border: 1.5px solid #D9CDB8; border-radius: 24px;
+  padding: 24px; position: sticky; top: 88px;
+}
+.room-sidebar-title { font-size: 10px; font-weight: 800; color: #BDB09A; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 16px; }
+.room-sidebar-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #E8DFD0; font-size: 13px; }
+.room-sidebar-row:last-child { border-bottom: none; }
+.room-sidebar-label { font-weight: 600; color: #8A7A60; }
+.room-sidebar-value { font-weight: 700; color: #3B3224; }
+
+/* ── 피드 작성 모달 ── */
+.feed-modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(59,50,36,0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.feed-modal {
+  background: #FDFAF5; border-radius: 28px; width: 100%; max-width: 520px;
+  border: 1.5px solid #D9CDB8; box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.feed-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 28px; border-bottom: 1.5px solid #EDE7DA;
+}
+.feed-modal-title { font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 900; color: #3B3224; }
+.feed-modal-close { background: none; border: none; cursor: pointer; color: #8A7A60; font-size: 20px; line-height: 1; }
+.feed-modal-close:hover { color: #3B3224; }
+.feed-modal-body { padding: 24px 28px; }
+.feed-modal-textarea {
+  width: 100%; background: #F2EDE4; border: 1.5px solid #E8DFD0; border-radius: 16px;
+  padding: 16px; font-size: 14px; color: #3B3224; outline: none; resize: none; height: 130px;
+  box-sizing: border-box; font-family: 'Noto Sans KR', sans-serif; transition: border-color 0.2s; margin-bottom: 16px;
+}
+.feed-modal-textarea:focus { border-color: #7BA05B; }
+.feed-modal-media-preview { border-radius: 14px; overflow: hidden; border: 1.5px solid #E8DFD0; position: relative; margin-bottom: 16px; display: inline-block; }
+.feed-modal-media-preview img, .feed-modal-media-preview video { height: 120px; object-fit: cover; display: block; }
+.feed-modal-media-remove { position: absolute; top: 6px; right: 6px; background: rgba(59,50,36,0.6); color: #F2EDE4; border: none; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
+.feed-modal-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px dashed #D9CDB8; }
+.feed-modal-media-btns { display: flex; gap: 8px; }
+.feed-modal-media-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; border: none; background: #F2EDE4; color: #8A7A60; cursor: pointer; transition: all 0.15s; }
+.feed-modal-media-btn:hover { background: #EDE7DA; color: #3B3224; }
+.feed-modal-submit { background: #3B3224; color: #F2EDE4; padding: 12px 28px; border-radius: 50px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; transition: background 0.2s; }
+.feed-modal-submit:hover { background: #2C2218; }
+.feed-modal-submit:disabled { background: #D9CDB8; cursor: not-allowed; }
+
+/* ── 비밀번호 모달 ── */
+.pw-modal-backdrop { position: fixed; inset: 0; z-index: 200; background: rgba(59,50,36,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.pw-modal { background: #FDFAF5; border-radius: 28px; padding: 36px; width: 100%; max-width: 360px; border: 1.5px solid #D9CDB8; box-shadow: 0 16px 40px rgba(0,0,0,0.1); text-align: center; }
+.pw-modal-title { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 900; color: #3B3224; margin-bottom: 20px; }
+.pw-modal-input { width: 100%; background: #F2EDE4; border: 1.5px solid #E8DFD0; border-radius: 16px; padding: 14px 16px; font-size: 14px; color: #3B3224; outline: none; margin-bottom: 20px; box-sizing: border-box; text-align: center; letter-spacing: 0.2em; transition: border-color 0.2s; }
+.pw-modal-input:focus { border-color: #7BA05B; }
+.pw-modal-btn-row { display: flex; gap: 10px; }
+.pw-modal-cancel { flex: 1; padding: 14px; border: 1.5px solid #D9CDB8; background: transparent; color: #8A7A60; font-weight: 700; font-size: 13px; border-radius: 16px; cursor: pointer; transition: all 0.15s; }
+.pw-modal-cancel:hover { background: #F2EDE4; }
+.pw-modal-confirm { flex: 1; padding: 14px; background: #3B3224; color: #F2EDE4; font-weight: 700; font-size: 13px; border-radius: 16px; border: none; cursor: pointer; transition: background 0.2s; }
+.pw-modal-confirm:hover { background: #2C2218; }
+
+/* 스크롤바 */
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: #D9CDB8; border-radius: 4px; }
