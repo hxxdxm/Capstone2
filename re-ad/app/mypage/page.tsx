@@ -146,8 +146,8 @@ export default function MyPage() {
               if (localStorage.getItem('token')) localStorage.setItem('userName', data.nickname);
               else sessionStorage.setItem('userName', data.nickname);
             }
-            setFollowers(data.followersCount || 0);
-            setFollowing(data.followingCount || 0);
+            setFollowers(data.followersCount ?? (Array.isArray(data.followers) ? data.followers.length : 0));
+            setFollowing(data.followingCount ?? (Array.isArray(data.following) ? data.following.length : 0));
             // 서버 MBTI가 있으면 서버 값 우선 적용 + 로컬에도 저장
             if (data.mbti) {
               const serverMbti = { mbti: data.mbti };
@@ -157,6 +157,18 @@ export default function MyPage() {
           }
         })
         .catch(() => { });
+
+      if (myUserId) {
+        fetch(`${API_BASE_URL}/users/${myUserId}/followers`, { headers })
+          .then(res => res.json())
+          .then(list => { if (Array.isArray(list)) setFollowers(list.length); })
+          .catch(() => {});
+          
+        fetch(`${API_BASE_URL}/users/${myUserId}/following`, { headers })
+          .then(res => res.json())
+          .then(list => { if (Array.isArray(list)) setFollowing(list.length); })
+          .catch(() => {});
+      }
     }
   }, []);
 
