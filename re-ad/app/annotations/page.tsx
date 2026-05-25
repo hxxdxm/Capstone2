@@ -338,16 +338,6 @@ export default function ExhibitionPage() {
                 return (
                   <article key={item.id} className="anno-card">
 
-                    {/* hover 오버레이 — 유저명 + 좋아요 */}
-                    <div className="anno-card-hover-bar">
-                      <span className="anno-user-badge">@{item.user}</span>
-                      <button onClick={() => toggleLike(item.id)} className="anno-like-btn">
-                        <svg className={`anno-like-icon ${isLiked ? 'liked' : 'unlike'}`} fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-
                     {/* 이미지 타입 */}
                     {item.type === 'image' ? (
                       <div className="anno-card-image-wrap">
@@ -374,23 +364,35 @@ export default function ExhibitionPage() {
                             <div className="anno-book-title-text">{item.book}</div>
                             <div className="anno-book-author-text">{item.author}</div>
                           </div>
-                          <span className="anno-likes-text">♥ {item.likes}</span>
                         </div>
                       </div>
                     )}
 
-                    {/* 댓글 버튼 — 카드 하단 */}
+                    {/* 카드 하단 액션바 (항상 표시) */}
                     <div className="anno-card-footer">
-                      <button
-                        className="anno-comment-btn"
-                        onClick={() => openComments(item)}
-                      >
-                        <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                        댓글
-                        <span className="anno-comment-count">{item.commentCount || 0}</span>
-                      </button>
+                      <span className="anno-user-badge">@{item.user}</span>
+                      
+                      <div className="anno-card-actions">
+                        {/* 좋아요 버튼 */}
+                        <button onClick={() => toggleLike(item.id)} className={`anno-like-btn ${isLiked ? 'liked' : ''}`}>
+                          <svg className={`anno-like-icon ${isLiked ? 'liked' : 'unlike'}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                          </svg>
+                          <span className="anno-like-count">{item.likes || 0}</span>
+                        </button>
+
+                        {/* 댓글 버튼 */}
+                        <button
+                          className="anno-comment-btn"
+                          onClick={() => openComments(item)}
+                        >
+                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                          </svg>
+                          댓글
+                          <span className="anno-comment-count">{item.commentCount || 0}</span>
+                        </button>
+                      </div>
                     </div>
                   </article>
                 );
