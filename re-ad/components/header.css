@@ -1,0 +1,306 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+/* ───────────────────────────────────────
+   헤더 전체
+─────────────────────────────────────── */
+.site-header {
+  background: rgba(253, 250, 245, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1.5px solid #D9CDB8;
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 32px;
+}
+
+/* ───────────────────────────────────────
+   로고
+─────────────────────────────────────── */
+.header-logo-wrap {
+  flex: 1;
+}
+
+.header-logo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.header-logo-text {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #3B3224;
+  letter-spacing: -0.5px;
+}
+
+.header-logo-text span {
+  color: #7BA05B;
+}
+
+.header-logo-leaf {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+/* ───────────────────────────────────────
+   네비게이션
+─────────────────────────────────────── */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.nav-link {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8A7A60;
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: #7BA05B;
+}
+
+.nav-link.active {
+  color: #7BA05B;
+  border-bottom-color: #7BA05B;
+}
+
+/* ───────────────────────────────────────
+   우측 위젯 영역
+─────────────────────────────────────── */
+.header-widget-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* ───────────────────────────────────────
+   UserWidget — 로그인 버튼 (비로그인)
+─────────────────────────────────────── */
+.widget-auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-login {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #8A7A60;
+  background: transparent;
+  border: 1.5px solid #D9CDB8;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.btn-login:hover {
+  border-color: #7BA05B;
+  color: #7BA05B;
+}
+
+.btn-signup {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #fff;
+  background: #7BA05B;
+  border: 1.5px solid #7BA05B;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn-signup:hover {
+  background: #5E8542;
+  border-color: #5E8542;
+  transform: translateY(-1px);
+}
+
+/* ───────────────────────────────────────
+   UserWidget — 로그인 트리거 버튼
+─────────────────────────────────────── */
+.widget-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 5px;
+  border-radius: 50px;
+  border: 1.5px solid #D9CDB8;
+  background: #FDFAF5;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+.widget-trigger:hover {
+  border-color: #7BA05B;
+  background: #F5F0E4;
+}
+
+.widget-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #7BA05B;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.widget-username {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #3B3224;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.widget-chevron {
+  width: 14px;
+  height: 14px;
+  color: #8A7A60;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.widget-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* ───────────────────────────────────────
+   UserWidget — 드롭다운 패널
+─────────────────────────────────────── */
+.widget-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 240px;
+  background: #FDFAF5;
+  border: 1.5px solid #D9CDB8;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(100,80,40,0.12);
+  overflow: hidden;
+  z-index: 50;
+  animation: dropdownIn 0.15s ease-out forwards;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 드롭다운 상단 프로필 */
+.dropdown-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  background: #F2EDE4;
+  border-bottom: 1px dashed #D9CDB8;
+}
+
+.dropdown-avatar-lg {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #7BA05B;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'Noto Serif KR', serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(123,160,91,0.30);
+}
+
+.dropdown-profile-name {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #3B3224;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-profile-sub {
+  font-size: 11px;
+  color: #8A7A60;
+  margin-top: 2px;
+}
+
+/* 드롭다운 메뉴 아이템 */
+.dropdown-nav {
+  padding: 6px 0;
+}
+
+.dropdown-menu-link,
+.dropdown-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #5A4A36;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+.dropdown-menu-link:hover {
+  background: rgba(123,160,91,0.08);
+  color: #3B3224;
+}
+.dropdown-menu-btn:hover {
+  background: rgba(192,57,43,0.07);
+  color: #C0392B;
+}
+
+.dropdown-menu-icon {
+  width: 16px;
+  height: 16px;
+  color: #8A7A60;
+  flex-shrink: 0;
+}
+.dropdown-menu-btn .dropdown-menu-icon {
+  color: #BDB09A;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #EDE7DA;
+  margin: 4px 16px;
+}

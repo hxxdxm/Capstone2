@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import './header.css';
 
 export default function UserWidget() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -101,19 +102,14 @@ export default function UserWidget() {
         <button
           ref={triggerRef}
           onClick={() => setIsOpen(prev => !prev)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors duration-150 select-none"
+          className="widget-trigger"
         >
-          {/* 아바타 */}
-          <div className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center text-white text-xs font-black flex-shrink-0 shadow-sm">
+          <div className="widget-avatar">
             {userName ? userName[0].toUpperCase() : '?'}
           </div>
-          {/* 닉네임 */}
-          <span className="text-sm font-bold text-gray-800 max-w-[80px] truncate">
-            {userName}
-          </span>
-          {/* 화살표 */}
+          <span className="widget-username">{userName}</span>
           <svg
-            className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            className={`widget-chevron${isOpen ? ' open' : ''}`}
             fill="none" stroke="currentColor" viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
@@ -122,34 +118,28 @@ export default function UserWidget() {
 
         {/* 드롭다운 패널 */}
         {isOpen && (
-          <div
-            ref={panelRef}
-            className="absolute right-0 top-[calc(100%+8px)] w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-dropdown"
-          >
+          <div ref={panelRef} className="widget-dropdown">
             {/* 상단 프로필 영역 */}
-            <div className="px-5 py-5 bg-gray-50 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white text-lg font-black shadow-md flex-shrink-0">
-                  {userName ? userName[0].toUpperCase() : '?'}
+            <div className="dropdown-profile">
+              <div className="dropdown-avatar-lg">
+                {userName ? userName[0].toUpperCase() : '?'}
+              </div>
+              <div>
+                <div className="dropdown-profile-name">
+                  {userName}<span style={{ fontWeight: 400, color: '#8A7A60' }}>님</span>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-black text-gray-900 truncate">
-                    {userName}
-                    <span className="font-medium text-gray-500">님</span>
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">안녕하세요 👋</p>
-                </div>
+                <div className="dropdown-profile-sub">안녕하세요 🌿</div>
               </div>
             </div>
 
             {/* 메뉴 리스트 */}
-            <nav className="py-2">
+            <nav className="dropdown-nav">
               <Link
                 href="/mypage"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                className="dropdown-menu-link"
               >
-                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="dropdown-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 마이페이지
@@ -158,21 +148,18 @@ export default function UserWidget() {
               <Link
                 href="/record"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                className="dropdown-menu-link"
               >
-                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="dropdown-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 독서 기록
               </Link>
 
-              <div className="my-1.5 border-t border-gray-100" />
+              <div className="dropdown-divider" />
 
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-5 py-3 text-sm font-bold text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button onClick={handleLogout} className="dropdown-menu-btn">
+                <svg className="dropdown-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 로그아웃
@@ -180,35 +167,15 @@ export default function UserWidget() {
             </nav>
           </div>
         )}
-
-        <style jsx>{`
-          @keyframes dropdown {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
-          .animate-dropdown {
-            animation: dropdown 0.15s ease-out forwards;
-          }
-        `}</style>
       </div>
     );
   }
 
   /* ── 비로그인 상태 ── */
   return (
-    <div className="flex items-center gap-2">
-      <Link
-        href="/login"
-        className="px-4 py-1.5 text-sm font-bold text-gray-700 hover:text-black border border-gray-200 rounded-full hover:border-gray-400 transition-colors"
-      >
-        로그인
-      </Link>
-      <Link
-        href="/signup"
-        className="px-4 py-1.5 text-sm font-bold text-white bg-black rounded-full hover:bg-gray-800 transition-colors"
-      >
-        회원가입
-      </Link>
+    <div className="widget-auth-buttons">
+      <Link href="/login" className="btn-login">로그인</Link>
+      <Link href="/signup" className="btn-signup">회원가입</Link>
     </div>
   );
 }
