@@ -1,0 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+/* ── 페이지 기본 ── */
+.handmedowns-container {
+  min-height: 100vh;
+  background-color: #F2EDE4;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(139,175,116,0.1) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(196,167,119,0.15) 0%, transparent 40%);
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #3B3224;
+  padding-bottom: 100px;
+}
+
+/* ── 히어로 ── */
+.handmedowns-hero {
+  text-align: center;
+  padding: 60px 24px 40px;
+  position: relative;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.handmedowns-hero-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  background: #3B3224;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  border-radius: 50px;
+  margin-bottom: 20px;
+}
+.handmedowns-hero-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 48px;
+  font-weight: 900;
+  color: #3B3224;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+}
+.handmedowns-hero-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: #8A7A60;
+}
+.btn-register-item {
+  position: absolute;
+  right: 24px;
+  bottom: 40px;
+  background: #7BA05B;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(123,160,91,0.3);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-register-item:hover {
+  background: #5E8542;
+  transform: translateY(-2px);
+}
+@media (max-width: 768px) {
+  .btn-register-item {
+    position: static;
+    margin: 30px auto 0;
+    width: fit-content;
+  }
+}
+
+/* ── 필터 ── */
+.handmedowns-filter-group {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+.btn-filter {
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.2s;
+  border: 1px solid #D9CDB8;
+  background: #FDFAF5;
+  color: #8A7A60;
+  cursor: pointer;
+}
+.btn-filter.active {
+  background: #3B3224;
+  color: #fff;
+  border-color: #3B3224;
+  box-shadow: 0 4px 12px rgba(59,50,36,0.2);
+}
+.btn-filter:not(.active):hover {
+  border-color: #7BA05B;
+  color: #7BA05B;
+}
+
+/* ── 메인 컨텐츠 ── */
+.handmedowns-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.handmedowns-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+@media (min-width: 640px) { .handmedowns-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .handmedowns-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+
+/* ── 아이템 카드 ── */
+.item-card {
+  background: #FDFAF5;
+  border: 1.5px solid #D9CDB8;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  overflow: hidden;
+  height: 100%;
+}
+.item-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(80,60,30,0.06);
+  border-color: #7BA05B;
+}
+.item-image-wrapper {
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+  background: #EDE7DA;
+}
+.item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+.item-card:hover .item-image {
+  transform: scale(1.05);
+}
+.item-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.badge-share { background: #7BA05B; }
+.badge-exchange { background: #C4A777; }
+
+.item-details {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.item-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #3B3224;
+  margin-bottom: 4px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.item-author {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8A7A60;
+  margin-bottom: 16px;
+}
+.item-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px dashed #D9CDB8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+.item-desc { color: #5A4A36; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; }
+.item-owner { color: #BDB09A; flex-shrink: 0; }
+
+.handmedowns-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 80px 20px;
+  border: 2px dashed #D9CDB8;
+  border-radius: 24px;
+  background: rgba(253,250,245,0.5);
+}
+.handmedowns-empty p:first-child { font-size: 18px; font-weight: 700; color: #5A4A36; margin-bottom: 8px; }
+.handmedowns-empty p:last-child { font-size: 13px; color: #8A7A60; }
+
+/* ── 모달 ── */
+.handmedowns-modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(59,50,36,0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.handmedowns-modal {
+  background: #FDFAF5; border-radius: 32px; width: 100%; max-width: 500px;
+  border: 1.5px solid #D9CDB8; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  padding: 40px; position: relative; max-height: 90vh; overflow-y: auto;
+}
+.handmedowns-modal-close {
+  position: absolute; top: 24px; right: 24px;
+  background: none; border: none; color: #8A7A60; font-size: 24px; cursor: pointer;
+  transition: color 0.2s;
+}
+.handmedowns-modal-close:hover { color: #3B3224; }
+.handmedowns-modal h3 {
+  font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 900;
+  color: #3B3224; margin-bottom: 30px; letter-spacing: -1px;
+}
+
+/* 폼 디자인 */
+.handmedowns-form-group { margin-bottom: 20px; }
+.handmedowns-form-label {
+  display: block; font-size: 11px; font-weight: 700; color: #8A7A60;
+  margin-bottom: 8px; letter-spacing: 0.05em;
+}
+.handmedowns-form-input, .handmedowns-form-select, .handmedowns-form-textarea {
+  width: 100%; background: #F2EDE4; border: 1.5px solid #E8DFD0;
+  border-radius: 16px; padding: 14px 16px; font-size: 14px; color: #3B3224;
+  outline: none; box-sizing: border-box; font-weight: 500; transition: border-color 0.2s;
+}
+.handmedowns-form-input:focus, .handmedowns-form-select:focus, .handmedowns-form-textarea:focus {
+  border-color: #7BA05B;
+}
+.handmedowns-form-textarea { height: 100px; resize: none; }
+.handmedowns-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* 사진 업로드 영역 */
+.upload-area {
+  position: relative; width: 100%; height: 180px; background: #F2EDE4;
+  border-radius: 20px; border: 2px dashed #D9CDB8; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-area:hover { border-color: #7BA05B; background: #EDE7DA; }
+.upload-preview { width: 100%; height: 100%; position: relative; }
+.upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+.upload-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.4); opacity: 0;
+  display: flex; align-items: center; justify-content: center; transition: opacity 0.2s;
+}
+.upload-area:hover .upload-overlay { opacity: 1; }
+.upload-overlay span { color: #fff; font-size: 12px; font-weight: 700; }
+.upload-placeholder { text-align: center; color: #8A7A60; }
+.upload-placeholder span:first-child { font-size: 32px; display: block; margin-bottom: 8px; }
+.upload-placeholder span:last-child { font-size: 12px; font-weight: 700; }
+.upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.btn-submit-item {
+  width: 100%; background: #3B3224; color: #fff; padding: 18px;
+  border-radius: 20px; font-size: 15px; font-weight: 700; border: none;
+  cursor: pointer; margin-top: 20px; transition: background 0.2s;
+}
+.btn-submit-item:hover { background: #2C2218; }

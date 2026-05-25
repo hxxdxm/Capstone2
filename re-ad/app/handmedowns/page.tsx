@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import './handmedowns.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
@@ -125,39 +126,34 @@ export default function HandMeDownsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans text-black">
+    <div className="handmedowns-container">
       <Header />
 
-      <main className="mx-auto max-w-6xl px-6 mt-16">
-        <section className="text-center mb-12 relative">
-          <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-4 rounded-full">
-            BOOK EXCHANGE
-          </span>
-          <h2 className="text-5xl font-black tracking-tighter uppercase text-black">물려주기</h2>
-          <p className="mt-4 text-gray-700 font-bold">책 사진을 올리면 거래 확률이 2배 더 높아져요!</p>
+      <main className="handmedowns-content">
+        <section className="handmedowns-hero">
+          <span className="handmedowns-hero-badge">BOOK EXCHANGE</span>
+          <h2 className="handmedowns-hero-title">물려주기</h2>
+          <p className="handmedowns-hero-desc">책 사진을 올리면 거래 확률이 2배 더 높아져요!</p>
           
-          <div className="absolute right-0 bottom-0">
-            <button 
-              onClick={() => {
-                if (!getToken()) return alert("로그인 후 이용 가능합니다.");
-                setIsModalOpen(true);
-              }}
-              className="bg-black text-white px-6 py-3 rounded-full font-black text-sm hover:bg-gray-800 transition shadow-lg flex items-center space-x-2"
-            >
-              <span>+ 책 등록하기</span>
-            </button>
-          </div>
+          <button 
+            onClick={() => {
+              if (!getToken()) return alert("로그인 후 이용 가능합니다.");
+              setIsModalOpen(true);
+            }}
+            className="btn-register-item"
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            책 등록하기
+          </button>
         </section>
 
         {/* 필터 탭 */}
-        <div className="flex justify-center space-x-2 mb-12">
+        <div className="handmedowns-filter-group">
           {['전체', '나눔', '교환'].map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-6 py-2 rounded-full text-xs font-black transition-all ${
-                activeFilter === filter ? 'bg-black text-white shadow-md' : 'bg-white text-gray-500 border border-gray-200'
-              }`}
+              className={`btn-filter ${activeFilter === filter ? 'active' : ''}`}
             >
               {filter}
             </button>
@@ -166,108 +162,114 @@ export default function HandMeDownsPage() {
 
         {/* 책 목록 그리드 */}
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+            <div style={{ width: '40px', height: '40px', border: '3px solid rgba(123,160,91,0.3)', borderTopColor: '#7BA05B', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <div key={item._id || item.id} className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden hover:shadow-xl transition-all group flex flex-col h-full">
-                <div className="h-48 overflow-hidden relative bg-gray-100">
-                  <img
-                    src={item.bookThumbnail || item.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
-                    alt={item.bookTitle || item.title || '책 이미지'}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-2 py-1 rounded text-[10px] font-black tracking-widest text-white shadow-sm ${getTradeTypeLabel(item.tradeType) === '나눔' ? 'bg-green-500' : 'bg-purple-500'}`}>
+          <div className="handmedowns-grid">
+            {filteredItems.length === 0 ? (
+              <div className="handmedowns-empty">
+                <p>등록된 책이 없습니다.</p>
+                <p>첫 번째로 나눔/교환할 책을 등록해 보세요!</p>
+              </div>
+            ) : (
+              filteredItems.map((item) => (
+                <div key={item._id || item.id} className="item-card">
+                  <div className="item-image-wrapper">
+                    <img
+                      src={item.bookThumbnail || item.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
+                      alt={item.bookTitle || item.title || '책 이미지'}
+                      className="item-image"
+                    />
+                    <span className={`item-badge ${getTradeTypeLabel(item.tradeType) === '나눔' ? 'badge-share' : 'badge-exchange'}`}>
                       {getTradeTypeLabel(item.tradeType)}
                     </span>
                   </div>
-                </div>
-                <div className="p-6 flex flex-col flex-1">
-                  <h3 className="text-lg font-black mb-1 text-black line-clamp-1">{item.bookTitle || item.title}</h3>
-                  <p className="text-xs font-bold text-gray-400 mb-4">{item.bookAuthor || item.author}</p>
-                  <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between text-[10px] font-black text-gray-500">
-                    <span>{item.comment || item.description || item.condition}</span>
-                    <span>By {item.ownerId?.nickname || item.provider || '익명'}</span>
+                  <div className="item-details">
+                    <h3 className="item-title">{item.bookTitle || item.title}</h3>
+                    <p className="item-author">{item.bookAuthor || item.author}</p>
+                    <div className="item-footer">
+                      <span className="item-desc">{item.comment || item.description || item.condition}</span>
+                      <span className="item-owner">By {item.ownerId?.nickname || item.provider || '익명'}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </main>
 
-      {/* 📍 등록 모달창 (사진 업로드 기능 추가됨) */}
+      {/* 📍 등록 모달창 */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 relative shadow-2xl my-8">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-gray-400 hover:text-black font-bold text-xl">✕</button>
-            <h3 className="text-3xl font-black tracking-tighter mb-8 text-black">물려줄 책 등록</h3>
+        <div className="handmedowns-modal-backdrop">
+          <div className="handmedowns-modal">
+            <button onClick={() => setIsModalOpen(false)} className="handmedowns-modal-close">✕</button>
+            <h3>물려줄 책 등록</h3>
             
-            <form onSubmit={handleRegister} className="space-y-5">
+            <form onSubmit={handleRegister}>
               
               {/* 📍 사진 업로드 영역 */}
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">책 상태 사진 *</label>
-                <div className="group relative w-full h-44 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center cursor-pointer hover:border-black transition-all">
+              <div className="handmedowns-form-group">
+                <label className="handmedowns-form-label">책 상태 사진 *</label>
+                <div className="upload-area">
                   {formData.imagePreview ? (
-                    <div className="relative w-full h-full">
-                      <img src={formData.imagePreview} className="w-full h-full object-cover" alt="미리보기" />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <span className="text-white font-bold text-sm">사진 변경하기</span>
+                    <div className="upload-preview">
+                      <img src={formData.imagePreview} alt="미리보기" />
+                      <div className="upload-overlay">
+                        <span>사진 변경하기</span>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center">
-                      <span className="text-2xl mb-2 block">📸</span>
-                      <span className="text-gray-400 font-bold text-xs">클릭하여 책 사진 올리기</span>
+                    <div className="upload-placeholder">
+                      <span>📸</span>
+                      <span>클릭하여 책 사진 올리기</span>
                     </div>
                   )}
                   <input 
                     type="file" 
                     accept="image/*" 
                     onChange={handleFileChange} 
-                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                    className="upload-input" 
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">책 제목 *</label>
-                <input type="text" className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black" placeholder="책 제목을 입력해주세요" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
+              <div className="handmedowns-form-group">
+                <label className="handmedowns-form-label">책 제목 *</label>
+                <input type="text" className="handmedowns-form-input" placeholder="책 제목을 입력해주세요" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">저자명 *</label>
-                <input type="text" className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black" placeholder="지은이를 입력해주세요" value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} required />
+              <div className="handmedowns-form-group">
+                <label className="handmedowns-form-label">저자명 *</label>
+                <input type="text" className="handmedowns-form-input" placeholder="지은이를 입력해주세요" value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} required />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-black text-gray-500 mb-2">책 상태 *</label>
-                  <select className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black bg-white" value={formData.condition} onChange={(e) => setFormData({...formData, condition: e.target.value})}>
+              <div className="handmedowns-form-row">
+                <div className="handmedowns-form-group">
+                  <label className="handmedowns-form-label">책 상태 *</label>
+                  <select className="handmedowns-form-select" value={formData.condition} onChange={(e) => setFormData({...formData, condition: e.target.value})}>
                     <option value="거의 새 것">거의 새 것</option>
                     <option value="사용감 있음">사용감 있음</option>
                     <option value="밑줄 많음">밑줄 많음</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-black text-gray-500 mb-2">거래 방식 *</label>
-                  <select className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black bg-white" value={formData.tradeType} onChange={(e) => setFormData({...formData, tradeType: e.target.value})}>
+                <div className="handmedowns-form-group">
+                  <label className="handmedowns-form-label">거래 방식 *</label>
+                  <select className="handmedowns-form-select" value={formData.tradeType} onChange={(e) => setFormData({...formData, tradeType: e.target.value})}>
                     <option value="나눔">나눔 (무료)</option>
                     <option value="교환">교환 (책 맞교환)</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">상세 설명</label>
-                <textarea className="w-full border-2 border-gray-100 rounded-2xl p-4 h-24 focus:border-black outline-none font-bold text-black transition resize-none" placeholder="책 상태에 대해 자유롭게 적어주세요" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})}></textarea>
+              <div className="handmedowns-form-group">
+                <label className="handmedowns-form-label">상세 설명</label>
+                <textarea className="handmedowns-form-textarea" placeholder="책 상태에 대해 자유롭게 적어주세요" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})}></textarea>
               </div>
 
-              <button type="submit" className="w-full bg-black text-white py-4 rounded-2xl font-black text-lg hover:bg-gray-800 transition shadow-lg mt-2">
+              <button type="submit" className="btn-submit-item">
                 도서 등록 완료
               </button>
             </form>

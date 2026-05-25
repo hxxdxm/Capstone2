@@ -224,8 +224,10 @@
   letter-spacing: -0.2px;
 }
 
+.filter-tab
+
 /* 필터 탭 */
-.filter-tabs {
+s {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
