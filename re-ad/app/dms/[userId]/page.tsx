@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import '../../dm.css';
+import '../dm.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 const SOCKET_URL   = 'http://13.124.191.57:5000';
