@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import './rooms.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
@@ -115,40 +116,33 @@ export default function RoomsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-24 font-sans text-black">
+    <div className="rooms-container">
       <Header />
 
-      <main className="mx-auto max-w-6xl px-6 mt-16">
-        <section className="text-center mb-10 relative">
-          <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black tracking-[0.3em] mb-4 rounded-full">
-            READING LOUNGE
-          </span>
-          <h2 className="text-5xl font-black tracking-tighter uppercase text-black">Rooms</h2>
-          <p className="mt-4 text-gray-700 font-bold">함께 읽고, 나누고, 성장하는 공간</p>
+      <main className="rooms-content">
+        <section className="rooms-hero">
+          <span className="rooms-hero-badge">READING LOUNGE</span>
+          <h2 className="rooms-hero-title">Rooms</h2>
+          <p className="rooms-hero-desc">함께 읽고, 나누고, 성장하는 공간</p>
           
-          <div className="absolute right-0 bottom-0">
-            <button 
-              onClick={() => {
-                if (!getToken()) return alert("로그인 후 이용 가능합니다.");
-                setIsCreateModalOpen(true);
-              }}
-              className="bg-black text-white px-6 py-3 rounded-full font-black text-sm hover:bg-gray-800 transition shadow-lg flex items-center space-x-2"
-            >
-              <span>+ 방 만들기</span>
-            </button>
-          </div>
+          <button 
+            onClick={() => {
+              if (!getToken()) return alert("로그인 후 이용 가능합니다.");
+              setIsCreateModalOpen(true);
+            }}
+            className="btn-create-room"
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            방 만들기
+          </button>
         </section>
 
-        <div className="flex justify-center space-x-2 mb-12">
+        <div className="rooms-filter-group">
           {['전체', '온라인', '오프라인'].map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-6 py-2 rounded-full text-xs font-black transition-all ${
-                activeFilter === filter
-                  ? 'bg-black text-white shadow-md'
-                  : 'bg-white text-gray-500 border border-gray-200 hover:border-black hover:text-black'
-              }`}
+              className={`btn-filter ${activeFilter === filter ? 'active' : ''}`}
             >
               {filter}
             </button>
@@ -156,48 +150,49 @@ export default function RoomsPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+            <div style={{ width: '40px', height: '40px', border: '3px solid rgba(123,160,91,0.3)', borderTopColor: '#7BA05B', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="rooms-grid">
             {filteredRooms.length === 0 ? (
-              <div className="col-span-full text-center py-24 border-2 border-dashed border-gray-300 rounded-[2.5rem]">
-                <p className="text-gray-600 font-bold text-lg">해당하는 모임방이 없습니다.</p>
-                <p className="text-sm text-gray-500 mt-2">조건을 바꾸거나 새 모임방을 개설해 보세요!</p>
+              <div className="rooms-empty">
+                <p>해당하는 모임방이 없습니다.</p>
+                <p>조건을 바꾸거나 새 모임방을 개설해 보세요!</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
                 <Link 
                   href={`/rooms/${room._id || room.id}`} 
                   key={room._id || room.id}
-                  className="bg-white p-8 rounded-[2.5rem] border border-gray-200 flex flex-col justify-between hover:shadow-2xl hover:-translate-y-1 hover:border-black transition-all group min-h-[280px]"
+                  className="room-card"
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${room.roomType === 'ONLINE' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                    <div className="room-card-header">
+                      <span className={`room-type-badge ${room.roomType === 'ONLINE' ? 'type-online' : 'type-local'}`}>
                         {getRoomTypeLabel(room.roomType)}
                       </span>
                       {room.roomPassword && (
-                        <span className="text-gray-400" title="비밀번호 필요">🔒</span>
+                        <span className="room-lock-icon" title="비밀번호 필요">🔒</span>
                       )}
                     </div>
                     
-                    <h3 className="text-xl font-black mb-3 text-black group-hover:text-gray-700 transition-colors line-clamp-2">
+                    <h3 className="room-card-title">
                       {room.roomName}
                     </h3>
                     
-                    {/* 📍 핵심 수정: room.description을 최우선으로 보여줍니다. */}
-                    <p className="text-sm font-bold text-gray-600 line-clamp-2 leading-relaxed">
+                    <p className="room-card-desc">
                       {room.description || room.roomDesc || "모임 소개글이 없습니다."}
                     </p>
                   </div>
 
-                  <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs font-black text-gray-800">
-                      인원 <span className="text-black">{room.members?.length || 0} / {room.maxMembers}</span>
+                  <div className="room-card-footer">
+                    <span className="room-members">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                      인원 <span>{room.members?.length || 0} / {room.maxMembers}</span>
                     </span>
-                    <span className="text-[10px] font-bold text-gray-400">
+                    <span className="room-host">
                       방장: {room.hostName || "익명"}
                     </span>
                   </div>
@@ -209,23 +204,23 @@ export default function RoomsPage() {
       </main>
 
       {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-xl rounded-[2.5rem] p-8 md:p-10 relative shadow-2xl my-8">
+        <div className="rooms-modal-backdrop">
+          <div className="rooms-modal">
             <button 
               onClick={() => setIsCreateModalOpen(false)} 
-              className="absolute top-8 right-8 text-gray-400 hover:text-black font-bold text-xl"
+              className="rooms-modal-close"
             >
               ✕
             </button>
             
-            <h3 className="text-3xl font-black tracking-tighter mb-8 text-black">새 모임방 개설</h3>
+            <h3>새 모임방 개설</h3>
             
-            <form onSubmit={handleCreateRoom} className="space-y-6">
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">모임방 이름 *</label>
+            <form onSubmit={handleCreateRoom}>
+              <div className="rooms-form-group">
+                <label className="rooms-form-label">모임방 이름 *</label>
                 <input 
                   type="text" 
-                  className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black transition" 
+                  className="rooms-form-input" 
                   placeholder="예) 금요일 밤 소설 읽기" 
                   value={newRoom.roomName}
                   onChange={(e) => setNewRoom({...newRoom, roomName: e.target.value})}
@@ -233,11 +228,11 @@ export default function RoomsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-black text-gray-500 mb-2">진행 방식 *</label>
+              <div className="rooms-form-row">
+                <div className="rooms-form-group">
+                  <label className="rooms-form-label">진행 방식 *</label>
                   <select 
-                    className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black bg-white"
+                    className="rooms-form-select"
                     value={newRoom.roomType}
                     onChange={(e) => setNewRoom({...newRoom, roomType: e.target.value})}
                   >
@@ -245,12 +240,12 @@ export default function RoomsPage() {
                     <option value="오프라인">오프라인</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-black text-gray-500 mb-2">최대 인원 *</label>
+                <div className="rooms-form-group">
+                  <label className="rooms-form-label">최대 인원 *</label>
                   <input 
                     type="number" 
                     min="2" max="100"
-                    className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black transition" 
+                    className="rooms-form-input" 
                     value={newRoom.maxMembers}
                     onChange={(e) => setNewRoom({...newRoom, maxMembers: parseInt(e.target.value)})}
                     required
@@ -258,39 +253,39 @@ export default function RoomsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">비밀번호 (선택)</label>
+              <div className="rooms-form-group">
+                <label className="rooms-form-label">비밀번호 (선택)</label>
                 <input 
                   type="password" 
-                  className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black transition" 
+                  className="rooms-form-input" 
                   placeholder="입력 시 비공개 방으로 설정됩니다" 
                   value={newRoom.roomPassword}
                   onChange={(e) => setNewRoom({...newRoom, roomPassword: e.target.value})}
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">모임 소개</label>
+              <div className="rooms-form-group">
+                <label className="rooms-form-label">모임 소개</label>
                 <textarea 
-                  className="w-full border-2 border-gray-100 rounded-2xl p-4 h-24 focus:border-black outline-none font-bold text-black transition resize-none" 
+                  className="rooms-form-textarea" 
                   placeholder="어떤 모임인지 자세히 적어주세요"
                   value={newRoom.roomDesc}
                   onChange={(e) => setNewRoom({...newRoom, roomDesc: e.target.value})}
                 ></textarea>
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-500 mb-2">태그 (선택)</label>
+              <div className="rooms-form-group">
+                <label className="rooms-form-label">태그 (선택)</label>
                 <input 
                   type="text" 
-                  className="w-full border-b-2 border-gray-200 py-2 focus:border-black outline-none font-bold text-black transition" 
-                  placeholder="콤마(,)로 구분해 주세요 예) 소설,주말,온라인" 
+                  className="rooms-form-input" 
+                  placeholder="콤마(,)로 구분해 주세요 예) 소설,주말" 
                   value={newRoom.tags}
                   onChange={(e) => setNewRoom({...newRoom, tags: e.target.value})}
                 />
               </div>
 
-              <button type="submit" className="w-full bg-black text-white py-4 rounded-2xl font-black text-lg hover:bg-gray-800 transition shadow-lg mt-4">
+              <button type="submit" className="btn-submit-room">
                 모임방 만들기
               </button>
             </form>
