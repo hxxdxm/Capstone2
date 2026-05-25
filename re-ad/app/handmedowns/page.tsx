@@ -90,7 +90,9 @@ export default function HandMeDownsPage() {
       payload.append('bookAuthor', formData.author);
       payload.append('comment', formData.description || `${formData.condition} 상태의 책입니다.`);
       payload.append('tradeType', getTradeTypeValue(formData.tradeType));
-      payload.append('image', formData.imageFile);
+      if (formData.imageFile) {
+        payload.append('image', formData.imageFile);
+      }
 
       const res = await fetch(`${API_BASE_URL}/handmedowns`, {
         method: 'POST',
