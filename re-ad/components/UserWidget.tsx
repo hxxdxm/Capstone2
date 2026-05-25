@@ -26,7 +26,7 @@ export default function UserWidget() {
       try {
         const payload = JSON.parse(window.atob(token.split('.')[1]));
         console.log('🪙 JWT payload:', payload);
-        const jwtName = payload.username || payload.nickname || payload.name || payload.email?.split('@')[0] || '';
+        const jwtName = payload.nickname || payload.name || payload.email?.split('@')[0] || '';
         if (jwtName) {
           setUserName(jwtName);
           if (localStorage.getItem('token')) localStorage.setItem('userName', jwtName);
@@ -54,8 +54,8 @@ export default function UserWidget() {
             console.log(`📡 ${endpoints[idx]} 응답:`, data);
             const user = data.user || data.data || data;
             const fetchedName =
-              user.username || user.nickname || user.name ||
-              data.username || data.nickname || data.name || '';
+              user.nickname || user.name ||
+              data.nickname || data.name || '';
             if (fetchedName) {
               setUserName(fetchedName);
               if (localStorage.getItem('token')) localStorage.setItem('userName', fetchedName);

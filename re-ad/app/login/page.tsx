@@ -44,8 +44,8 @@ export default function LoginPage() {
         // 가능한 모든 닉네임 필드명 시도 + 중첩 객체(data.user) 내부도 확인
         const user = data.user || data.data || {};
         const userName =
-          data.username || data.nickname || data.name ||
-          user.username || user.nickname || user.name || '';
+          data.nickname || data.name ||
+          user.nickname || user.name || '';
 
         console.log('👤 추출된 닉네임:', userName);
 

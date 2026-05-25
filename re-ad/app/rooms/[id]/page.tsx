@@ -48,6 +48,8 @@ export default function RoomDetailPage() {
   const [chats, setChats] = useState<any[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true); // 사용자가 맨 아래를 보고 있는지 여부
 
   // ⭐️ 안전한 토큰 추출 함수 (유지)
   const getSafeToken = () => {
@@ -202,10 +204,25 @@ export default function RoomDetailPage() {
   };
 
   // --- 채팅 핸들러 및 useEffect ---
+
+  // 스크롤 위치 감지: 맨 아래인지 체크
+  const handleChatScroll = () => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const threshold = 80; // 아래에서 80px 이내면 "맨 아래" 로 간주
+    isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+  };
+
+  // 맨 아래로 즉시 이동
+  const scrollToBottom = (smooth = false) => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+  };
+
   useEffect(() => {
     if (!isJoined || activeTab !== 'chat') return;
     
-    // ⭐️ 1. 과거 채팅 불러올 때 토큰 헤더에 담기 (백엔드 에러 방지)
     const token = getSafeToken();
     if (!token) {
       console.warn("토큰이 없어 과거 채팅을 불러오지 못했습니다.");
@@ -213,40 +230,41 @@ export default function RoomDetailPage() {
     }
 
     fetch(`${API_BASE_URL}/chats/${roomId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}` // 📍 토큰 추가!
-      }
+      headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) setChats(data);
+        if (Array.isArray(data)) {
+          setChats(data);
+          // 과거 채팅 로드 후 맨 아래로 즉시 이동 (애니메이션 없이)
+          setTimeout(() => scrollToBottom(false), 0);
+        }
       })
       .catch(err => console.error("과거 채팅 로드 실패:", err));
 
-    // ⭐️ 2. 소켓 연결 시에도 안전한 토큰 사용 (getSafeToken 적용)
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
-      auth: { token: token }, // 📍 적용
-      extraHeaders: {
-        Authorization: `Bearer ${token}` // 📍 혹시 몰라 헤더에도 챙겨줍니다
-      }
+      auth: { token: token },
+      extraHeaders: { Authorization: `Bearer ${token}` }
     });
     setSocket(newSocket);
 
     newSocket.emit('joinRoom', roomId);
 
-    newSocket.on('receiveMessage', (chatData:any) => {
+    newSocket.on('receiveMessage', (chatData: any) => {
       setChats((prev) => [...prev, chatData]);
     });
 
-    return () => {
-      newSocket.disconnect();
-    };
+    return () => { newSocket.disconnect(); };
   }, [isJoined, activeTab, roomId]);
 
+  // 새 메시지 도착 시: 사용자가 맨 아래를 보고 있을 때만 자동 스크롤
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chats, activeTab]);
+    if (chats.length === 0) return;
+    if (isAtBottomRef.current) {
+      scrollToBottom(true);
+    }
+  }, [chats]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -411,10 +429,21 @@ export default function RoomDetailPage() {
                   <h3 className="font-black text-lg text-black">실시간 모임방 채팅 💬</h3>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
+                <div
+                  ref={chatContainerRef}
+                  onScroll={handleChatScroll}
+                  className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50"
+                >
+                  {chats.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                      <span className="text-4xl mb-3">💬</span>
+                      <p className="text-sm font-bold">아직 채팅 내역이 없습니다.</p>
+                      <p className="text-xs mt-1">첫 번째 메시지를 보내보세요!</p>
+                    </div>
+                  )}
                   {chats.map((chat, idx) => {
                     const isMe = chat.userId?._id === getMyId() || chat.userId === getMyId();
-                    const nickname = chat.userId?.nickname || '멤버';
+                    const nickname = chat.userId?.nickname || chat.userId?.username || '멤버';
 
                     return (
                       <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>

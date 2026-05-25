@@ -9,20 +9,18 @@ const API_BASE_URL = 'http://13.124.191.57:5000/api';
 export default function MainPage() {
   const [exhibitions, setExhibitions] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
-  const [rankings, setRankings] = useState<any[]>([]); 
+  const [rankings, setRankings] = useState<any[]>([]);
   const [activeFilter, setActiveFilter] = useState('전체');
-
-
 
   useEffect(() => {
 
-    // 1. [API] 필사 데이터 최신 5개 (📍 백엔드 주소 /annotations/exhibition 으로 완벽 수정)
+    // 1. [API] 필사 데이터 최신 5개 (📍백엔드 주소 /annotations/exhibition 으로 완벽 수정)
     fetch(`${API_BASE_URL}/annotations/exhibition`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
           // 백엔드에서 이미 최신순 10개를 주므로, 앞에서 5개만 자르기
-          setExhibitions(data.slice(0, 5)); 
+          setExhibitions(data.slice(0, 5));
         }
       })
       .catch(err => console.error("필사 로드 실패:", err));
@@ -44,7 +42,7 @@ export default function MainPage() {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          setRankings(data.slice(0, 5)); 
+          setRankings(data.slice(0, 5));
         }
       })
       .catch(err => console.error("랭킹 로드 실패:", err));
@@ -58,11 +56,8 @@ export default function MainPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
-      
+
       <Header />
-
-
-
       <section className="px-6 py-10 mx-auto max-w-7xl border-b border-gray-100">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -99,23 +94,20 @@ export default function MainPage() {
       </section>
 
       <main className="px-6 py-12 mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
         <div className="lg:col-span-8 space-y-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-black tracking-tight">🤝 참여를 기다리는 모임방</h3>
             <Link href="/rooms" className="text-xs font-black border-b-2 border-black pb-1">VIEW ALL</Link>
           </div>
-
           <div className="flex flex-wrap gap-2 mb-6">
             {['전체', '온라인', '오프라인'].map((filter) => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-full text-[10px] font-black transition ${
-                  activeFilter === filter
-                    ? 'bg-black text-white shadow-md'
-                    : 'bg-white text-gray-500 border border-gray-200 hover:border-black hover:text-black'
-                }`}
+                className={`px-4 py-2 rounded-full text-[10px] font-black transition ${activeFilter === filter
+                  ? 'bg-black text-white shadow-md'
+                  : 'bg-white text-gray-500 border border-gray-200 hover:border-black hover:text-black'
+                  }`}
               >
                 {filter}
               </button>
@@ -127,7 +119,6 @@ export default function MainPage() {
               filteredRooms.map((room) => {
                 const currentMembers = room.members?.length || 0;
                 const isFull = currentMembers >= (room.maxMembers || 8);
-                
                 return (
                   <Link href={`/rooms/${room._id || room.id}`} key={room._id || room.id} className="bg-white p-7 rounded-3xl border border-gray-100 hover:shadow-lg transition-all group cursor-pointer relative flex flex-col justify-between h-[200px] block">
                     {isFull && (
@@ -182,7 +173,6 @@ export default function MainPage() {
             </Link>
           </section>
         </aside>
-
       </main>
     </div>
   );

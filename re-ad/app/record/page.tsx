@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function RecordPage() {
-    // 📍 1. 내 독서 기록 데이터 상태
+    //📍1. 내 독서 기록 데이터 상태
     const [recordData, setRecordData] = useState({
         title: '',
         author: '',
@@ -17,13 +17,13 @@ export default function RecordPage() {
         isPublic: true // 공개 여부 (경험 공유의 핵심!)
     });
 
-    // 📍 2. 책 검색 모달 상태
+    //📍2. 책 검색 모달 상태
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
 
-    // 📍 3. 책 검색 API 호출 함수 (임시로 프론트에서 카카오 API를 바로 찌르거나, 백엔드를 거칩니다)
+    //📍3. 책 검색 API 호출 함수 (임시로 프론트에서 카카오 API를 바로 찌르거나, 백엔드를 거칩니다)
     const handleSearchBook = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!searchQuery.trim()) return alert("책 제목을 입력해주세요.");
@@ -49,7 +49,7 @@ export default function RecordPage() {
         }
     };
 
-    // 📍 4. 검색 결과에서 책을 선택했을 때 (자동 완성!)
+    //📍4. 검색 결과에서 책을 선택했을 때 (자동 완성!)
     const handleSelectBook = (book: any) => {
         setRecordData({
             ...recordData,

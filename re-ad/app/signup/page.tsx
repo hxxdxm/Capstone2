@@ -4,12 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import './signup.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function SignupPage() {
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     nickname: '',
@@ -31,7 +32,7 @@ export default function SignupPage() {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0) {
-      setIsCodeSent(false); 
+      setIsCodeSent(false);
     }
     return () => clearInterval(timerId);
   }, [isCodeSent, isVerified, timeLeft]);
@@ -56,7 +57,7 @@ export default function SignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email })
       });
-      
+
       if (res.ok) {
         alert("입력하신 이메일로 인증번호 6자리가 발송되었습니다. 메일함을 확인해주세요!");
         setIsCodeSent(true);
@@ -80,7 +81,7 @@ export default function SignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email, code: authCode })
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         if (data.verified) {
@@ -119,7 +120,7 @@ export default function SignupPage() {
           nickname: formData.nickname,
           password: formData.password,
           // 전화번호가 비어있지 않으면 같이 보냄
-          phone: formData.phone || undefined 
+          phone: formData.phone || undefined
         })
       });
 
@@ -136,69 +137,75 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans text-black flex flex-col pb-20">
+    <div className="signup-bg">
       <Header />
 
-      <main className="flex-1 flex items-center justify-center px-6 py-12 mt-10">
-        <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-10 md:p-12 relative overflow-hidden">
-          
-          <div className="absolute top-0 left-0 w-full h-2 bg-black"></div>
+      <main className="signup-main">
+        <div className="signup-card">
+          {/* 모서리 꽃/잎 장식 */}
+          <span className="deco-leaf tl">🍃</span>
+          <span className="deco-leaf tr">🌸</span>
+          <span className="deco-leaf bl">🌿</span>
+          <span className="deco-leaf br">🌷</span>
 
-          <div className="text-center mb-10 mt-2">
-            <h2 className="text-3xl font-black tracking-tighter uppercase mb-3 text-black">
-              Sign Up
-            </h2>
-            <p className="text-gray-500 font-bold text-xs tracking-widest">
-              교환독서의 멤버가 되어보세요
-            </p>
+          <div className="signup-title-wrap">
+            <h2 className="signup-title">회원가입</h2>
+            <p className="signup-subtitle">교환독서의 멤버가 되어보세요</p>
           </div>
 
-          <form onSubmit={handleSignup} className="space-y-6">
-            
-            {/* 📍 이메일 인증 영역으로 변경 */}
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Email Verification</label>
-              <div className="flex space-x-3">
-                <input 
-                  type="email" 
-                  className="flex-1 border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent disabled:text-gray-400" 
-                  placeholder="인증받을 이메일 주소" 
-                  value={formData.email} 
-                  onChange={(e) => setFormData({...formData, email: e.target.value})} 
+          <div className="divider">
+            <span className="divider-icon">✦</span>
+          </div>
+
+          <form onSubmit={handleSignup}>
+
+            {/* 📍 이메일 인증 */}
+            <div className="form-group">
+              <label className="form-label">이메일 인증</label>
+              <div className="email-row">
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="인증받을 이메일 주소"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   disabled={isVerified}
-                  required 
+                  required
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleSendAuthCode}
                   disabled={isVerified}
-                  className={`px-4 py-2 text-xs font-black rounded-xl transition ${isVerified ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-100 text-black border border-gray-200 hover:border-black hover:bg-white'}`}
+                  className="btn-send"
                 >
                   {isVerified ? '인증완료' : (isCodeSent ? '재전송' : '인증번호 전송')}
                 </button>
               </div>
+
+              {/* 인증완료 뱃지 */}
+              {isVerified && (
+                <div><span className="verified-badge">✓ 이메일 인증이 완료되었습니다</span></div>
+              )}
             </div>
 
-            {/* 인증번호 입력 영역 (전송 버튼을 눌렀을 때만 나타남) */}
+            {/* 인증번호 입력 (전송 후 표시) */}
             {isCodeSent && !isVerified && (
-              <div className="flex space-x-3 animate-in fade-in slide-in-from-top-2">
-                <div className="flex-1 relative">
-                  <input 
-                    type="text" 
+              <div className="form-group verify-row">
+                <div className="verify-input-wrap">
+                  <input
+                    type="text"
                     maxLength={6}
-                    className="w-full border-b-2 border-blue-500 py-3 pl-2 pr-12 outline-none font-bold text-black bg-blue-50/30 transition tracking-widest" 
-                    placeholder="인증번호 6자리" 
-                    value={authCode} 
-                    onChange={(e) => setAuthCode(e.target.value.replace(/[^0-9]/g, ''))} 
+                    className="form-input"
+                    placeholder="인증번호 6자리"
+                    value={authCode}
+                    onChange={(e) => setAuthCode(e.target.value.replace(/[^0-9]/g, ''))}
                   />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-black text-red-500">
-                    {formatTime(timeLeft)}
-                  </span>
+                  <span className="timer-badge">{formatTime(timeLeft)}</span>
                 </div>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleVerifyCode}
-                  className="px-6 py-2 text-xs font-black rounded-xl bg-black text-white hover:bg-gray-800 transition shadow-md"
+                  className="btn-verify"
                 >
                   확인
                 </button>
@@ -206,53 +213,69 @@ export default function SignupPage() {
             )}
 
             {/* 닉네임 */}
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Nickname</label>
-              <input type="text" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" placeholder="사용할 닉네임 (예: 독서왕)" value={formData.nickname} onChange={(e) => setFormData({...formData, nickname: e.target.value})} required />
-            </div>
-
-            {/* 비밀번호 */}
-            <div className="pt-2">
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Password</label>
-              <input type="password" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" placeholder="비밀번호" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required />
-            </div>
-
-            {/* 비밀번호 확인 */}
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">Confirm Password</label>
-              <input type="password" className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" placeholder="비밀번호 확인" value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} required />
-            </div>
-
-            {/* 📍 전화번호 (선택 항목으로 변경됨) */}
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 mb-2 uppercase tracking-widest">
-                Phone <span className="text-gray-400 lowercase font-bold tracking-normal">(선택)</span>
-              </label>
-              <input 
-                type="text" 
-                maxLength={11}
-                className="w-full border-b-2 border-gray-200 py-3 focus:border-black outline-none font-bold text-black transition bg-transparent" 
-                placeholder="- 없이 숫자만 입력 (예: 01012345678)" 
-                value={formData.phone} 
-                onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/[^0-9]/g, '')})} 
+            <div className="form-group">
+              <label className="form-label">닉네임</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="사용할 닉네임 (예: 독서왕)"
+                value={formData.nickname}
+                onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                required
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="w-full bg-black text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-gray-800 transition shadow-lg mt-8"
-            >
+            {/* 비밀번호 */}
+            <div className="form-group">
+              <label className="form-label">비밀번호</label>
+              <input
+                type="password"
+                className="form-input"
+                placeholder="비밀번호"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+              />
+            </div>
+
+            {/* 비밀번호 확인 */}
+            <div className="form-group">
+              <label className="form-label">비밀번호 확인</label>
+              <input
+                type="password"
+                className="form-input"
+                placeholder="비밀번호 확인"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                required
+              />
+            </div>
+
+            {/* 전화번호 (선택) */}
+            <div className="form-group">
+              <label className="form-label">
+                전화번호
+                <span className="optional-badge">(선택)</span>
+              </label>
+              <input
+                type="text"
+                maxLength={11}
+                className="form-input"
+                placeholder="- 없이 숫자만 입력 (예: 01012345678)"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^0-9]/g, '') })}
+              />
+            </div>
+
+            <button type="submit" className="btn-submit">
               가입하기
             </button>
           </form>
 
-          <div className="mt-8 text-center pt-6 border-t border-gray-100">
-            <span className="text-xs font-bold text-gray-500">이미 계정이 있으신가요? </span>
-            <Link href="/login" className="text-black font-black underline underline-offset-4 hover:text-gray-600 transition">
-              로그인
-            </Link>
+          <div className="login-link-wrap">
+            <span className="login-link-text">이미 계정이 있으신가요?&nbsp;</span>
+            <Link href="/login" className="login-link">로그인</Link>
           </div>
-
         </div>
       </main>
     </div>
