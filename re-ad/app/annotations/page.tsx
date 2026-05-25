@@ -37,6 +37,7 @@ export default function ExhibitionPage() {
   const [commentInput, setCommentInput] = useState('');
   const [isSendingComment, setIsSendingComment] = useState(false);
   const commentListRef = useRef<HTMLDivElement>(null);
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null); // ← 점3개 메뉴 상태
 
   /* ── 공통 유틸 ── */
   const getToken = () => {
@@ -81,6 +82,7 @@ export default function ExhibitionPage() {
           const imageUrl = apiItem.imageUrl || apiItem.image_url;
           return {
             id: apiItem._id,
+            userId: apiItem.userId?._id || apiItem.userId, // ← 작성자 ID 포함
             type: imageUrl ? 'image' : 'text',
             image: imageUrl,
             quote: apiItem.quote || apiItem.content,
@@ -289,6 +291,29 @@ export default function ExhibitionPage() {
     }
   };
 
+  /* ── 게시글 삭제 ── */
+  const deletePost = async (postId: string) => {
+    if (!confirm('이 게시글을 삭제할까요?')) return;
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/annotations/${postId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+        setOpenMenuPostId(null);
+      } else {
+        alert('삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('서버 통신 오류');
+    }
+  };
+
   /* ── 시간 포맷 ── */
   const formatTime = (dateStr: string) => {
     if (!dateStr) return '';
@@ -334,9 +359,11 @@ export default function ExhibitionPage() {
             ) : (
               posts.map((item) => {
                 const isLiked = likedPostIds.includes(item.id);
+                const isMyPost = myId && item.userId === myId;
+                const isMenuOpen = openMenuPostId === item.id;
 
                 return (
-                  <article key={item.id} className="anno-card">
+                  <article key={item.id} className="anno-card" onClick={() => openMenuPostId && setOpenMenuPostId(null)}>
 
                     {/* 이미지 타입 */}
                     {item.type === 'image' ? (
@@ -368,7 +395,7 @@ export default function ExhibitionPage() {
                       </div>
                     )}
 
-                    {/* 카드 하단 액션바 (항상 표시) */}
+                    {/* 카드 하단 액션바 */}
                     <div className="anno-card-footer">
                       <span className="anno-user-badge">@{item.user}</span>
                       
@@ -392,6 +419,34 @@ export default function ExhibitionPage() {
                           댓글
                           <span className="anno-comment-count">{item.commentCount || 0}</span>
                         </button>
+
+                        {/* 점 3개 메뉴 - 내 게시글만 */}
+                        {isMyPost && (
+                          <div className="anno-menu-wrap" onClick={e => e.stopPropagation()}>
+                            <button
+                              className="anno-menu-btn"
+                              onClick={() => setOpenMenuPostId(isMenuOpen ? null : item.id)}
+                              title="더보기"
+                            >
+                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                              </svg>
+                            </button>
+                            {isMenuOpen && (
+                              <div className="anno-menu-dropdown">
+                                <button
+                                  className="anno-menu-item delete"
+                                  onClick={() => deletePost(item.id)}
+                                >
+                                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  삭제하기
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </article>

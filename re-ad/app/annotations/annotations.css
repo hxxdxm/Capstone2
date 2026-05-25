@@ -526,5 +526,65 @@
   color: #7BA05B; font-weight: 700; text-decoration: underline; cursor: pointer;
 }
 
+
 /* ── hover 바 (이미지 카드용, 유지) ── */
 .anno-card-hover-bar { display: none; }
+
+/* ── 점 3개 메뉴 ── */
+.anno-menu-wrap {
+  position: relative;
+}
+.anno-menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #8A7A60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+}
+.anno-menu-btn:hover {
+  background: rgba(59,50,36,0.08);
+  color: #3B3224;
+}
+.anno-menu-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  background: #FDFAF5;
+  border: 1.5px solid #D9CDB8;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(59,50,36,0.12);
+  padding: 6px;
+  min-width: 120px;
+  z-index: 50;
+  animation: menuFadeIn 0.12s ease;
+}
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anno-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.anno-menu-item.delete {
+  color: #D94F4F;
+}
+.anno-menu-item.delete:hover {
+  background: rgba(217,79,79,0.08);
+}

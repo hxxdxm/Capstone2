@@ -19,6 +19,14 @@ export default function OtherUserProfilePage() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
+  // 팔로워/팔로잌 목록 모달
+  const [followModal, setFollowModal] = useState<{
+    open: boolean;
+    type: 'followers' | 'following';
+    list: any[];
+    loading: boolean;
+  }>({ open: false, type: 'followers', list: [], loading: false });
+
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -84,6 +92,22 @@ export default function OtherUserProfilePage() {
       console.error("프로필 데이터 로드 에러:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+  // 팔로워/팔로잉 목록 열기
+  const openFollowModal = async (type: 'followers' | 'following') => {
+    setFollowModal({ open: true, type, list: [], loading: true });
+    const headers = getHeaders();
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/${targetUserId}/${type}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setFollowModal(prev => ({ ...prev, list: Array.isArray(data) ? data : [], loading: false }));
+      } else {
+        setFollowModal(prev => ({ ...prev, loading: false }));
+      }
+    } catch {
+      setFollowModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -173,8 +197,18 @@ export default function OtherUserProfilePage() {
                 )}
               </div>
               <div className="profile-stats">
-                <span className="profile-stat">팔로워 <strong>{followersCount}</strong></span>
-                <span className="profile-stat">팔로잉 <strong>{followingCount}</strong></span>
+                <span
+                  style={{ cursor: 'pointer', textDecoration: 'underline dotted' }}
+                  onClick={() => openFollowModal('followers')}
+                >
+                  팔로워 <strong>{followersCount}</strong>
+                </span>
+                <span
+                  style={{ cursor: 'pointer', textDecoration: 'underline dotted', marginLeft: '15px' }}
+                  onClick={() => openFollowModal('following')}
+                >
+                  팔로잉 <strong>{followingCount}</strong>
+                </span>
               </div>
             </div>
           </div>
@@ -230,6 +264,84 @@ export default function OtherUserProfilePage() {
           )}
         </section>
       </main>
+
+      {/* ── 팔로워/팔로잉 목록 모달 ── */}
+      {followModal.open && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(59,50,36,0.55)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
+          }}
+          onClick={() => setFollowModal(prev => ({ ...prev, open: false }))}
+        >
+          <div
+            style={{
+              background: '#FDFAF5', borderRadius: '28px', width: '100%', maxWidth: '400px',
+              border: '1.5px solid #D9CDB8', boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+              maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #EDE7DA', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: '20px', fontWeight: 900, color: '#3B3224', margin: 0 }}>
+                {followModal.type === 'followers' ? '팔로워' : '팔로잉'}
+              </h3>
+              <button
+                onClick={() => setFollowModal(prev => ({ ...prev, open: false }))}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8A7A60', fontSize: '20px', lineHeight: 1 }}
+              >✕</button>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1, padding: '8px 16px' }}>
+              {followModal.loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                  <div style={{ width: '32px', height: '32px', border: '3px solid rgba(123,160,91,0.3)', borderTopColor: '#7BA05B', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              ) : followModal.list.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '40px 0', color: '#8A7A60', fontSize: '14px', fontWeight: 600 }}>
+                  {followModal.type === 'followers' ? '팔로워가 없습니다.' : '팔로잉하는 사용자가 없습니다.'}
+                </p>
+              ) : (
+                followModal.list.map((user: any) => {
+                  const displayName = user.nickname || user.username || user.name || '알 수 없음';
+                  const userId = user._id || user.id;
+                  return (
+                    <div
+                      key={userId}
+                      onClick={() => { router.push(`/profile/${userId}`); setFollowModal(prev => ({ ...prev, open: false })); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '14px',
+                        padding: '14px 8px', borderRadius: '14px', cursor: 'pointer', transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#F2EDE4')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div style={{
+                        width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
+                        background: 'linear-gradient(135deg, #3B3224, #5A4A36)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#F2EDE4', fontWeight: 900, fontSize: '16px', fontFamily: "'Noto Serif KR', serif"
+                      }}>
+                        {displayName[0]}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', color: '#3B3224' }}>{displayName}</div>
+                        {user.readingMbti && (
+                          <div style={{ fontSize: '10px', color: '#7BA05B', fontWeight: 700, marginTop: '2px' }}>{user.readingMbti}</div>
+                        )}
+                      </div>
+                      <svg style={{ marginLeft: 'auto', color: '#BDB09A' }} width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

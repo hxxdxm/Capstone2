@@ -77,8 +77,8 @@ export default function HandMeDownsPage() {
     if (!getToken()) return alert("로그인 후 등록할 수 있습니다.");
 
     if (!formData.imageFile) {
-      alert("책 상태를 확인할 수 있는 사진을 등록해주세요!");
-      return;
+      // 사진 없이도 등록 가능 (선택사항)
+      console.log("사진 없이 등록합니다.");
     }
 
     const token = getToken();
@@ -210,10 +210,10 @@ export default function HandMeDownsPage() {
             
             <form onSubmit={handleRegister}>
               
-              {/* 📍 사진 업로드 영역 */}
+              {/* 📍 사진 업로드 영역 - label로 감싸서 클릭 보장 */}
               <div className="handmedowns-form-group">
-                <label className="handmedowns-form-label">책 상태 사진 *</label>
-                <div className="upload-area">
+                <label className="handmedowns-form-label">책 상태 사진 (선택)</label>
+                <label htmlFor="book-image-upload" className="upload-area" style={{ cursor: 'pointer' }}>
                   {formData.imagePreview ? (
                     <div className="upload-preview">
                       <img src={formData.imagePreview} alt="미리보기" />
@@ -228,12 +228,13 @@ export default function HandMeDownsPage() {
                     </div>
                   )}
                   <input 
+                    id="book-image-upload"
                     type="file" 
                     accept="image/*" 
                     onChange={handleFileChange} 
-                    className="upload-input" 
+                    style={{ display: 'none' }}
                   />
-                </div>
+                </label>
               </div>
 
               <div className="handmedowns-form-group">
