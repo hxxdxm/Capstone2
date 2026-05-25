@@ -1,0 +1,275 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+.login-bg {
+  min-height: 100vh;
+  background-color: #F2EDE4;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(139,175,116,0.12) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, rgba(196,167,119,0.15) 0%, transparent 45%);
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  margin-top: 40px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: #FDFAF5;
+  border-radius: 24px;
+  border: 1.5px solid #D9CDB8;
+  box-shadow: 0 8px 40px rgba(100,80,40,0.10);
+  padding: 44px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 상단 녹색 태그 장식 */
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 8px;
+  background: #7BA05B;
+  border-radius: 0 0 8px 8px;
+}
+
+/* 모서리 장식 */
+.deco-leaf {
+  position: absolute;
+  font-size: 22px;
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+.deco-leaf.tl { top: 18px; left: 18px; transform: rotate(-20deg); }
+.deco-leaf.tr { top: 18px; right: 18px; transform: rotate(20deg); }
+.deco-leaf.bl { bottom: 18px; left: 18px; transform: rotate(10deg); }
+.deco-leaf.br { bottom: 18px; right: 18px; transform: rotate(-10deg); }
+
+/* 타이틀 영역 */
+.login-title-wrap {
+  text-align: center;
+  margin-bottom: 32px;
+  margin-top: 14px;
+}
+
+.login-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #3B3224;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.login-subtitle {
+  font-size: 12px;
+  color: #8A7A60;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+/* 구분선 */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #D9CDB8;
+}
+.divider-icon {
+  font-size: 14px;
+  color: #7BA05B;
+}
+
+/* 폼 그룹 */
+.form-group {
+  margin-bottom: 22px;
+}
+
+.form-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #7BA05B;
+  margin-bottom: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.form-input {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid #D9CDB8;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3B3224;
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+  box-sizing: border-box;
+}
+.form-input:focus {
+  border-bottom-color: #7BA05B;
+}
+.form-input::placeholder {
+  color: #BDB09A;
+  font-weight: 400;
+}
+
+/* 로그인 유지 체크박스 */
+.keep-login-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+  margin-bottom: 4px;
+}
+
+.keep-login-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #7BA05B;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.keep-login-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8A7A60;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.keep-login-label:hover {
+  color: #7BA05B;
+}
+
+/* 로그인 버튼 */
+.btn-submit {
+  width: 100%;
+  margin-top: 28px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Noto Serif KR', serif;
+  letter-spacing: 0.05em;
+  background: #7BA05B;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(123,160,91,0.35);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-submit::after {
+  content: '🌿';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  opacity: 0.7;
+}
+.btn-submit:hover {
+  background: #5E8542;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(123,160,91,0.40);
+}
+.btn-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(123,160,91,0.25);
+}
+
+/* 하단 링크 영역 */
+.login-footer {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.signup-link-wrap {
+  padding-bottom: 20px;
+  border-bottom: 1px dashed #D9CDB8;
+}
+
+.signup-link-text {
+  font-size: 12px;
+  color: #8A7A60;
+}
+
+.signup-link {
+  color: #7BA05B;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1.5px solid #7BA05B;
+  padding-bottom: 1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.signup-link:hover {
+  color: #5E8542;
+  border-color: #5E8542;
+}
+
+/* 계정 도움 영역 */
+.help-wrap {
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.help-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #BDB09A;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.help-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.help-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8A7A60;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.help-link:hover {
+  color: #7BA05B;
+}
+
+.help-divider {
+  font-size: 12px;
+  color: #D9CDB8;
+}

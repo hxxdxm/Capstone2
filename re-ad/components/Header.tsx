@@ -20,7 +20,10 @@ export default function Header() {
       <div className="header-logo-wrap">
         <Link href="/" className="header-logo-link">
           <span className="header-logo-leaf">🌿</span>
-          <h1 className="header-logo-text">교환<span>독서</span></h1>
+          <div>
+            <h1 className="header-logo-text">이음</h1>
+            <p className="header-logo-sub">독서의 여운을 타인과 잇다</p>
+          </div>
         </Link>
       </div>
 
