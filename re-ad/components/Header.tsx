@@ -26,11 +26,12 @@ export default function Header() {
 
       {/* 네비게이션 메뉴 */}
       <nav className="header-nav">
-        <Link href="/ranking"    className={navLinkClass('/ranking')}>랭킹</Link>
-        <Link href="/annotations" className={navLinkClass('/annotations')}>필사</Link>
-        <Link href="/rooms"      className={navLinkClass('/rooms')}>모임</Link>
-        <Link href="/handmedowns" className={navLinkClass('/handmedowns')}>나눔</Link>
-        <Link href="/search"     className={navLinkClass('/search')}>친구찾기</Link>
+        <Link href="/ranking"     className={navLinkClass('/ranking')}>랭킹</Link>
+        <Link href="/annotations"  className={navLinkClass('/annotations')}>필사</Link>
+        <Link href="/rooms"        className={navLinkClass('/rooms')}>모임</Link>
+        <Link href="/handmedowns"  className={navLinkClass('/handmedowns')}>나눔</Link>
+        <Link href="/search"       className={navLinkClass('/search')}>친구찾기</Link>
+        <Link href="/dms"          className={navLinkClass('/dms')}>메시지</Link>
       </nav>
 
       {/* 우측 유저 위젯 */}
