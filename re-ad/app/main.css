@@ -24,11 +24,23 @@
 }
 
 /* ───────────────────────────────────────
-   필사 전시회 섹션
+   좌측 메인 콘텐츠 공통 (섹션들)
 ─────────────────────────────────────── */
-.exhibition-section {
-  padding: 36px 0 28px;
+.main-content-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-section {
+  padding: 0 0 40px 0;
+  margin-bottom: 40px;
   border-bottom: 1.5px dashed #D9CDB8;
+}
+
+.main-section:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .section-header {
@@ -384,7 +396,11 @@ s {
 /* ───────────────────────────────────────
    도서 랭킹 사이드바
 ─────────────────────────────────────── */
-.ranking-aside {}
+.ranking-aside {
+  position: sticky;
+  top: 96px;
+  align-self: flex-start;
+}
 
 .ranking-card {
   background: #FDFAF5;

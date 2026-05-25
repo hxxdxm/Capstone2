@@ -74,106 +74,146 @@ export default function MainPage() {
     <div className="main-wrap">
       <Header />
 
-      {/* ── 필사 전시회 섹션 ── */}
-      <section className="exhibition-section">
-        <div className="section-inner">
-          <div className="section-header">
-            <div>
-              <Link href="/annotations" className="section-title-link">
-                <h3 className="section-title">🖊 필사 전시회</h3>
-              </Link>
-              <p className="section-title-sub">오늘의 영감을 준 문장들</p>
-            </div>
-            <Link href="/annotations" className="view-all-link">전체 보기</Link>
-          </div>
-
-          <div className="card-scroll-row">
-            {exhibitions.length > 0 ? (
-              exhibitions.map((item) => (
-                <Link href="/annotations" key={item._id} className="exhibition-card">
-                  <div>
-                    <div className="exhibition-quote-box">
-                      {/* 📍 백엔드의 quote 키값 사용 */}
-                      <p className="exhibition-quote">"{item.quote}"</p>
-                    </div>
-                  </div>
-                  <div className="exhibition-meta">
-                    <span className="exhibition-meta-text">
-                      {/* 📍 백엔드의 populate 데이터 사용 */}
-                      {item.bookId?.title || '도서'} | {item.userId?.nickname || '작자미상'}
-                    </span>
-                    <span className="exhibition-meta-icon">📖</span>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="empty-state">등록된 전시글이 없습니다.</div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 메인 그리드 (모임방 + 랭킹) ── */}
       <div className="main-grid">
+        
+        {/* ── 좌측 메인 콘텐츠 ── */}
+        <div className="main-content-left">
+          
+          {/* 1. 필사 전시회 섹션 */}
+          <section className="main-section">
+            <div className="section-header">
+              <div>
+                <Link href="/annotations" className="section-title-link">
+                  <h3 className="section-title">🖊 필사 전시회</h3>
+                </Link>
+                <p className="section-title-sub">오늘의 영감을 준 문장들</p>
+              </div>
+              <Link href="/annotations" className="view-all-link">전체 보기</Link>
+            </div>
 
-        {/* 모임방 */}
-        <div className="rooms-section">
-          <div className="rooms-section-header">
-            <h3 className="rooms-section-title">🤝 참여를 기다리는 모임방</h3>
-            <Link href="/rooms" className="view-all-link">전체 보기</Link>
-          </div>
-
-          {/* 필터 탭 */}
-          <div className="filter-tabs">
-            {['전체', '온라인', '오프라인'].map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`filter-tab${activeFilter === filter ? ' active' : ''}`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-
-          {/* 모임방 카드 */}
-          <div className="rooms-grid">
-            {filteredRooms.length > 0 ? (
-              filteredRooms.map((room) => {
-                const currentMembers = room.members?.length || 0;
-                const isFull = currentMembers >= (room.maxMembers || 8);
-                return (
-                  <Link
-                    href={`/rooms/${room._id || room.id}`}
-                    key={room._id || room.id}
-                    className="room-card"
-                  >
-                    {isFull && <div className="room-full-badge">모집 마감</div>}
+            <div className="card-scroll-row">
+              {exhibitions.length > 0 ? (
+                exhibitions.map((item) => (
+                  <Link href="/annotations" key={item._id} className="exhibition-card">
                     <div>
-                      <div className="room-card-top">
-                        <span className={`room-type-badge ${room.roomType === '온라인' ? 'online' : 'offline'}`}>
-                          {room.roomType || '온라인'}
-                        </span>
-                        <span className={`room-member-count ${isFull ? 'full' : 'ok'}`}>
-                          <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                          </svg>
-                          {currentMembers} / {room.maxMembers || 8}명
-                        </span>
+                      <div className="exhibition-quote-box">
+                        <p className="exhibition-quote">"{item.quote}"</p>
                       </div>
-                      <h4 className="room-name">{room.roomName}</h4>
-                      <p className="room-desc">{room.roomDesc || room.description}</p>
+                    </div>
+                    <div className="exhibition-meta">
+                      <span className="exhibition-meta-text">
+                        {item.bookId?.title || '도서'} | {item.userId?.nickname || '작자미상'}
+                      </span>
+                      <span className="exhibition-meta-icon">📖</span>
                     </div>
                   </Link>
-                );
-              })
-            ) : (
-              <div className="rooms-empty">현재 개설된 모임방이 없습니다.</div>
-            )}
-          </div>
+                ))
+              ) : (
+                <div className="empty-state">등록된 전시글이 없습니다.</div>
+              )}
+            </div>
+          </section>
+
+          {/* 2. 모임방 섹션 */}
+          <section className="main-section">
+            <div className="section-header">
+              <div>
+                <Link href="/rooms" className="section-title-link">
+                  <h3 className="section-title">🤝 참여를 기다리는 모임방</h3>
+                </Link>
+                <p className="section-title-sub">함께 읽고 나누는 즐거움</p>
+              </div>
+              <Link href="/rooms" className="view-all-link">전체 보기</Link>
+            </div>
+
+            <div className="filter-tabs">
+              {['전체', '온라인', '오프라인'].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setActiveFilter(filter)}
+                  className={`filter-tab${activeFilter === filter ? ' active' : ''}`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <div className="rooms-grid">
+              {filteredRooms.length > 0 ? (
+                filteredRooms.map((room) => {
+                  const currentMembers = room.members?.length || 0;
+                  const isFull = currentMembers >= (room.maxMembers || 8);
+                  return (
+                    <Link
+                      href={`/rooms/${room._id || room.id}`}
+                      key={room._id || room.id}
+                      className="room-card"
+                    >
+                      {isFull && <div className="room-full-badge">모집 마감</div>}
+                      <div>
+                        <div className="room-card-top">
+                          <span className={`room-type-badge ${room.roomType === '온라인' ? 'online' : 'offline'}`}>
+                            {room.roomType || '온라인'}
+                          </span>
+                          <span className={`room-member-count ${isFull ? 'full' : 'ok'}`}>
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                            </svg>
+                            {currentMembers} / {room.maxMembers || 8}명
+                          </span>
+                        </div>
+                        <h4 className="room-name">{room.roomName}</h4>
+                        <p className="room-desc">{room.roomDesc || room.description}</p>
+                      </div>
+                    </Link>
+                  );
+                })
+              ) : (
+                <div className="rooms-empty">현재 개설된 모임방이 없습니다.</div>
+              )}
+            </div>
+          </section>
+
+          {/* 3. 물려주기/교환하기 섹션 */}
+          <section className="main-section">
+            <div className="section-header">
+              <div>
+                <Link href="/handmedowns" className="section-title-link">
+                  <h3 className="section-title">📚 물려주기/교환하기</h3>
+                </Link>
+                <p className="section-title-sub">이웃이 물려준 따뜻한 책들</p>
+              </div>
+              <Link href="/handmedowns" className="view-all-link">전체 보기</Link>
+            </div>
+
+            <div className="handmedown-grid">
+              {handmedowns.length > 0 ? (
+                handmedowns.map((item) => (
+                  <Link href="/handmedowns" key={item._id} className="handmedown-card">
+                    <div className="hm-card-img-wrap">
+                      {item.image ? (
+                        <img src={item.image} alt={item.bookTitle} className="hm-card-img" />
+                      ) : (
+                        <div className="hm-card-no-img">NO IMG</div>
+                      )}
+                      <span className="hm-trade-badge">{item.tradeType === 'SELL' ? '판매' : '나눔'}</span>
+                    </div>
+                    <div className="hm-card-info">
+                      <h4 className="hm-card-title">{item.bookTitle}</h4>
+                      <p className="hm-card-author">{item.bookAuthor || '저자 미상'}</p>
+                      <p className="hm-card-desc">{item.comment}</p>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="empty-state">아직 등록된 물려주기 책이 없습니다.</div>
+              )}
+            </div>
+          </section>
+
         </div>
 
-        {/* 도서 랭킹 사이드바 */}
+        {/* ── 우측 도서 랭킹 사이드바 ── */}
         <aside className="ranking-aside">
           <div className="ranking-card">
             <div className="ranking-card-title">📚 도서 랭킹</div>
@@ -196,45 +236,6 @@ export default function MainPage() {
           </div>
         </aside>
       </div>
-
-      {/* ── 물려주기 섹션 ── */}
-      <section className="handmedowns-section">
-        <div className="section-inner">
-          <div className="section-header">
-            <div>
-              <Link href="/handmedowns" className="section-title-link">
-                <h3 className="section-title">📚 새로 올라온 책</h3>
-              </Link>
-              <p className="section-title-sub">이웃이 물려준 따뜻한 책들</p>
-            </div>
-            <Link href="/handmedowns" className="view-all-link">전체 보기</Link>
-          </div>
-
-          <div className="handmedown-grid">
-            {handmedowns.length > 0 ? (
-              handmedowns.map((item) => (
-                <Link href="/handmedowns" key={item._id} className="handmedown-card">
-                  <div className="hm-card-img-wrap">
-                    {item.image ? (
-                      <img src={item.image} alt={item.bookTitle} className="hm-card-img" />
-                    ) : (
-                      <div className="hm-card-no-img">NO IMG</div>
-                    )}
-                    <span className="hm-trade-badge">{item.tradeType === 'SELL' ? '판매' : '나눔'}</span>
-                  </div>
-                  <div className="hm-card-info">
-                    <h4 className="hm-card-title">{item.bookTitle}</h4>
-                    <p className="hm-card-author">{item.bookAuthor || '저자 미상'}</p>
-                    <p className="hm-card-desc">{item.comment}</p>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="empty-state">아직 등록된 물려주기 책이 없습니다.</div>
-            )}
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
