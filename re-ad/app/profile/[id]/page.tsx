@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import './profile.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
@@ -35,7 +36,6 @@ export default function OtherUserProfilePage() {
     } catch (e) { return null; }
   };
 
-  // 📍 [핵심 수정] 헤더 객체를 안전하게 만드는 함수
   const getHeaders = () => {
     const token = getSafeToken();
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
@@ -121,79 +121,111 @@ export default function OtherUserProfilePage() {
     }
   };
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">프로필을 불러오는 중...</div>;
+  const handleDm = () => {
+    const token = getSafeToken();
+    if (!token) {
+      alert("로그인 후 이용할 수 있습니다.");
+      return router.push('/login');
+    }
+    router.push(`/dms/${targetUserId}`);
+  };
+
+  if (isLoading) return (
+    <div className="profile-loading">
+      <div>
+        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(123,160,91,0.3)', borderTopColor: '#7BA05B', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p>프로필을 불러오는 중...</p>
+      </div>
+    </div>
+  );
   if (!profileData) return null;
 
+  // 📍 닉네임/이름 필드 다중 대응 (백엔드 응답 필드명 차이 해결)
+  const displayName =
+    profileData.nickname ||
+    profileData.username ||
+    profileData.name ||
+    profileData.user?.nickname ||
+    profileData.user?.username ||
+    '알 수 없음';
+
+  const avatarChar = displayName !== '알 수 없음' ? displayName[0] : '👤';
+
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 pb-24 font-sans">
+    <div className="profile-container">
       <Header />
 
-      <main className="mx-auto max-w-4xl px-6 mt-12">
-        <section className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-          
-          <div className="flex items-center space-x-6 relative z-10">
-            <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center text-white text-3xl font-black shadow-lg">
-              {profileData.nickname ? profileData.nickname[0] : '👤'}
+      <main className="profile-main">
+        {/* ── 프로필 카드 ── */}
+        <section className="profile-card">
+          <div className="profile-info">
+            <div className="profile-avatar">
+              {avatarChar}
             </div>
             <div>
-              <h2 className="text-3xl font-black mb-2 flex items-center space-x-3">
-                <span>{profileData.nickname}</span>
+              <div className="profile-name-row">
+                <span className="profile-name">{displayName}</span>
                 {profileData.readingMbti && (
-                  <span className="px-2 py-1 bg-purple-100 text-purple-600 text-[10px] uppercase tracking-widest rounded-md border border-purple-200">
+                  <span className="profile-mbti-badge">
                     {profileData.readingMbti}
                   </span>
                 )}
-              </h2>
-              <div className="flex space-x-4 text-sm font-bold text-gray-500">
-                <span>팔로워 <strong className="text-black">{followersCount}</strong></span>
-                <span>팔로잉 <strong className="text-black">{followingCount}</strong></span>
+              </div>
+              <div className="profile-stats">
+                <span className="profile-stat">팔로워 <strong>{followersCount}</strong></span>
+                <span className="profile-stat">팔로잉 <strong>{followingCount}</strong></span>
               </div>
             </div>
           </div>
 
-          <div className="relative z-10 w-full md:w-auto">
-            {getMyId() !== targetUserId && (
-              <button 
+          {getMyId() !== targetUserId && (
+            <div className="profile-action-btns">
+              <button
                 onClick={handleToggleFollow}
-                className={`w-full md:w-auto px-10 py-4 rounded-full font-black text-sm transition-all duration-300 shadow-md ${
-                  isFollowing 
-                    ? 'bg-white text-black border-2 border-black hover:bg-gray-50'
-                    : 'bg-black text-white border-2 border-black hover:bg-gray-800'
-                }`}
+                className={`btn-follow ${isFollowing ? 'following' : 'not-following'}`}
               >
-                {isFollowing ? '팔로잉' : '팔로우하기'}
+                {isFollowing ? '팔로잉 ✓' : '팔로우하기'}
               </button>
-            )}
-          </div>
+              <button onClick={handleDm} className="btn-dm">
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                메시지
+              </button>
+            </div>
+          )}
         </section>
 
-        <section className="mt-12">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-black italic tracking-tighter">Collection</h3>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+        {/* ── 컬렉션 ── */}
+        <section className="profile-collection">
+          <div className="profile-collection-header">
+            <h3 className="profile-collection-title">Collection</h3>
+            <span className="profile-collection-count">
               {profileData.quotes?.length || 0} Quotes
             </span>
           </div>
 
           {profileData.quotes && profileData.quotes.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="profile-quotes-grid">
               {profileData.quotes.map((q: any) => (
-                <div key={q._id} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between h-[280px]">
+                <div key={q._id} className="profile-quote-card">
                   <div>
-                    <div className="text-3xl font-serif text-gray-100 mb-2">"</div>
-                    <p className="font-serif text-gray-800 leading-relaxed line-clamp-4 break-keep">
+                    <div className="profile-quote-mark">"</div>
+                    <p className="profile-quote-text">
                       {q.quote || q.content}
                     </p>
                   </div>
-                  <p className="text-[10px] text-black font-black uppercase tracking-tight truncate border-l-2 border-black pl-3 mt-4">
+                  <p className="profile-quote-book">
                     {q.bookId?.title || q.bookTitle || 'Unknown Book'}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="bg-white p-12 rounded-[2rem] border border-gray-100 text-center text-gray-400 font-bold">
-              아직 수집한 문장이 없습니다.
+            <div className="profile-empty-collection">
+              <p>아직 수집한 문장이 없습니다.</p>
+              <p>이 독자가 마음에 드는 문장을 모으면 여기에 표시됩니다.</p>
             </div>
           )}
         </section>
