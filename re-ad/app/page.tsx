@@ -11,6 +11,7 @@ export default function MainPage() {
   const [exhibitions, setExhibitions] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [rankings, setRankings] = useState<any[]>([]);
+  const [handmedowns, setHandmedowns] = useState<any[]>([]);
   const [activeFilter, setActiveFilter] = useState('전체');
 
   useEffect(() => {
@@ -48,11 +49,25 @@ export default function MainPage() {
       })
       .catch(err => console.error("랭킹 로드 실패:", err));
 
+    // 4. [API] 물려주기 데이터 최신 4개
+    fetch(`${API_BASE_URL}/handmedowns`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const latestItems = data
+            .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 4);
+          setHandmedowns(latestItems);
+        }
+      })
+      .catch(err => console.error("물려주기 로드 실패:", err));
+
   }, []);
 
   const filteredRooms = rooms.filter((room) => {
     if (activeFilter === '전체') return true;
-    return room.roomType === activeFilter;
+    const type = room.roomType || '온라인';
+    return type === activeFilter;
   });
 
   return (
@@ -181,6 +196,45 @@ export default function MainPage() {
           </div>
         </aside>
       </div>
+
+      {/* ── 물려주기 섹션 ── */}
+      <section className="handmedowns-section">
+        <div className="section-inner">
+          <div className="section-header">
+            <div>
+              <Link href="/handmedowns" className="section-title-link">
+                <h3 className="section-title">📚 새로 올라온 책</h3>
+              </Link>
+              <p className="section-title-sub">이웃이 물려준 따뜻한 책들</p>
+            </div>
+            <Link href="/handmedowns" className="view-all-link">전체 보기</Link>
+          </div>
+
+          <div className="handmedown-grid">
+            {handmedowns.length > 0 ? (
+              handmedowns.map((item) => (
+                <Link href="/handmedowns" key={item._id} className="handmedown-card">
+                  <div className="hm-card-img-wrap">
+                    {item.image ? (
+                      <img src={item.image} alt={item.bookTitle} className="hm-card-img" />
+                    ) : (
+                      <div className="hm-card-no-img">NO IMG</div>
+                    )}
+                    <span className="hm-trade-badge">{item.tradeType === 'SELL' ? '판매' : '나눔'}</span>
+                  </div>
+                  <div className="hm-card-info">
+                    <h4 className="hm-card-title">{item.bookTitle}</h4>
+                    <p className="hm-card-author">{item.bookAuthor || '저자 미상'}</p>
+                    <p className="hm-card-desc">{item.comment}</p>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="empty-state">아직 등록된 물려주기 책이 없습니다.</div>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
