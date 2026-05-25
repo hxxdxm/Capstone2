@@ -11,10 +11,10 @@ export default function RecordPage() {
         title: '',
         author: '',
         coverImage: '',
-        status: 'READING', // READING, COMPLETED, PAUSED
+        status: '읽는 중',  // 백엔드 명세: '읽는 중' | '다 읽음' | '잠시 멈춤'
         rating: 5,
         review: '',
-        isPublic: true // 공개 여부 (경험 공유의 핵심!)
+        isPublic: true   // true + review 있으면 필사 게시판 자동 등록 (백엔드 처리)
     });
 
     //📍2. 책 검색 모달 상태
@@ -23,22 +23,41 @@ export default function RecordPage() {
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
 
-    //📍3. 책 검색 API 호출 함수 (임시로 프론트에서 카카오 API를 바로 찌르거나, 백엔드를 거칩니다)
+    //📍NEW. 선택된 책 원본(카카오 응답) + 오늘 읽은 페이지수 + 날짜
+    const [selectedBook, setSelectedBook] = useState<any>(null); // 카카오 검색 결과 원본
+    const [readPages, setReadPages] = useState<number>(0);       // 오늘 읽은 페이지 수
+    const [readDate, setReadDate] = useState<string>(           // 독서 날짜 (기본값: 오늘)
+        new Date().toISOString().slice(0, 10)
+    );
+    const [isSaving, setIsSaving] = useState(false);
+
+    const getToken = () => {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        return token && token !== 'undefined' ? token : null;
+    };
+
+    // JWT payload에서 userId 추출
+    const getUserId = (token: string): string => {
+        try {
+            const payload = JSON.parse(window.atob(token.split('.')[1]));
+            return payload.id || payload.userId || payload._id || '';
+        } catch { return ''; }
+    };
+
+    //📍3. 책 검색 API 호출 함수
     const handleSearchBook = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!searchQuery.trim()) return alert("책 제목을 입력해주세요.");
 
         setIsSearching(true);
         try {
-            // 🚨 주의: 원래는 백엔드 팀원분이 /api/books/search 를 만들어주시는 게 가장 안전합니다!
-            // 아래는 백엔드 API가 완성되었다고 가정한 호출 코드입니다.
             const res = await fetch(`${API_BASE_URL}/books/search?query=${encodeURIComponent(searchQuery)}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { 'Authorization': `Bearer ${getToken()}` }
             });
 
             if (res.ok) {
                 const data = await res.json();
-                setSearchResults(data.documents || data); // 카카오 API 기준으로는 data.documents 에 배열이 들어옵니다.
+                setSearchResults(data.documents || data);
             } else {
                 setSearchResults([]);
             }
@@ -49,17 +68,103 @@ export default function RecordPage() {
         }
     };
 
-    //📍4. 검색 결과에서 책을 선택했을 때 (자동 완성!)
+    //📍4. 검색 결과에서 책을 선택했을 때
     const handleSelectBook = (book: any) => {
+        // 카카오 원본 데이터를 별도로 보관 (POST /api/books 에 그대로 사용)
+        setSelectedBook(book);
         setRecordData({
             ...recordData,
             title: book.title,
             author: book.authors?.join(', ') || book.author,
             coverImage: book.thumbnail || book.cover
         });
-        setIsSearchModalOpen(false); // 모달 닫기
-        setSearchResults([]); // 검색 결과 초기화
+        setIsSearchModalOpen(false);
+        setSearchResults([]);
         setSearchQuery('');
+    };
+
+    //📍NEW. 기록 저장 (2단계: 책 DB 등록 → 독서 기록 저장)
+    const handleSaveRecord = async () => {
+        const token = getToken();
+        if (!token) return alert("로그인이 필요합니다.");
+        if (!readPages || readPages <= 0) return alert("오늘 읽은 페이지 수를 입력해주세요.");
+
+        setIsSaving(true);
+        try {
+            let bookId: string | null = null;
+
+            // ── STEP 1: 선택한 책을 /api/books 에 등록하여 DB의 _id 받아오기 ──
+            if (selectedBook) {
+                try {
+                    const bookRes = await fetch(`${API_BASE_URL}/books`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        // 카카오 검색 결과 데이터를 그대로 Body에 전송
+                        body: JSON.stringify({
+                            title: selectedBook.title,
+                            author: selectedBook.authors?.join(', ') || selectedBook.author || '',
+                            cover: selectedBook.thumbnail || selectedBook.cover || '',
+                            isbn: selectedBook.isbn || '',
+                            publisher: selectedBook.publisher || '',
+                            pubdate: selectedBook.datetime || selectedBook.pubdate || '',
+                        })
+                    });
+                    if (bookRes.ok) {
+                        const bookData = await bookRes.json();
+                        bookId = bookData.book?._id || bookData._id || null;
+                        console.log('📚 책 DB 등록 성공, bookId:', bookId);
+                    } else {
+                        console.warn('📚 책 DB 등록 실패 — bookId 없이 저장 진행');
+                    }
+                } catch (e) {
+                    console.warn('📚 책 DB 등록 에러 — bookId 없이 저장 진행', e);
+                }
+            }
+
+            // ── STEP 2: 독서 기록 저장 (백엔드 명세 구조) ──
+            // 💡 isPublic: true + review 내용 있으면 백엔드가 필사 게시판 자동 등록!
+            const logBody: any = {
+                userId: getUserId(token),   // 백엔드 명세 필수
+                readPages,
+                status: recordData.status,  // '읽는 중' | '다 읽음' | '잠시 멈춤'
+                rating: recordData.rating,  // 1~5
+                review: recordData.review,  // 감상평 (있으면 필사 자동 등록)
+                isPublic: recordData.isPublic,
+            };
+            // bookId가 있으면 포함 (독서 현황에 책 제목이 뜸)
+            if (bookId) logBody.bookId = bookId;
+
+            const logRes = await fetch(`${API_BASE_URL}/reading-logs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(logBody)
+            });
+
+            if (logRes.ok) {
+                alert(bookId
+                    ? `기록이 저장됐습니다! 독서 현황에 "${recordData.title}"이(가) 표시됩니다. 📊`
+                    : '기록이 저장됐습니다! (온도/페이지 반영 완료) 📊'
+                );
+                // 폼 초기화
+                setRecordData({ title: '', author: '', coverImage: '', status: '읽는 중', rating: 5, review: '', isPublic: true });
+                setSelectedBook(null);
+                setReadPages(0);
+                setReadDate(new Date().toISOString().slice(0, 10));
+            } else {
+                const err = await logRes.json().catch(() => ({}));
+                alert(`저장 실패: ${err.message || '서버 오류가 발생했습니다.'}`);
+            }
+        } catch (error) {
+            alert("서버와 통신할 수 없습니다.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -112,7 +217,33 @@ export default function RecordPage() {
                     </div>
 
                     {/* ✍️ 감상 및 상태 기록 영역 */}
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSaveRecord(); }}>
+
+                        {/* 📍NEW: 오늘 읽은 페이지 수 + 날짜 (독서 현황 온도/페이지 반영에 필수!) */}
+                        <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-2">📄 오늘 읽은 페이지 수 <span className="text-red-400">*</span></label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    placeholder="예: 30"
+                                    value={readPages || ''}
+                                    onChange={(e) => setReadPages(Number(e.target.value))}
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-black"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-2">📅 독서 날짜</label>
+                                <input
+                                    type="date"
+                                    value={readDate}
+                                    onChange={(e) => setReadDate(e.target.value)}
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-black"
+                                />
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-2">독서 상태</label>
@@ -164,8 +295,12 @@ export default function RecordPage() {
                                 <span className="text-sm font-bold text-gray-600">내 피드에 공개하기</span>
                             </label>
 
-                            <button type="button" className="bg-black text-white px-8 py-4 rounded-xl font-black text-sm hover:bg-gray-800 transition shadow-lg">
-                                기록 저장하기
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="bg-black text-white px-8 py-4 rounded-xl font-black text-sm hover:bg-gray-800 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSaving ? '저장 중...' : '기록 저장하기'}
                             </button>
                         </div>
                     </form>

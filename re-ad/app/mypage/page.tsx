@@ -343,7 +343,7 @@ export default function MyPage() {
         {/* 독서 영수증 & 통계 대시보드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <section className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden flex flex-col items-center">
-            <h3 className="text-lg font-black tracking-tight mb-6 self-start w-full">🧾 이번 달 독서 영수증</h3>
+            <h3 className="text-lg font-black tracking-tight mb-6 self-start w-full">📊 이번 달 독서 현황</h3>
             {receipt ? (
               <div className="w-full max-w-xs bg-white border border-gray-200 shadow-md p-6 relative" style={{ backgroundImage: 'radial-gradient(circle at 10px 0, transparent 10px, #f9fafb 11px)', backgroundSize: '100% 20px', backgroundRepeat: 'no-repeat', backgroundPosition: 'top' }}>
                 <div className="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4 mt-2">

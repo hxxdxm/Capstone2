@@ -7,8 +7,8 @@
   min-height: 100vh;
   background-color: #F2EDE4;
   background-image:
-    radial-gradient(circle at 10% 15%, rgba(139,175,116,0.10) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(196,167,119,0.12) 0%, transparent 40%);
+    radial-gradient(circle at 10% 15%, rgba(139, 175, 116, 0.10) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(196, 167, 119, 0.12) 0%, transparent 40%);
   font-family: 'Noto Sans KR', sans-serif;
   color: #3B3224;
   padding-bottom: 96px;
@@ -51,6 +51,7 @@
   letter-spacing: -0.3px;
   transition: color 0.2s;
 }
+
 .section-title-link:hover .section-title {
   color: #7BA05B;
 }
@@ -73,6 +74,7 @@
   transition: color 0.2s, border-color 0.2s;
   white-space: nowrap;
 }
+
 .view-all-link:hover {
   color: #5E8542;
   border-color: #5E8542;
@@ -86,7 +88,10 @@
   padding-bottom: 12px;
   scrollbar-width: none;
 }
-.card-scroll-row::-webkit-scrollbar { display: none; }
+
+.card-scroll-row::-webkit-scrollbar {
+  display: none;
+}
 
 /* 필사 카드 */
 .exhibition-card {
@@ -103,9 +108,10 @@
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
   cursor: pointer;
 }
+
 .exhibition-card:hover {
   border-color: #7BA05B;
-  box-shadow: 0 6px 24px rgba(100,80,40,0.10);
+  box-shadow: 0 6px 24px rgba(100, 80, 40, 0.10);
   transform: translateY(-2px);
 }
 
@@ -121,6 +127,7 @@
   position: relative;
   overflow: hidden;
 }
+
 .exhibition-quote-box::before {
   content: '"';
   position: absolute;
@@ -128,7 +135,7 @@
   left: 10px;
   font-family: 'Noto Serif KR', serif;
   font-size: 72px;
-  color: rgba(123,160,91,0.15);
+  color: rgba(123, 160, 91, 0.15);
   line-height: 1;
   pointer-events: none;
 }
@@ -237,15 +244,17 @@
   color: #8A7A60;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
+
 .filter-tab:hover {
   border-color: #7BA05B;
   color: #7BA05B;
 }
+
 .filter-tab.active {
   background: #7BA05B;
   color: #fff;
   border-color: #7BA05B;
-  box-shadow: 0 2px 8px rgba(123,160,91,0.30);
+  box-shadow: 0 2px 8px rgba(123, 160, 91, 0.30);
 }
 
 /* 모임방 카드 그리드 */
@@ -276,9 +285,10 @@
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
   overflow: hidden;
 }
+
 .room-card:hover {
   border-color: #7BA05B;
-  box-shadow: 0 6px 24px rgba(100,80,40,0.10);
+  box-shadow: 0 6px 24px rgba(100, 80, 40, 0.10);
   transform: translateY(-2px);
 }
 
@@ -309,12 +319,14 @@
   border-radius: 20px;
   letter-spacing: 0.05em;
 }
+
 .room-type-badge.online {
-  background: rgba(91,141,160,0.12);
+  background: rgba(91, 141, 160, 0.12);
   color: #3D7A9A;
 }
+
 .room-type-badge.offline {
-  background: rgba(196,130,60,0.12);
+  background: rgba(196, 130, 60, 0.12);
   color: #A0622A;
 }
 
@@ -325,9 +337,11 @@
   align-items: center;
   gap: 3px;
 }
+
 .room-member-count.full {
   color: #C0392B;
 }
+
 .room-member-count.ok {
   color: #8A7A60;
 }
@@ -388,6 +402,7 @@
   align-items: center;
   gap: 6px;
 }
+
 .ranking-card-title::after {
   content: '';
   flex: 1;
@@ -409,6 +424,7 @@
   cursor: pointer;
   transition: transform 0.15s;
 }
+
 .ranking-item:hover {
   transform: translateX(3px);
 }
@@ -422,6 +438,7 @@
   flex-shrink: 0;
   transition: color 0.2s;
 }
+
 .ranking-item:hover .ranking-num {
   color: #7BA05B;
 }
@@ -469,6 +486,7 @@
   border: 1.5px solid #D9CDB8;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
+
 .ranking-more-btn:hover {
   background: #7BA05B;
   color: #fff;
