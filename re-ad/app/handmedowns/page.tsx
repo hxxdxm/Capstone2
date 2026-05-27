@@ -37,6 +37,12 @@ export default function HandMeDownsPage() {
     return label;
   };
 
+  const getImageUrl = (url: string | undefined | null) => {
+    if (!url) return 'https://via.placeholder.com/400x300?text=No+Image';
+    if (url.startsWith('/uploads')) return `http://43.202.179.130:3000${url}`;
+    return url;
+  };
+
   // 📍 사진 선택 핸들러
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -180,7 +186,7 @@ export default function HandMeDownsPage() {
                 <div key={item._id || item.id} className="item-card">
                   <div className="item-image-wrapper">
                     <img
-                      src={item.bookThumbnail || item.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
+                      src={getImageUrl(item.bookThumbnail || item.imageUrl)}
                       alt={item.bookTitle || item.title || '책 이미지'}
                       className="item-image"
                     />

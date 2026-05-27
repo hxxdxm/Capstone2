@@ -36,6 +36,7 @@ export default function MyPage() {
 
   const [receipt, setReceipt] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  const [readingLevel, setReadingLevel] = useState('');
   const [mbtiResult, setMbtiResult] = useState<any>(null);
   const [isMbtiModalOpen, setIsMbtiModalOpen] = useState(false);
   const [mbtiAnswers, setMbtiAnswers] = useState<number[]>([]);
@@ -134,7 +135,7 @@ export default function MyPage() {
 
       fetchReadingData(token);
 
-      fetch(`${API_BASE_URL}/users/my-profile`, { headers })
+      fetch(`${API_BASE_URL}/users/me`, { headers })
         .then(res => {
           if (res.ok) return res.json();
           throw new Error('프로필 API 미구현 또는 에러');
@@ -159,6 +160,15 @@ export default function MyPage() {
         .catch(() => { });
 
       if (myUserId) {
+        fetch(`${API_BASE_URL}/users/${myUserId}/profile`, { headers })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data?.stats?.readingLevel) {
+              setReadingLevel(data.stats.readingLevel);
+            }
+          })
+          .catch(() => {});
+
         fetch(`${API_BASE_URL}/users/${myUserId}/followers`, { headers })
           .then(res => res.json())
           .then(list => { if (Array.isArray(list)) setFollowers(list.length); })
@@ -257,7 +267,8 @@ export default function MyPage() {
         body: JSON.stringify({
           nickname: editFormData.name,
           email: editFormData.email || undefined,
-          newPassword: editFormData.password || undefined
+          newPassword: editFormData.password || undefined,
+          phone: editFormData.phone || ''
         })
       });
 
@@ -345,6 +356,7 @@ export default function MyPage() {
             <div className="profile-details">
               <h2>
                 {userName}님
+                {readingLevel && <span className="profile-level-badge">{readingLevel}</span>}
                 {mbtiResult && <span className="profile-mbti-badge">{mbtiResult.mbti}</span>}
               </h2>
               <div className="profile-stats">
@@ -384,7 +396,7 @@ export default function MyPage() {
               let phone = '';
               if (token) {
                 try {
-                  const res = await fetch(`${API_BASE_URL}/users/my-profile`, {
+                  const res = await fetch(`${API_BASE_URL}/users/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                   });
                   if (res.ok) {
@@ -577,18 +589,16 @@ export default function MyPage() {
                   <input type="text" value={editFormData.name} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} className="mypage-form-input" />
                 </div>
 
-                {/* 전화번호 - 읽기 전용 */}
+                {/* 전화번호 */}
                 <div className="mypage-form-group">
-                  <label className="mypage-form-label">
-                    전화번호
-                    <span style={{ fontSize: '10px', color: '#BDB09A', fontWeight: 600, marginLeft: '6px' }}>(수정 불가)</span>
-                  </label>
+                  <label className="mypage-form-label">전화번호</label>
                   <input
                     type="text"
-                    value={editFormData.phone || '등록된 전화번호가 없습니다.'}
-                    disabled
+                    maxLength={11}
+                    value={editFormData.phone || ''}
+                    placeholder="- 없이 숫자만 입력"
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value.replace(/[^0-9]/g, '') })}
                     className="mypage-form-input"
-                    style={{ opacity: 0.5, cursor: 'not-allowed', background: '#EDE7DA' }}
                   />
                 </div>
 

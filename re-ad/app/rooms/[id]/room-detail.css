@@ -56,6 +56,13 @@
   font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
 }
 .btn-delete-room:hover { background: rgba(217,79,79,0.06); border-color: #D94F4F; }
+.btn-leave-room {
+  padding: 12px 20px; background: transparent; color: #8A7A60;
+  border: 1.5px solid #D9CDB8; border-radius: 50px;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-leave-room:hover { background: #F2EDE4; color: #3B3224; border-color: #8A7A60; }
 
 /* ── 탭 네비 ── */
 .room-tab-nav {
@@ -171,6 +178,8 @@
 .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8A7A60; gap: 8px; }
 .chat-empty-icon { font-size: 36px; }
 .chat-empty-text { font-size: 13px; font-weight: 600; }
+.chat-date-divider { display: flex; justify-content: center; margin: 16px 0; }
+.chat-date-text { background: rgba(138, 122, 96, 0.15); color: #8A7A60; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 .chat-bubble-wrap { display: flex; flex-direction: column; }
 .chat-bubble-wrap.me { align-items: flex-end; }
 .chat-bubble-wrap.other { align-items: flex-start; }
@@ -255,6 +264,62 @@
 .pw-modal-confirm { flex: 1; padding: 14px; background: #3B3224; color: #F2EDE4; font-weight: 700; font-size: 13px; border-radius: 16px; border: none; cursor: pointer; transition: background 0.2s; }
 .pw-modal-confirm:hover { background: #2C2218; }
 
+/* ── 사이드바 액션 버튼 ── */
+.sidebar-action-btn {
+  width: 100%; margin-top: 12px; padding: 11px 14px;
+  background: #F2EDE4; border: 1.5px solid #D9CDB8; border-radius: 14px;
+  font-size: 12px; font-weight: 700; color: #5A4A36; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  transition: all 0.2s;
+}
+.sidebar-action-btn:hover { background: #EDE7DA; border-color: #8A7A60; color: #3B3224; }
+.sidebar-action-btn.invite { background: #3B3224; color: #F2EDE4; border-color: #3B3224; }
+.sidebar-action-btn.invite:hover { background: #2C2218; }
+.sidebar-action-btn.invite.copied { background: #7BA05B; border-color: #7BA05B; }
+
+/* ── 멤버 목록 모달 ── */
+.member-modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(59,50,36,0.55); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.member-modal {
+  background: #FDFAF5; border-radius: 24px; width: 100%; max-width: 380px;
+  border: 1.5px solid #D9CDB8; box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+  overflow: hidden; max-height: 80vh; display: flex; flex-direction: column;
+}
+.member-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px; border-bottom: 1.5px solid #EDE7DA;
+}
+.member-modal-header h3 { font-size: 18px; font-weight: 900; color: #3B3224; }
+.member-modal-close {
+  background: none; border: none; cursor: pointer; color: #8A7A60;
+  font-size: 18px; line-height: 1; transition: color 0.2s;
+}
+.member-modal-close:hover { color: #3B3224; }
+.member-modal-body { overflow-y: auto; padding: 12px 16px; flex: 1; }
+.member-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 8px; border-radius: 14px; transition: background 0.15s;
+}
+.member-item:hover { background: #F2EDE4; }
+.member-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #3B3224, #5A4A36);
+  display: flex; align-items: center; justify-content: center;
+  color: #F2EDE4; font-weight: 900; font-size: 16px;
+}
+.member-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.member-name { font-size: 14px; font-weight: 700; color: #3B3224; }
+.member-host-badge {
+  font-size: 10px; font-weight: 700; color: #C4A777;
+  background: rgba(196,167,119,0.15); padding: 2px 8px;
+  border-radius: 20px; border: 1px solid rgba(196,167,119,0.3); white-space: nowrap;
+}
+
 /* 스크롤바 */
 .chat-messages::-webkit-scrollbar { width: 4px; }
 .chat-messages::-webkit-scrollbar-thumb { background: #D9CDB8; border-radius: 4px; }
+.member-modal-body::-webkit-scrollbar { width: 4px; }
+.member-modal-body::-webkit-scrollbar-thumb { background: #D9CDB8; border-radius: 4px; }

@@ -119,8 +119,7 @@ export default function SignupPage() {
           email: formData.email,
           nickname: formData.nickname,
           password: formData.password,
-          // 전화번호가 비어있지 않으면 같이 보냄
-          phone: formData.phone || undefined
+          phone: formData.phone
         })
       });
 

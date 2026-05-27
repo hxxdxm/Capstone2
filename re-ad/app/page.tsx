@@ -9,6 +9,7 @@ const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function MainPage() {
   const [exhibitions, setExhibitions] = useState<any[]>([]);
+  const [trending, setTrending] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [rankings, setRankings] = useState<any[]>([]);
   const [handmedowns, setHandmedowns] = useState<any[]>([]);
@@ -16,7 +17,13 @@ export default function MainPage() {
 
   useEffect(() => {
 
-    // 1. [API] 필사 데이터 최신 5개 (📍백엔드 주소 /annotations/exhibition 으로 완벽 수정)
+    // 1. [API] 인기(트렌딩) 필사 2개
+    fetch(`${API_BASE_URL}/annotations/exhibition?tab=TRENDING`)
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setTrending(data.slice(0, 2)); })
+      .catch(err => console.error('트렌딩 로드 실패:', err));
+
+    // 2. [API] 필사 데이터 최신 5개 (📍백엔드 주소 /annotations/exhibition 으로 완벽 수정)
     fetch(`${API_BASE_URL}/annotations/exhibition`)
       .then(res => res.json())
       .then(data => {
@@ -78,6 +85,40 @@ export default function MainPage() {
 
         {/* ── 좌측 메인 콘텐츠 ── */}
         <div className="main-content-left">
+
+          {/* 0. 🔥 이번 주 인기 감상평 (트렌딩) */}
+          {trending.length > 0 && (
+            <section className="trending-section">
+              <div className="trending-header">
+                <div className="trending-title-wrap">
+                  <span className="trending-fire">🔥</span>
+                  <div>
+                    <h3 className="trending-title">이번 주 인기 감상평</h3>
+                    <p className="trending-sub">TRENDING THIS WEEK</p>
+                  </div>
+                </div>
+                <Link href="/annotations?tab=TRENDING" className="view-all-link">전체 보기</Link>
+              </div>
+              <div className="trending-cards">
+                {trending.map((item, idx) => (
+                  <Link href="/annotations" key={item._id || idx} className="trending-card">
+                    <div className="trending-card-rank">#{idx + 1}</div>
+                    <div className="trending-card-body">
+                      <p className="trending-card-quote">&ldquo;{item.quote}&rdquo;</p>
+                      <div className="trending-card-meta">
+                        <span className="trending-card-book">{item.bookId?.title || '도서'}</span>
+                        <span className="trending-card-dot">·</span>
+                        <span className="trending-card-author">{item.userId?.nickname || '작자미상'}</span>
+                        {item.likes?.length > 0 && (
+                          <span className="trending-card-likes">❤️ {item.likes.length}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* 1. 필사 전시회 섹션 */}
           <section className="main-section">

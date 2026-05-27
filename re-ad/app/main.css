@@ -195,6 +195,167 @@
 }
 
 /* ───────────────────────────────────────
+   🔥 트렌딩 인기 감상평 섹션
+─────────────────────────────────────── */
+.trending-section {
+  background: linear-gradient(135deg, #3B3224 0%, #2C2218 100%);
+  border-radius: 24px;
+  padding: 28px 28px 24px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.trending-section::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(123,160,91,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.trending-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.trending-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.trending-fire {
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(255,140,0,0.5));
+  animation: flicker 2s ease-in-out infinite alternate;
+}
+
+@keyframes flicker {
+  from { filter: drop-shadow(0 0 6px rgba(255,140,0,0.4)); }
+  to   { filter: drop-shadow(0 0 14px rgba(255,80,0,0.7)); }
+}
+
+.trending-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #F2EDE4;
+  letter-spacing: -0.3px;
+}
+
+.trending-sub {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(242,237,228,0.45);
+  letter-spacing: 0.2em;
+  margin-top: 3px;
+}
+
+.trending-section .view-all-link {
+  color: rgba(242,237,228,0.7);
+  border-bottom-color: rgba(242,237,228,0.4);
+}
+
+.trending-section .view-all-link:hover {
+  color: #F2EDE4;
+  border-bottom-color: #F2EDE4;
+}
+
+.trending-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .trending-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+.trending-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  cursor: pointer;
+}
+
+.trending-card:hover {
+  background: rgba(123,160,91,0.15);
+  border-color: rgba(123,160,91,0.4);
+  transform: translateY(-2px);
+}
+
+.trending-card-rank {
+  font-size: 22px;
+  font-weight: 900;
+  color: #7BA05B;
+  flex-shrink: 0;
+  line-height: 1;
+  min-width: 28px;
+}
+
+.trending-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.trending-card-quote {
+  font-size: 13px;
+  font-style: italic;
+  color: #F2EDE4;
+  line-height: 1.75;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.trending-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.trending-card-book {
+  font-size: 10px;
+  font-weight: 700;
+  color: #C4A777;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+.trending-card-dot {
+  color: rgba(242,237,228,0.3);
+  font-size: 10px;
+}
+
+.trending-card-author {
+  font-size: 10px;
+  color: rgba(242,237,228,0.5);
+  font-weight: 600;
+}
+
+.trending-card-likes {
+  font-size: 10px;
+  font-weight: 700;
+  color: #E87C7C;
+  margin-left: auto;
+}
+
+/* ───────────────────────────────────────
    메인 그리드 (모임방 + 랭킹)
 ─────────────────────────────────────── */
 .main-grid {

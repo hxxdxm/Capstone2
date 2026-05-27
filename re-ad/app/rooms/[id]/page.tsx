@@ -39,6 +39,9 @@ export default function RoomDetailPage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
 
+  const [isMemberListOpen, setIsMemberListOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -76,6 +79,25 @@ export default function RoomDetailPage() {
     } catch { alert("서버 연결 실패"); }
   };
 
+  const handleLeaveRoom = async () => {
+    if (!confirm("모임방을 나가시겠습니까? 다시 참여하려면 다시 신청해야 합니다.")) return;
+    const token = getSafeToken();
+    if (!token) return alert("로그인이 필요합니다.");
+    try {
+      const res = await fetch(`${API_BASE_URL}/rooms/${roomId}/leave`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert("모임방에서 나갔습니다.");
+        router.push('/rooms');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "모임방 나가기에 실패했습니다.");
+      }
+    } catch { alert("서버 연결 실패"); }
+  };
+
   const executeJoin = async (password = '') => {
     const token = getSafeToken();
     if (!token) { alert("로그인이 필요합니다."); router.push('/login'); return; }
@@ -94,6 +116,17 @@ export default function RoomDetailPage() {
       if (res.ok) { setRoomData({ ...roomData, description: editRoomDesc, roomDesc: editRoomDesc }); setIsEditingInfo(false); }
       else alert("수정 실패: 방장 권한이 없거나 서버 오류입니다.");
     } catch { alert("서버와 연결할 수 없습니다."); }
+  };
+
+  const handleInvite = async () => {
+    const inviteUrl = `${window.location.origin}/rooms/${roomId}`;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      alert(`초대 링크: ${inviteUrl}`);
+    }
   };
 
   const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,6 +210,14 @@ export default function RoomDetailPage() {
           </div>
           <div className="room-header-actions">
             {isHost && <button onClick={handleDeleteRoom} className="btn-delete-room">모임 삭제</button>}
+            {isJoined && !isHost && (
+              <button onClick={handleLeaveRoom} className="btn-leave-room">
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                모임 나가기
+              </button>
+            )}
             {!isJoined && (
               <button
                 onClick={() => roomData.roomPassword ? setIsPasswordModalOpen(true) : executeJoin()}
@@ -312,12 +353,26 @@ export default function RoomDetailPage() {
                   ) : chats.map((chat, idx) => {
                     const isMe = chat.userId?._id === getMyId() || chat.userId === getMyId();
                     const nickname = chat.userId?.nickname || chat.userId?.username || '멤버';
+
+                    const currentDate = new Date(chat.createdAt || Date.now()).toLocaleDateString();
+                    const previousDate = idx > 0 ? new Date(chats[idx - 1].createdAt || Date.now()).toLocaleDateString() : null;
+                    const showDateDivider = currentDate !== previousDate;
+
                     return (
-                      <div key={idx} className={`chat-bubble-wrap ${isMe ? 'me' : 'other'}`}>
-                        {!isMe && <span className="chat-sender-name">{nickname}</span>}
-                        <div className={`chat-bubble ${isMe ? 'me' : 'other'}`}>{chat.message}</div>
-                        <span className="chat-time">{new Date(chat.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
+                      <React.Fragment key={idx}>
+                        {showDateDivider && (
+                          <div className="chat-date-divider">
+                            <span className="chat-date-text">
+                              {new Date(chat.createdAt || Date.now()).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                            </span>
+                          </div>
+                        )}
+                        <div className={`chat-bubble-wrap ${isMe ? 'me' : 'other'}`}>
+                          {!isMe && <span className="chat-sender-name">{nickname}</span>}
+                          <div className={`chat-bubble ${isMe ? 'me' : 'other'}`}>{chat.message}</div>
+                          <span className="chat-time">{new Date(chat.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </React.Fragment>
                     );
                   })}
                   <div ref={chatEndRef} />
@@ -352,10 +407,71 @@ export default function RoomDetailPage() {
                 <span className="room-sidebar-label">개설일</span>
                 <span className="room-sidebar-value">{new Date(roomData.createdAt).toLocaleDateString()}</span>
               </div>
+
+              {/* 멤버 목록 버튼 */}
+              <button className="sidebar-action-btn" onClick={() => setIsMemberListOpen(true)}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                멤버 보기 ({roomData.members?.length || 0})
+              </button>
+
+              {/* 초대 링크 복사 버튼 */}
+              {isJoined && (
+                <button className={`sidebar-action-btn invite ${isCopied ? 'copied' : ''}`} onClick={handleInvite}>
+                  {isCopied ? (
+                    <>
+                      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      복사 완료!
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      친구 초대하기
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </aside>
         </div>
       </main>
+
+      {/* ── 멤버 목록 모달 ── */}
+      {isMemberListOpen && (
+        <div className="member-modal-backdrop" onClick={() => setIsMemberListOpen(false)}>
+          <div className="member-modal" onClick={e => e.stopPropagation()}>
+            <div className="member-modal-header">
+              <h3>모임 멤버 ({roomData.members?.length || 0}명)</h3>
+              <button className="member-modal-close" onClick={() => setIsMemberListOpen(false)}>✕</button>
+            </div>
+            <div className="member-modal-body">
+              {roomData.members?.length > 0 ? (
+                roomData.members.map((member: any, idx: number) => {
+                  const nickname = member.userId?.nickname || member.userId?.username || member.nickname || `멤버 ${idx + 1}`;
+                  const memberId = member.userId?._id || member.userId || member._id;
+                  const isThisHost = roomData.hostId === memberId || roomData.hostId === member.userId?._id;
+                  return (
+                    <div key={idx} className="member-item">
+                      <div className="member-avatar">{nickname[0]}</div>
+                      <div className="member-info">
+                        <span className="member-name">{nickname}</span>
+                        {isThisHost && <span className="member-host-badge">👑 방장</span>}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p style={{ textAlign: 'center', color: '#8A7A60', fontSize: '13px', padding: '20px 0' }}>멤버 정보를 불러올 수 없습니다.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── 피드 작성 모달 ── */}
       {isWriteModalOpen && (
