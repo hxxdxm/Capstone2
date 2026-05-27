@@ -792,3 +792,124 @@ s {
   overflow: hidden;
   margin-top: auto;
 }
+
+/* ───────────────────────────────────────
+   반응형 (모바일)
+─────────────────────────────────────── */
+
+/* 태블릿 이하 */
+@media (max-width: 1023px) {
+  .main-grid {
+    padding: 24px 16px 0;
+    gap: 24px;
+  }
+
+  /* 랭킹 사이드바: 데스크탑 그리드에서 벗어나 하단으로 */
+  .ranking-aside {
+    position: static;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .main-grid {
+    padding: 16px 12px 0;
+    gap: 20px;
+  }
+
+  .main-section {
+    padding: 0 0 28px 0;
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-size: 17px;
+  }
+
+  /* 필사 카드 가로 스크롤 카드 너비 축소 */
+  .exhibition-card {
+    min-width: 220px;
+    max-width: 220px;
+  }
+
+  .exhibition-quote-box {
+    height: 110px;
+  }
+
+  /* 모임방 그리드: 1열 */
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 물려주기 그리드: 2열 */
+  .handmedown-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* 트렌딩 섹션 */
+  .trending-section {
+    padding: 20px 16px 16px;
+    margin-bottom: 28px;
+  }
+
+  .trending-title {
+    font-size: 17px;
+  }
+
+  .trending-fire {
+    font-size: 28px;
+  }
+
+  .trending-cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* 랭킹 사이드바 */
+  .ranking-card {
+    padding: 20px 16px;
+  }
+}
+
+/* 소형 모바일 */
+@media (max-width: 480px) {
+  .main-grid {
+    padding: 12px 10px 0;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .section-title-sub {
+    font-size: 9px;
+  }
+
+  .exhibition-card {
+    min-width: 190px;
+    max-width: 190px;
+    padding: 14px;
+  }
+
+  .handmedown-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .hm-card-info {
+    padding: 12px;
+  }
+
+  .hm-card-title {
+    font-size: 13px;
+  }
+
+  .room-card {
+    min-height: 160px;
+    padding: 16px;
+  }
+
+  .room-name {
+    font-size: 14px;
+  }
+}

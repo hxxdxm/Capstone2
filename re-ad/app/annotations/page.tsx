@@ -80,15 +80,32 @@ export default function ExhibitionPage() {
             initialLikedIds.push(apiItem._id);
           }
           const imageUrl = apiItem.imageUrl || apiItem.image_url;
+
+          // 도서명: bookId가 populate된 객체 → bookTitle 필드 → 직접 title 필드
+          const bookTitle =
+            apiItem.bookId?.title ||
+            apiItem.bookTitle ||
+            apiItem.book_title ||
+            apiItem.title ||
+            '';
+
+          // 작가명: bookId가 populate된 객체 → bookAuthor 필드 → 직접 author 필드
+          const bookAuthor =
+            apiItem.bookId?.author ||
+            apiItem.bookAuthor ||
+            apiItem.book_author ||
+            apiItem.author ||
+            '';
+
           return {
             id: apiItem._id,
-            userId: apiItem.userId?._id || apiItem.userId, // ← 작성자 ID 포함
+            userId: apiItem.userId?._id || apiItem.userId,
             type: imageUrl ? 'image' : 'text',
             image: imageUrl,
             quote: apiItem.quote || apiItem.content,
-            book: apiItem.bookId?.title || '도서',
-            author: '작자미상',
-            user: apiItem.userId?.nickname || '익명',
+            book: bookTitle || '도서',
+            author: bookAuthor || '작자미상',
+            user: apiItem.userId?.nickname || apiItem.userId?.username || '익명',
             likes: apiItem.likes?.length || 0,
             commentCount: apiItem.comments?.length || 0,
             bg: apiItem.color || 'bg-white text-gray-900 border-gray-200'
@@ -219,6 +236,20 @@ export default function ExhibitionPage() {
     if (!token) return;
 
     setIsSendingComment(true);
+    // 낙관적 업데이트: 전송 전 먼저 로컬에 추가
+    const optimisticComment = {
+      id: `temp-${Date.now()}`,
+      content: text,
+      author: userName || '나',
+      authorId: getMyId(),
+      createdAt: new Date().toISOString(),
+    };
+    setCommentDrawer(prev => ({ ...prev, comments: [...prev.comments, optimisticComment] }));
+    setCommentInput('');
+    setTimeout(() => {
+      commentListRef.current?.scrollTo({ top: 9999, behavior: 'smooth' });
+    }, 80);
+
     try {
       const res = await fetch(`${API_BASE_URL}/annotations/${commentDrawer.postId}/comments`, {
         method: 'POST',
@@ -230,40 +261,61 @@ export default function ExhibitionPage() {
       });
 
       if (res.ok) {
-        const data = await res.json(); // 업데이트된 댓글 목록 반환
-        const updatedComments = Array.isArray(data)
-          ? data.map((c: any) => ({
-              id: c._id,
-              content: c.content,
-              author: c.userId?.nickname || '익명',
-              authorId: c.userId?._id || c.userId,
-              createdAt: c.createdAt,
-            }))
-          : commentDrawer.comments; // 실패 시 기존 유지
+        const data = await res.json();
 
-        setCommentDrawer(prev => ({ ...prev, comments: updatedComments }));
-        setCommentInput('');
-
-        // 카드의 commentCount 업데이트
-        setPosts(prev => prev.map(p =>
-          p.id === commentDrawer.postId
-            ? { ...p, commentCount: updatedComments.length }
-            : p
-        ));
-
-        // 목록 맨 아래 스크롤
-        setTimeout(() => {
-          commentListRef.current?.scrollTo({ top: 9999, behavior: 'smooth' });
-        }, 100);
+        // 백엔드가 전체 댓글 배열을 반환하면 교체, 아니면 낙관적 댓글을 실제 데이터로 교체
+        if (Array.isArray(data)) {
+          const serverComments = data.map((c: any) => ({
+            id: c._id,
+            content: c.content,
+            author: c.userId?.nickname || '익명',
+            authorId: c.userId?._id || c.userId,
+            createdAt: c.createdAt,
+          }));
+          setCommentDrawer(prev => ({ ...prev, comments: serverComments }));
+          setPosts(prev => prev.map(p =>
+            p.id === commentDrawer.postId ? { ...p, commentCount: serverComments.length } : p
+          ));
+        } else {
+          // 단일 댓글 객체 또는 메시지만 반환하는 경우 — 낙관적 댓글의 임시 id를 실제 id로 교체
+          const newComment = data.comment || data;
+          if (newComment?._id) {
+            setCommentDrawer(prev => ({
+              ...prev,
+              comments: prev.comments.map(c =>
+                c.id === optimisticComment.id
+                  ? { id: newComment._id, content: newComment.content, author: newComment.userId?.nickname || userName || '나', authorId: newComment.userId?._id || getMyId(), createdAt: newComment.createdAt }
+                  : c
+              )
+            }));
+          }
+          setPosts(prev => prev.map(p =>
+            p.id === commentDrawer.postId
+              ? { ...p, commentCount: (p.commentCount || 0) + 1 }
+              : p
+          ));
+        }
       } else {
+        // 실패 시 낙관적 댓글 롤백
+        setCommentDrawer(prev => ({
+          ...prev,
+          comments: prev.comments.filter(c => c.id !== optimisticComment.id)
+        }));
+        setCommentInput(text);
         alert('댓글 등록에 실패했습니다.');
       }
     } catch (err) {
+      setCommentDrawer(prev => ({
+        ...prev,
+        comments: prev.comments.filter(c => c.id !== optimisticComment.id)
+      }));
+      setCommentInput(text);
       alert('서버 통신 오류');
     } finally {
       setIsSendingComment(false);
     }
   };
+
 
   /* ── 댓글 삭제 ── */
   const deleteComment = async (commentId: string) => {

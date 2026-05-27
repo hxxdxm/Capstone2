@@ -41,6 +41,7 @@ export default function RoomDetailPage() {
 
   const [isMemberListOpen, setIsMemberListOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [memberDetails, setMemberDetails] = useState<Record<string, any>>({});
 
   const getSafeToken = () => {
     if (typeof window === 'undefined') return null;
@@ -62,10 +63,36 @@ export default function RoomDetailPage() {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
       const data = await res.json();
       if (!res.ok) throw new Error("방 정보 로드 실패");
-      setIsJoined(data.members?.some((m: any) => m.userId === getMyId()));
+      setIsJoined(data.members?.some((m: any) => m.userId === getMyId() || m.userId?._id === getMyId()));
       setRoomData(data);
       setEditRoomDesc(data.description || data.roomDesc || '');
       setIsLoading(false);
+
+      // 멤버 주에서 userId가 순수 ID 문자열일 때 프로필 조회
+      if (Array.isArray(data.members)) {
+        const details: Record<string, any> = {};
+        await Promise.all(
+          data.members.map(async (m: any) => {
+            // populate된 객체면 니코네임이 이미 있음
+            if (m.userId && typeof m.userId === 'object' && (m.userId.nickname || m.userId.username)) {
+              const uid = m.userId._id || m.userId.id || String(m.userId);
+              details[uid] = { nickname: m.userId.nickname || m.userId.username, _id: uid };
+              return;
+            }
+            // 순수 ID 문자열이면 API 호출
+            const uid = typeof m.userId === 'string' ? m.userId : (m.userId?._id || m._id);
+            if (!uid) return;
+            try {
+              const r = await fetch(`${API_BASE_URL}/users/${uid}/profile`);
+              if (r.ok) {
+                const u = await r.json();
+                details[uid] = { nickname: u.nickname || u.username || u.name, _id: uid, ...u };
+              }
+            } catch {}
+          })
+        );
+        setMemberDetails(details);
+      }
     } catch { router.push('/rooms'); }
   };
 
@@ -452,9 +479,16 @@ export default function RoomDetailPage() {
             <div className="member-modal-body">
               {roomData.members?.length > 0 ? (
                 roomData.members.map((member: any, idx: number) => {
-                  const nickname = member.userId?.nickname || member.userId?.username || member.nickname || `멤버 ${idx + 1}`;
-                  const memberId = member.userId?._id || member.userId || member._id;
-                  const isThisHost = roomData.hostId === memberId || roomData.hostId === member.userId?._id;
+                  const rawId = typeof member.userId === 'string'
+                    ? member.userId
+                    : (member.userId?._id || member._id || '');
+                  const detail = memberDetails[rawId];
+                  const nickname =
+                    detail?.nickname ||
+                    member.userId?.nickname || member.userId?.username ||
+                    member.nickname ||
+                    rawId.slice(-4) || `멤버 ${idx + 1}`;
+                  const isThisHost = roomData.hostId === rawId || roomData.hostId === member.userId?._id;
                   return (
                     <div key={idx} className="member-item">
                       <div className="member-avatar">{nickname[0]}</div>

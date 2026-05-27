@@ -301,3 +301,91 @@
   background: #EDE7DA;
   margin: 4px 16px;
 }
+
+/* ───────────────────────────────────────
+   반응형 (모바일)
+─────────────────────────────────────── */
+
+/* 태블릿 이하 (768px) */
+@media (max-width: 768px) {
+  .site-header {
+    padding: 0 16px;
+    gap: 12px;
+    height: 54px;
+  }
+
+  /* 로고 폰트 축소 */
+  .header-logo-text {
+    font-size: 26px;
+  }
+
+  /* 네비 링크 일부 숨기기 (중요한 것만 유지) */
+  .header-nav {
+    gap: 14px;
+  }
+
+  .nav-link {
+    font-size: 11px;
+  }
+
+  /* 위젯 영역 */
+  .widget-username {
+    display: none; /* 닉네임 텍스트 숨기고 아바타만 */
+  }
+
+  .widget-chevron {
+    display: none;
+  }
+
+  .widget-trigger {
+    padding: 4px;
+    border-radius: 50%;
+    border: 1.5px solid #D9CDB8;
+  }
+
+  /* 드롭다운 전체 너비 방지 */
+  .widget-dropdown {
+    right: 0;
+    width: 220px;
+  }
+
+  /* 로그인/회원가입 버튼 축소 */
+  .btn-login, .btn-signup {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+/* 소형 모바일 (480px 이하) */
+@media (max-width: 480px) {
+  .site-header {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .header-logo-text {
+    font-size: 22px;
+  }
+
+  /* 네비 숨기기 - 너무 좁을 경우 핵심 메뉴 2개만 */
+  .header-nav .nav-link:nth-child(n+4) {
+    display: none;
+  }
+
+  .header-nav {
+    gap: 10px;
+  }
+
+  .nav-link {
+    font-size: 10px;
+  }
+
+  .btn-login {
+    display: none; /* 로그인만 숨기고 회원가입은 유지 */
+  }
+
+  .btn-signup {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+}
