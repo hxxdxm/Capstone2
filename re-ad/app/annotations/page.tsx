@@ -140,6 +140,7 @@ export default function ExhibitionPage() {
     const formData = new FormData();
     formData.append('quote', newPost.quote);
     formData.append('bookTitle', newPost.book);
+    formData.append('bookAuthor', newPost.author);
     formData.append('color', newPost.style);
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;

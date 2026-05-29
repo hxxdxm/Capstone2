@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import './handmedowns.css';
 
@@ -183,7 +184,12 @@ export default function HandMeDownsPage() {
               </div>
             ) : (
               filteredItems.map((item) => (
-                <div key={item._id || item.id} className="item-card">
+                <Link
+                  href={`/handmedowns/${item._id || item.id}`}
+                  key={item._id || item.id}
+                  className="item-card"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
                   <div className="item-image-wrapper">
                     <img
                       src={getImageUrl(item.bookThumbnail || item.imageUrl)}
@@ -202,7 +208,7 @@ export default function HandMeDownsPage() {
                       <span className="item-owner">By {item.ownerId?.nickname || item.provider || '익명'}</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
