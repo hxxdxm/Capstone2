@@ -24,7 +24,12 @@ export default function HandMeDownsPage() {
     imageFile: null as File | null // 📍 실제 서버로 보낼 파일 객체
   });
 
-  const getToken = () => typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
+  const getToken = () => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token || token === 'undefined' || token === 'null' || token.trim() === '') return null;
+    return token;
+  };
 
   const getTradeTypeLabel = (tradeType: string) => {
     if (tradeType === 'SHARE') return '나눔';
@@ -81,42 +86,76 @@ export default function HandMeDownsPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!getToken()) return alert("로그인 후 등록할 수 있습니다.");
-
-    if (!formData.imageFile) {
-      // 사진 없이도 등록 가능 (선택사항)
-      console.log("사진 없이 등록합니다.");
-    }
 
     const token = getToken();
-    if (!token) return alert("로그인 토큰이 없습니다. 다시 로그인해주세요.");
+    if (!token) return alert("로그인 후 등록할 수 있습니다. 다시 로그인해주세요.");
+
+    if (!formData.title.trim()) return alert('책 제목을 입력해주세요.');
+    if (!formData.author.trim()) return alert('저자명을 입력해주세요.');
 
     try {
-      const payload = new FormData();
-      payload.append('bookTitle', formData.title);
-      payload.append('bookAuthor', formData.author);
-      payload.append('comment', formData.description || `${formData.condition} 상태의 책입니다.`);
-      payload.append('tradeType', getTradeTypeValue(formData.tradeType));
-      if (formData.imageFile) {
-        payload.append('image', formData.imageFile);
-      }
+      const commentText = formData.description.trim()
+        ? `[${formData.condition}] ${formData.description.trim()}`
+        : `${formData.condition} 상태의 책입니다.`;
+      const tradeTypeValue = getTradeTypeValue(formData.tradeType);
 
-      const res = await fetch(`${API_BASE_URL}/handmedowns`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: payload
+      console.log('[나눔등록] 전송 데이터:', {
+        bookTitle: formData.title,
+        bookAuthor: formData.author,
+        comment: commentText,
+        tradeType: tradeTypeValue,
+        hasImage: !!formData.imageFile
       });
 
+      let res: Response;
+
+      if (formData.imageFile) {
+        // 이미지 있을 때 → FormData (multipart)
+        const payload = new FormData();
+        payload.append('bookTitle', formData.title.trim());
+        payload.append('bookAuthor', formData.author.trim());
+        payload.append('comment', commentText);
+        payload.append('tradeType', tradeTypeValue);
+        payload.append('image', formData.imageFile);
+
+        res = await fetch(`${API_BASE_URL}/handmedowns`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: payload
+        });
+      } else {
+        // 이미지 없을 때 → JSON (기존 서버 호환)
+        res = await fetch(`${API_BASE_URL}/handmedowns`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookTitle: formData.title.trim(),
+            bookAuthor: formData.author.trim(),
+            comment: commentText,
+            tradeType: tradeTypeValue,
+            bookThumbnail: ''
+          })
+        });
+      }
+
+      const responseText = await res.text();
+      console.log('[나눔등록] 서버 응답 status:', res.status);
+      console.log('[나눔등록] 서버 응답 body:', responseText);
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        alert(errorData.message || '도서 등록에 실패했습니다.');
+        let errorMsg = '도서 등록에 실패했습니다.';
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMsg = errorData.message || errorData.error || errorMsg;
+        } catch (_) {}
+        alert(`등록 실패 (${res.status}): ${errorMsg}`);
         return;
       }
 
-      const data = await res.json();
-      alert(data.message || '도서 등록이 완료되었습니다!');
+      alert('도서 등록이 완료되었습니다! 🎉');
       setIsModalOpen(false);
       setFormData({ 
         title: '', author: '', condition: '거의 새 것', tradeType: '나눔', 
@@ -124,8 +163,8 @@ export default function HandMeDownsPage() {
       });
       fetchItems();
     } catch (error) {
-      console.error('등록 중 에러:', error);
-      alert('서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.');
+      console.error('[나눔등록] 네트워크 에러:', error);
+      alert('서버와 통신할 수 없습니다. 네트워크 상태를 확인해주세요.');
     }
   };
 
