@@ -6,7 +6,16 @@ import Header from '@/components/Header';
 import './annotations.css';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : 'http://13.124.191.57:5000/api';
-const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://13.124.191.57:5000';
+// 📍 이미지 파일은 별도 서버(3000 포트)에서 서빙됨
+const IMAGE_BASE_URL = 'http://43.202.179.130:3000';
+
+// base64, 절대URL, /uploads 상대경로 모두 처리
+const resolveImageUrl = (url: string | undefined | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith('data:')) return url;          // base64
+  if (url.startsWith('http')) return url;           // 이미 완전한 URL
+  return `${IMAGE_BASE_URL}${url}`;                 // /uploads/... → 서버주소 붙임
+};
 
 export default function ExhibitionPage() {
   const router = useRouter();
@@ -101,7 +110,7 @@ export default function ExhibitionPage() {
             id: apiItem._id,
             userId: apiItem.userId?._id || apiItem.userId,
             type: imageUrl ? 'image' : 'text',
-            image: imageUrl,
+            image: resolveImageUrl(imageUrl),   // 📍 URL 완성 후 저장
             quote: apiItem.quote || apiItem.content,
             book: bookTitle || '도서',
             author: bookAuthor || '작자미상',
@@ -422,7 +431,7 @@ export default function ExhibitionPage() {
                     {item.type === 'image' ? (
                       <div className="anno-card-image-wrap">
                         <img
-                          src={item.image?.startsWith('http') ? item.image : `${IMAGE_BASE_URL}${item.image}`}
+                          src={item.image || ''}
                           alt="annotation"
                           className="anno-card-img"
                         />
