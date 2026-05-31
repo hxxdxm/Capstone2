@@ -186,6 +186,46 @@
 .hmd-dm-title { font-size: 15px; font-weight: 900; color: #3B3224; }
 .hmd-dm-sub { font-size: 11px; color: #8A7A60; margin-top: -4px; }
 
+/* 채팅방 바로가기 버튼 */
+.hmd-dm-goto-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: linear-gradient(135deg, #7BA05B, #5E8542);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+  box-shadow: 0 4px 14px rgba(123,160,91,0.35);
+  margin-bottom: 2px;
+}
+.hmd-dm-goto-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(123,160,91,0.45); }
+
+.hmd-dm-or {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #BDB09A;
+  position: relative;
+  margin: 4px 0;
+}
+.hmd-dm-or::before, .hmd-dm-or::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 38%;
+  height: 1px;
+  background: #D9CDB8;
+}
+.hmd-dm-or::before { left: 0; }
+.hmd-dm-or::after { right: 0; }
+
 .hmd-dm-input {
   width: 100%;
   background: #F2EDE4;

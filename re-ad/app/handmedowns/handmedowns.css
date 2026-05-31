@@ -200,6 +200,32 @@
 .item-desc { color: #5A4A36; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; }
 .item-owner { color: #BDB09A; flex-shrink: 0; }
 
+/* 카드 내 채팅 버튼 */
+.btn-chat-quick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  background: linear-gradient(135deg, #7BA05B, #5E8542);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(123,160,91,0.25);
+}
+.btn-chat-quick:hover {
+  background: linear-gradient(135deg, #5E8542, #4A6B33);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(123,160,91,0.35);
+}
+
 .handmedowns-empty {
   grid-column: 1 / -1;
   text-align: center;

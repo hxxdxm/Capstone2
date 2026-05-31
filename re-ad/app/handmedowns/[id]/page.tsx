@@ -10,8 +10,8 @@ const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 const getImageUrl = (url: string | undefined | null) => {
   if (!url) return null;
-  if (url.startsWith('/uploads')) return `http://43.202.179.130:3000${url}`;
-  return url;
+  if (url.startsWith('http')) return url;
+  return `http://43.202.179.130:3000${url}`;
 };
 
 export default function HandMeDownDetailPage() {
@@ -26,10 +26,12 @@ export default function HandMeDownDetailPage() {
   const [isSending, setIsSending] = useState(false);
   const [dmSent, setDmSent] = useState(false);
 
-  const getToken = () =>
-    typeof window !== 'undefined'
-      ? localStorage.getItem('token') || sessionStorage.getItem('token')
-      : null;
+  const getToken = () => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token || token === 'undefined' || token === 'null') return null;
+    return token;
+  };
 
   const getMyId = () => {
     const token = getToken();
@@ -83,7 +85,6 @@ export default function HandMeDownDetailPage() {
 
     setIsSending(true);
     try {
-      // DM API 시도 - 엔드포인트가 다를 수 있으므로 여러 경로 시도
       const res = await fetch(`${API_BASE_URL}/dms`, {
         method: 'POST',
         headers: {
@@ -92,15 +93,17 @@ export default function HandMeDownDetailPage() {
         },
         body: JSON.stringify({
           receiverId: ownerId,
-          message: dmMessage,
-          content: dmMessage
+          content: dmMessage.trim()
         })
       });
 
       if (res.ok) {
         setDmSent(true);
         setDmMessage('');
-        setTimeout(() => setDmSent(false), 3000);
+        // 1.5초 후 DM 채팅방으로 이동
+        setTimeout(() => {
+          router.push(`/dms/${ownerId}`);
+        }, 1500);
       } else {
         const data = await res.json().catch(() => ({}));
         alert(data.message || '메시지 전송에 실패했습니다.');
@@ -198,6 +201,26 @@ export default function HandMeDownDetailPage() {
               <div className="hmd-dm-section">
                 <p className="hmd-dm-title">💬 게시자에게 메시지 보내기</p>
                 <p className="hmd-dm-sub">나눔/교환을 원한다면 직접 연락해 보세요!</p>
+
+                {/* 채팅방 바로가기 버튼 */}
+                <button
+                  className="hmd-dm-goto-btn"
+                  onClick={() => {
+                    const token = getToken();
+                    if (!token) { alert('로그인이 필요합니다.'); router.push('/login'); return; }
+                    const ownerId = item?.ownerId?._id || item?.ownerId || item?.userId?._id || item?.userId;
+                    if (!ownerId) { alert('게시자 정보를 찾을 수 없습니다.'); return; }
+                    router.push(`/dms/${ownerId}`);
+                  }}
+                >
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  {ownerNickname}님과 채팅하러 가기
+                </button>
+
+                {/* 또는 직접 메시지 작성 후 전송 */}
+                <p className="hmd-dm-or">또는 메시지를 먼저 보내기</p>
                 <textarea
                   className="hmd-dm-input"
                   placeholder={`${ownerNickname}님에게 보낼 메시지를 입력하세요...`}
@@ -215,14 +238,14 @@ export default function HandMeDownDetailPage() {
                       <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
-                      전송 완료!
+                      전송 완료! 채팅방으로 이동 중...
                     </>
                   ) : isSending ? '전송 중...' : (
                     <>
                       <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                       </svg>
-                      메시지 보내기
+                      메시지 보내고 채팅하기
                     </>
                   )}
                 </button>

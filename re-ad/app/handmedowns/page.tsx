@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import './handmedowns.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
 export default function HandMeDownsPage() {
+  const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('전체');
@@ -45,8 +47,8 @@ export default function HandMeDownsPage() {
 
   const getImageUrl = (url: string | undefined | null) => {
     if (!url) return 'https://via.placeholder.com/400x300?text=No+Image';
-    if (url.startsWith('/uploads')) return `http://43.202.179.130:3000${url}`;
-    return url;
+    if (url.startsWith('http')) return url;
+    return `http://43.202.179.130:3000${url}`;
   };
 
   // 📍 사진 선택 핸들러
@@ -244,8 +246,25 @@ export default function HandMeDownsPage() {
                     <p className="item-author">{item.bookAuthor || item.author}</p>
                     <div className="item-footer">
                       <span className="item-desc">{item.comment || item.description || item.condition}</span>
-                      <span className="item-owner">By {item.ownerId?.nickname || item.provider || '익명'}</span>
+                      <span className="item-owner">By {item.ownerId?.nickname || item.ownerId?.username || item.provider || '익명'}</span>
                     </div>
+                    <button
+                      className="btn-chat-quick"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const token = getToken();
+                        if (!token) { alert('로그인 후 이용 가능합니다.'); return; }
+                        const ownerId = item.ownerId?._id || item.ownerId;
+                        if (!ownerId) { alert('게시자 정보를 찾을 수 없습니다.'); return; }
+                        router.push(`/dms/${ownerId}`);
+                      }}
+                    >
+                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      채팅하기
+                    </button>
                   </div>
                 </Link>
               ))
