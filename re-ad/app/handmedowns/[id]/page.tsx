@@ -13,7 +13,7 @@ const resolveImageUrl = (url: string | undefined | null): string | null => {
   if (!url) return null;
   if (url.startsWith('data:')) return url;
   if (url.startsWith('http')) return url;
-  return `http://43.202.179.130:3000${url}`;
+  return `http://13.124.191.57:5000${url}`;   // /uploads/... → API 서버 주소 붙임
 };
 
 // 아이템의 이미지 배열 반환 (images 배열 우선, 없으면 bookThumbnail 폴백)

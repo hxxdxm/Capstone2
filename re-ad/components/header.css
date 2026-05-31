@@ -77,6 +77,32 @@
   border-bottom-color: #7BA05B;
 }
 
+/* ── 메시지 링크 읽지 않은 알림 닷 ── */
+.nav-link-msg-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-unread-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #E53E3E;
+  box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.6);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+  margin-bottom: 6px;
+}
+
+@keyframes pulse-dot {
+  0%   { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.6); }
+  60%  { box-shadow: 0 0 0 6px rgba(229, 62, 62, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+}
+
 /* ───────────────────────────────────────
    우측 영역 (위젯 + 모바일 버튼)
 ─────────────────────────────────────── */

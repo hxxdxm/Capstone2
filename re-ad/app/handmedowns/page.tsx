@@ -92,9 +92,9 @@ export default function HandMeDownsPage() {
   // base64, http, 상대경로 모두 처리
   const resolveImageUrl = (url: string | undefined | null): string | null => {
     if (!url) return null;
-    if (url.startsWith('data:')) return url;      // base64 그대로
-    if (url.startsWith('http')) return url;       // 절대 URL 그대로
-    return `http://43.202.179.130:3000${url}`;    // 상대경로에 서버 주소 붙임
+    if (url.startsWith('data:')) return url;                      // base64 그대로
+    if (url.startsWith('http')) return url;                       // 절대 URL 그대로
+    return `http://13.124.191.57:5000${url}`;                    // /uploads/... → API 서버 주소 붙임
   };
 
   // 아이템의 이미지 배열을 가져오는 헬퍼
