@@ -148,6 +148,50 @@
 .item-card:hover .item-image {
   transform: scale(1.05);
 }
+
+/* 카드 이미지 슬라이더 버튼 */
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(59,50,36,0.65);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  padding: 0;
+}
+.slider-btn:hover { background: rgba(59,50,36,0.9); }
+.slider-btn-prev { left: 8px; }
+.slider-btn-next { right: 8px; }
+
+.slider-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 10;
+}
+.slider-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.slider-dot.active { background: #fff; }
 .item-badge {
   position: absolute;
   top: 16px;
@@ -225,6 +269,65 @@
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(123,160,91,0.35);
 }
+
+/* 사진 미리보기 슬라이더 (모달 내) */
+.preview-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.preview-slider {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #EDE7DA;
+  border: 2px dashed #D9CDB8;
+}
+.preview-slider-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.preview-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(59,50,36,0.75);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.2s;
+}
+.preview-remove-btn:hover { background: rgba(200,50,50,0.85); }
+
+.preview-dots { display: flex; gap: 5px; }
+
+.add-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  background: #F2EDE4;
+  border: 1.5px dashed #7BA05B;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7BA05B;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.add-more-btn:hover { background: #E8F0DF; }
 
 .handmedowns-empty {
   grid-column: 1 / -1;

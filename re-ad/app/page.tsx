@@ -73,8 +73,10 @@ export default function MainPage() {
 
   const filteredRooms = rooms.filter((room) => {
     if (activeFilter === '전체') return true;
-    const type = room.roomType || '온라인';
-    return type === activeFilter;
+    const type = room.roomType || 'ONLINE';
+    if (activeFilter === '온라인') return type === 'ONLINE';
+    if (activeFilter === '오프라인') return type === 'LOCAL';
+    return true;
   });
 
   return (
@@ -193,8 +195,8 @@ export default function MainPage() {
                       {isFull && <div className="room-full-badge">모집 마감</div>}
                       <div>
                         <div className="room-card-top">
-                          <span className={`room-type-badge ${room.roomType === '온라인' ? 'online' : 'offline'}`}>
-                            {room.roomType || '온라인'}
+                          <span className={`room-type-badge ${room.roomType === 'ONLINE' ? 'online' : 'offline'}`}>
+                             {room.roomType === 'ONLINE' ? '온라인' : '오프라인'}
                           </span>
                           <span className={`room-member-count ${isFull ? 'full' : 'ok'}`}>
                             <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">

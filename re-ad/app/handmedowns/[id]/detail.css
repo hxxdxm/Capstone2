@@ -72,6 +72,50 @@
 }
 .hmd-detail-image-wrap:hover .hmd-detail-image { transform: scale(1.03); }
 
+/* 상세 페이지 슬라이더 버튼 */
+.detail-slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(59,50,36,0.65);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  padding: 0;
+}
+.detail-slider-btn:hover { background: rgba(59,50,36,0.9); }
+.detail-slider-prev { left: 12px; }
+.detail-slider-next { right: 12px; }
+
+.detail-slider-dots {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+.detail-slider-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.detail-slider-dot.active { background: #fff; }
+
 .hmd-zoom-hint {
   position: absolute;
   bottom: 16px;

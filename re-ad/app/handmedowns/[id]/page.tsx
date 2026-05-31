@@ -8,11 +8,68 @@ import './detail.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 
-const getImageUrl = (url: string | undefined | null) => {
+// base64, 절대URL, 상대경로 모두 처리
+const resolveImageUrl = (url: string | undefined | null): string | null => {
   if (!url) return null;
+  if (url.startsWith('data:')) return url;
   if (url.startsWith('http')) return url;
   return `http://43.202.179.130:3000${url}`;
 };
+
+// 아이템의 이미지 배열 반환 (images 배열 우선, 없으면 bookThumbnail 폴백)
+const getItemImages = (item: any): string[] => {
+  if (item?.images && item.images.length > 0) {
+    return item.images.map((u: string) => resolveImageUrl(u)).filter(Boolean) as string[];
+  }
+  const single = resolveImageUrl(item?.bookThumbnail || item?.imageUrl);
+  return single ? [single] : [];
+};
+
+// 이미지 슬라이더 컴포넌트
+function DetailImageSlider({ images, title, onZoom }: { images: string[]; title: string; onZoom: (url: string) => void }) {
+  const [idx, setIdx] = useState(0);
+
+  if (images.length === 0) {
+    return (
+      <div className="hmd-detail-image-wrap">
+        <div className="hmd-no-image">
+          <span>📚</span>
+          <p>등록된 사진이 없습니다</p>
+        </div>
+      </div>
+    );
+  }
+
+  const prev = () => setIdx(i => (i - 1 + images.length) % images.length);
+  const next = () => setIdx(i => (i + 1) % images.length);
+
+  return (
+    <div className="hmd-detail-image-wrap" onClick={() => onZoom(images[idx])}>
+      <img src={images[idx]} alt={`${title} ${idx + 1}`} className="hmd-detail-image" />
+      {images.length > 1 && (
+        <>
+          <button className="detail-slider-btn detail-slider-prev"
+            onClick={e => { e.stopPropagation(); prev(); }}>‹</button>
+          <button className="detail-slider-btn detail-slider-next"
+            onClick={e => { e.stopPropagation(); next(); }}>›</button>
+          <div className="detail-slider-dots">
+            {images.map((_, i) => (
+              <span key={i}
+                className={`detail-slider-dot${i === idx ? ' active' : ''}`}
+                onClick={e => { e.stopPropagation(); setIdx(i); }} />
+            ))}
+          </div>
+        </>
+      )}
+      <div className="hmd-zoom-hint">
+        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+        </svg>
+        {images.length > 1 ? `${idx + 1}/${images.length} · 크게 보기` : '크게 보기'}
+      </div>
+    </div>
+  );
+}
 
 export default function HandMeDownDetailPage() {
   const params = useParams();
@@ -130,8 +187,9 @@ export default function HandMeDownDetailPage() {
 
   if (!item) return null;
 
-  const imageUrl = getImageUrl(item.bookThumbnail || item.imageUrl);
+  const itemImages = getItemImages(item);
   const tradeLabel = getTradeTypeLabel(item.tradeType);
+  const [zoomedUrl, setZoomedUrl] = useState<string | null>(null);
   const ownerNickname = item.ownerId?.nickname || item.ownerId?.username || item.provider || '익명';
   const isShare = tradeLabel === '나눔';
 
@@ -150,26 +208,13 @@ export default function HandMeDownDetailPage() {
 
         <div className="hmd-detail-layout">
 
-          {/* ── 좌측: 이미지 ── */}
+          {/* ── 좌측: 이미지 슬라이더 ── */}
           <div className="hmd-detail-image-col">
-            <div className="hmd-detail-image-wrap" onClick={() => imageUrl && setIsImageZoomed(true)}>
-              {imageUrl ? (
-                <>
-                  <img src={imageUrl} alt={item.bookTitle} className="hmd-detail-image" />
-                  <div className="hmd-zoom-hint">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                    </svg>
-                    크게 보기
-                  </div>
-                </>
-              ) : (
-                <div className="hmd-no-image">
-                  <span>📚</span>
-                  <p>등록된 사진이 없습니다</p>
-                </div>
-              )}
-            </div>
+            <DetailImageSlider
+              images={itemImages}
+              title={item.bookTitle || '책'}
+              onZoom={(url) => setZoomedUrl(url)}
+            />
             <div className="hmd-detail-badge-row">
               <span className={`hmd-trade-badge ${isShare ? 'share' : 'exchange'}`}>{tradeLabel}</span>
               {item.condition && <span className="hmd-condition-badge">{item.condition}</span>}
@@ -263,11 +308,11 @@ export default function HandMeDownDetailPage() {
       </main>
 
       {/* ── 이미지 확대 모달 ── */}
-      {isImageZoomed && imageUrl && (
-        <div className="hmd-zoom-backdrop" onClick={() => setIsImageZoomed(false)}>
-          <button className="hmd-zoom-close" onClick={() => setIsImageZoomed(false)}>✕</button>
+      {zoomedUrl && (
+        <div className="hmd-zoom-backdrop" onClick={() => setZoomedUrl(null)}>
+          <button className="hmd-zoom-close" onClick={() => setZoomedUrl(null)}>✕</button>
           <img
-            src={imageUrl}
+            src={zoomedUrl}
             alt={item.bookTitle}
             className="hmd-zoom-image"
             onClick={e => e.stopPropagation()}
