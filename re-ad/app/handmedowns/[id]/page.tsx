@@ -82,6 +82,7 @@ export default function HandMeDownDetailPage() {
   const [dmMessage, setDmMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [dmSent, setDmSent] = useState(false);
+  const [zoomedUrl, setZoomedUrl] = useState<string | null>(null); // 클릭 확대 URL
 
   const getToken = () => {
     if (typeof window === 'undefined') return null;
@@ -189,7 +190,6 @@ export default function HandMeDownDetailPage() {
 
   const itemImages = getItemImages(item);
   const tradeLabel = getTradeTypeLabel(item.tradeType);
-  const [zoomedUrl, setZoomedUrl] = useState<string | null>(null);
   const ownerNickname = item.ownerId?.nickname || item.ownerId?.username || item.provider || '익명';
   const isShare = tradeLabel === '나눔';
 
