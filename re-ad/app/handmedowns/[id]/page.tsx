@@ -77,27 +77,33 @@ export default function HandMeDownDetailPage() {
     const token = getToken();
     if (!token) { alert('로그인이 필요합니다.'); router.push('/login'); return; }
 
-    const ownerId = item?.ownerId?._id || item?.ownerId || item?.userId?._id || item?.userId;
+    // ownerId를 항상 string으로 추출
+    const ownerRaw = item?.ownerId?._id || item?.ownerId || item?.userId?._id || item?.userId;
+    const ownerId = ownerRaw ? String(ownerRaw) : null;
     if (!ownerId) { alert('게시자 정보를 찾을 수 없습니다.'); return; }
 
     const myId = getMyId();
-    if (myId === ownerId) { alert('본인 게시물에는 메시지를 보낼 수 없습니다.'); return; }
+    // 둘 다 string으로 비교
+    if (myId && String(myId) === ownerId) {
+      alert('본인 게시물에는 메시지를 보낼 수 없습니다.');
+      return;
+    }
 
     setIsSending(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/dms`, {
+      // POST /api/dms/:partnerId 엔드포인트 사용 (body에 content만 필요)
+      const res = await fetch(`${API_BASE_URL}/dms/${ownerId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          receiverId: ownerId,
           content: dmMessage.trim()
         })
       });
 
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         setDmSent(true);
         setDmMessage('');
         // 1.5초 후 DM 채팅방으로 이동
@@ -208,7 +214,8 @@ export default function HandMeDownDetailPage() {
                   onClick={() => {
                     const token = getToken();
                     if (!token) { alert('로그인이 필요합니다.'); router.push('/login'); return; }
-                    const ownerId = item?.ownerId?._id || item?.ownerId || item?.userId?._id || item?.userId;
+                    const ownerRaw = item?.ownerId?._id || item?.ownerId || item?.userId?._id || item?.userId;
+                    const ownerId = ownerRaw ? String(ownerRaw) : null;
                     if (!ownerId) { alert('게시자 정보를 찾을 수 없습니다.'); return; }
                     router.push(`/dms/${ownerId}`);
                   }}
