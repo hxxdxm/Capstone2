@@ -15,7 +15,17 @@ function CardImageSlider({ images, title }: { images: string[]; title: string })
   if (!images || images.length === 0) {
     return (
       <div className="item-image-wrapper">
-        <img src="https://via.placeholder.com/400x300?text=No+Image" alt={title} className="item-image" />
+        <div className="item-image" style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%)',
+        color: '#BDB09A', fontSize: '13px', gap: '8px', width: '100%', height: '100%',
+        minHeight: '180px'
+      }}>
+        <svg width="40" height="40" fill="none" stroke="#BDB09A" strokeWidth="1.5" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        <span>이미지 없음</span>
+      </div>
       </div>
     );
   }
@@ -56,8 +66,9 @@ export default function HandMeDownsPage() {
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('전체');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // 모달 상태 및 폼 데이터
+  // 등록 모달 상태 및 폼 데이터
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -65,16 +76,37 @@ export default function HandMeDownsPage() {
     condition: '거의 새 것',
     tradeType: '나눔',
     description: '',
-    imagePreviews: [] as string[], // 미리보기 URL 배열
-    imageFiles: [] as File[]       // 업로드할 파일 배열
+    imagePreviews: [] as string[],
+    imageFiles: [] as File[]
   });
-  const [previewIdx, setPreviewIdx] = useState(0); // 미리보기 슬라이더 인덱스
+  const [previewIdx, setPreviewIdx] = useState(0);
+
+  // 수정 모달 상태
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [editData, setEditData] = useState({
+    title: '',
+    author: '',
+    condition: '거의 새 것',
+    tradeType: '나눔',
+    description: '',
+  });
 
   const getToken = () => {
     if (typeof window === 'undefined') return null;
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token || token === 'undefined' || token === 'null' || token.trim() === '') return null;
     return token;
+  };
+
+  // JWT 페이로드에서 userId 파싱
+  const parseUserIdFromToken = (token: string): string | null => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.id || payload._id || payload.userId || null;
+    } catch {
+      return null;
+    }
   };
 
   const getTradeTypeLabel = (tradeType: string) => {
@@ -169,7 +201,92 @@ export default function HandMeDownsPage() {
 
   useEffect(() => {
     fetchItems();
+    // 현재 로그인 유저 ID 파싱
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+    console.log('[나눔] 저장된 토큰:', token ? token.substring(0, 30) + '...' : '없음');
+    if (token && token !== 'undefined' && token !== 'null') {
+      const uid = parseUserIdFromToken(token);
+      console.log('[나눔] 파싱된 currentUserId:', uid);
+      setCurrentUserId(uid);
+    }
   }, []);
+
+  // 🗑️ 삭제 핸들러
+  const handleDelete = async (e: React.MouseEvent, itemId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('정말로 이 글을 삭제하시겠어요?')) return;
+    const token = getToken();
+    if (!token) return alert('로그인이 필요합니다.');
+    try {
+      const res = await fetch(`${API_BASE_URL}/handmedowns/${itemId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return alert(data.message || '삭제에 실패했습니다.');
+      }
+      alert('삭제되었습니다.');
+      fetchItems();
+    } catch {
+      alert('네트워크 오류가 발생했습니다.');
+    }
+  };
+
+  // ✏️ 수정 모달 열기
+  const openEditModal = (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // comment에서 상태 파싱 시도 ([거의 새 것] 설명... 형태)
+    const commentMatch = item.comment?.match(/^\[([^\]]+)\]\s*(.*)$/);
+    const condition = commentMatch ? commentMatch[1] : '거의 새 것';
+    const description = commentMatch ? commentMatch[2] : (item.comment || '');
+    setEditTarget(item);
+    setEditData({
+      title: item.bookTitle || '',
+      author: item.bookAuthor || '',
+      condition,
+      tradeType: getTradeTypeLabel(item.tradeType),
+      description,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // ✏️ 수정 제출 핸들러
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = getToken();
+    if (!token || !editTarget) return;
+    const commentText = editData.description.trim()
+      ? `[${editData.condition}] ${editData.description.trim()}`
+      : `${editData.condition} 상태의 책입니다.`;
+    try {
+      const res = await fetch(`${API_BASE_URL}/handmedowns/${editTarget._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bookTitle: editData.title.trim(),
+          bookAuthor: editData.author.trim(),
+          comment: commentText,
+          tradeType: getTradeTypeValue(editData.tradeType),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return alert(data.message || '수정에 실패했습니다.');
+      }
+      alert('수정되었습니다! ✅');
+      setIsEditModalOpen(false);
+      setEditTarget(null);
+      fetchItems();
+    } catch {
+      alert('네트워크 오류가 발생했습니다.');
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,13 +403,39 @@ export default function HandMeDownsPage() {
             ) : (
               filteredItems.map((item) => {
                 const itemImages = getItemImages(item);
+                // populate된 객체인지, 문자열/ObjectId인지 모두 처리
+                const rawOwner = item.ownerId;
+                const itemOwnerIdStr = 
+                  typeof rawOwner === 'object' && rawOwner !== null
+                    ? (rawOwner._id?.toString() || rawOwner.toString())
+                    : String(rawOwner || '');
+                const isOwner = !!(currentUserId && itemOwnerIdStr && currentUserId === itemOwnerIdStr);
                 return (
                   <Link
                     href={`/handmedowns/${item._id || item.id}`}
                     key={item._id || item.id}
                     className="item-card"
-                    style={{ textDecoration: 'none', color: 'inherit' }}
+                    style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}
                   >
+                    {/* 내 글 수정/삭제 버튼 */}
+                    {isOwner && (
+                      <div className="item-owner-actions" onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                        <button
+                          className="btn-edit-item"
+                          onClick={(e) => openEditModal(e, item)}
+                          title="수정"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn-delete-item"
+                          onClick={(e) => handleDelete(e, item._id || item.id)}
+                          title="삭제"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
                     {/* 이미지 슬라이더 */}
                     <CardImageSlider images={itemImages} title={item.bookTitle || item.title || '책'} />
                     <span className={`item-badge ${getTradeTypeLabel(item.tradeType) === '나눔' ? 'badge-share' : 'badge-exchange'}`}>
@@ -305,23 +448,25 @@ export default function HandMeDownsPage() {
                         <span className="item-desc">{item.comment || item.description || item.condition}</span>
                         <span className="item-owner">By {item.ownerId?.nickname || item.ownerId?.username || item.provider || '익명'}</span>
                       </div>
-                      <button
-                        className="btn-chat-quick"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const token = getToken();
-                          if (!token) { alert('로그인 후 이용 가능합니다.'); return; }
-                          const ownerId = item.ownerId?._id || item.ownerId;
-                          if (!ownerId) { alert('게시자 정보를 찾을 수 없습니다.'); return; }
-                          router.push(`/dms/${ownerId}`);
-                        }}
-                      >
-                        <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        채팅하기
-                      </button>
+                      {!isOwner && (
+                        <button
+                          className="btn-chat-quick"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const token = getToken();
+                            if (!token) { alert('로그인 후 이용 가능합니다.'); return; }
+                            const ownerId = item.ownerId?._id || item.ownerId;
+                            if (!ownerId) { alert('게시자 정보를 찾을 수 없습니다.'); return; }
+                            router.push(`/dms/${ownerId}`);
+                          }}
+                        >
+                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          채팅하기
+                        </button>
+                      )}
                     </div>
                   </Link>
                 );
@@ -437,6 +582,53 @@ export default function HandMeDownsPage() {
               <button type="submit" className="btn-submit-item">
                 도서 등록 완료
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✏️ 수정 모달 */}
+      {isEditModalOpen && editTarget && (
+        <div className="handmedowns-modal-backdrop">
+          <div className="handmedowns-modal">
+            <button onClick={() => { setIsEditModalOpen(false); setEditTarget(null); }} className="handmedowns-modal-close">✕</button>
+            <h3>글 수정하기</h3>
+            <form onSubmit={handleEdit}>
+              <div className="handmedowns-form-group">
+                <label className="handmedowns-form-label">책 제목 *</label>
+                <input type="text" className="handmedowns-form-input" value={editData.title}
+                  onChange={(e) => setEditData({ ...editData, title: e.target.value })} required />
+              </div>
+              <div className="handmedowns-form-group">
+                <label className="handmedowns-form-label">저자명 *</label>
+                <input type="text" className="handmedowns-form-input" value={editData.author}
+                  onChange={(e) => setEditData({ ...editData, author: e.target.value })} required />
+              </div>
+              <div className="handmedowns-form-row">
+                <div className="handmedowns-form-group">
+                  <label className="handmedowns-form-label">책 상태</label>
+                  <select className="handmedowns-form-select" value={editData.condition}
+                    onChange={(e) => setEditData({ ...editData, condition: e.target.value })}>
+                    <option value="거의 새 것">거의 새 것</option>
+                    <option value="사용감 있음">사용감 있음</option>
+                    <option value="밑줄 많음">밑줄 많음</option>
+                  </select>
+                </div>
+                <div className="handmedowns-form-group">
+                  <label className="handmedowns-form-label">거래 방식</label>
+                  <select className="handmedowns-form-select" value={editData.tradeType}
+                    onChange={(e) => setEditData({ ...editData, tradeType: e.target.value })}>
+                    <option value="나눔">나눔 (무료)</option>
+                    <option value="교환">교환 (책 맞교환)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="handmedowns-form-group">
+                <label className="handmedowns-form-label">상세 설명</label>
+                <textarea className="handmedowns-form-textarea" value={editData.description}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })} />
+              </div>
+              <button type="submit" className="btn-submit-item">수정 완료</button>
             </form>
           </div>
         </div>

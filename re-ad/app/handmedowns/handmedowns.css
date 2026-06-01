@@ -406,3 +406,42 @@
   cursor: pointer; margin-top: 20px; transition: background 0.2s;
 }
 .btn-submit-item:hover { background: #2C2218; }
+
+/* ── 내 글 수정/삭제 버튼 ── */
+.item-owner-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+  display: flex;
+  gap: 4px;
+}
+.btn-edit-item,
+.btn-delete-item {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.btn-edit-item {
+  background: rgba(255, 255, 255, 0.88);
+}
+.btn-edit-item:hover {
+  background: #e8f5e9;
+  transform: scale(1.1);
+}
+.btn-delete-item {
+  background: rgba(255, 255, 255, 0.88);
+}
+.btn-delete-item:hover {
+  background: #fdecea;
+  transform: scale(1.1);
+}
