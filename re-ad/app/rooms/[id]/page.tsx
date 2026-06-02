@@ -77,7 +77,13 @@ export default function RoomDetailPage() {
             mediaType: ann.imageUrl ? 'image' : null,
             likes: ann.likes?.length || 0,
             likedByMe: ann.likes?.includes(getMyId()) || false,
-            comments: ann.comments || [],
+            // 🌟 DB에서 가져온 기존 댓글들도 프론트 형식에 맞게 변환해 줍니다!
+            comments: (ann.comments || []).map((c: any) => ({
+              id: c._id || c.id,
+              author: c.userId?.nickname || c.nickname || c.author || '익명',
+              text: c.content || c.text || '',
+              content: c.content || c.text || ''
+            })),
             createdAt: ann.createdAt,
             _id: ann._id
           }));
@@ -163,7 +169,7 @@ export default function RoomDetailPage() {
       const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ description: editRoomDesc }) });
       if (res.ok) { setRoomData({ ...roomData, description: editRoomDesc, roomDesc: editRoomDesc }); setIsEditingInfo(false); }
       else alert("수정 실패: 방장 권한이 없거나 서버 오류입니다.");
-    } catch { alert("서버와 연결할 수 없습니다."); }
+    } catch { alert("서버와 연결할 수 없습니다.")                                                         ; }
   };
 
   const handleInvite = async () => {
@@ -279,12 +285,37 @@ export default function RoomDetailPage() {
 
       if (res.ok) {
         const result = await res.json();
+        let newComments : any[] = [];
+
+        // 1. 백엔드가 전체 댓글 배열을 줬을 경우
+        if (result.comments && Array.isArray(result.comments)) {
+          newComments = result.comments.map((comment: any) => ({
+            id: comment._id,
+            userId: comment.userId?._id || comment.userId,
+            author: comment.userId?.nickname || comment.nickname || '익명',
+            text: comment.content,
+            content: comment.content
+          }));
+        } 
+        // 2. 백엔드가 방금 작성한 댓글 딱 1개만 줬을 경우
+        else if (result._id || result.content) {
+          const newComment = {
+            id: result._id || Date.now().toString(),
+            author: result.userId?.nickname || getMyName() || '익명',
+            text: result.content || t,
+            content: result.content || t
+          };
+          const existingComments = posts.find(p => p.id === postId)?.comments || [];
+          newComments = [...existingComments, newComment];
+        }
+
+        // 화면 업데이트
         setPosts(posts.map(p =>
-          p.id === postId
-            ? { ...p, comments: result.comments || [...p.comments, { id: Date.now(), author: getMyName() || "나", text: t }] }
-            : p
+          p.id === postId ? { ...p, comments: newComments } : p
         ));
         setCommentInputs({ ...commentInputs, [postId]: '' });
+      } else {
+        alert("댓글 작성에 실패했습니다.");
       }
     } catch (err) {
       console.error('댓글 작성 에러:', err);
@@ -456,15 +487,21 @@ export default function RoomDetailPage() {
                       <span className="feed-action-btn">💬 댓글 {post.comments.length}</span>
                     </div>
                     <div className="feed-comments">
-                      {post.comments.map((c: any) => (
-                        <div key={c.id} className="feed-comment">
-                          <div className="feed-comment-avatar">{c.author.charAt(0)}</div>
-                          <div className="feed-comment-bubble">
-                            <span className="feed-comment-author">{c.author}</span>
-                            <span className="feed-comment-text">{c.text}</span>
-                          </div>
-                        </div>
-                      ))}
+                      {post.comments.map((c: any, idx: number) => {
+                        // 🌟 안전 장치: author가 없으면 닉네임이나 '익명'을 대신 사용!
+                        const commentAuthor = c.author || c.userId?.nickname || c.nickname || '익명';
+                        const commentText = c.text || c.content || '';
+
+                          return (
+                            <div key={c.id || idx} className="feed-comment">
+                              <div className="feed-comment-avatar">{commentAuthor.charAt(0)}</div>
+                              <div className="feed-comment-bubble">
+                                <span className="feed-comment-author">{commentAuthor}</span>
+                                <span className="feed-comment-text">{commentText}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       <div className="feed-comment-input-row">
                         <input className="feed-comment-input" placeholder="댓글을 남겨보세요..." value={commentInputs[post.id] || ''} onChange={e => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAddComment(post.id)} />
                         <button className="feed-comment-send" onClick={() => handleAddComment(post.id)}>
@@ -593,16 +630,19 @@ export default function RoomDetailPage() {
             <div className="member-modal-body">
               {roomData.members?.length > 0 ? (
                 roomData.members.map((member: any, idx: number) => {
+                  if (!member) return null;
+
                   // 멤버 정보 추출 (백엔드에서 populate됨)
                   const userId = member.userId?._id || member.userId || '';
                   const nickname = member.userId?.nickname || member.nickname || member.userId?.username || `멤버${idx + 1}`;
                   const isThisHost = roomData.hostId === userId || roomData.hostId === member.userId?._id;
+                  const firstChar = (nickname && nickname.length > 0) ? nickname.charAt(0).toUpperCase() : '?';
 
                   return (
                     <div key={idx} className="member-item">
-                      <div className="member-avatar">{nickname[0]?.toUpperCase()}</div>
+                      <div className="member-avatar">{firstChar}</div>
                       <div className="member-info">
-                        <span className="member-name">{nickname}</span>
+                        <span className="member-name">{nickname || '멤버'}</span>
                         {isThisHost && <span className="member-host-badge">👑 방장</span>}
                       </div>
                     </div>
