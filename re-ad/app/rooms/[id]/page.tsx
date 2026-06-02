@@ -593,19 +593,14 @@ export default function RoomDetailPage() {
             <div className="member-modal-body">
               {roomData.members?.length > 0 ? (
                 roomData.members.map((member: any, idx: number) => {
-                  const rawId = typeof member.userId === 'string'
-                    ? member.userId
-                    : (member.userId?._id || member._id || '');
-                  const detail = memberDetails[rawId];
-                  const nickname =
-                    detail?.nickname ||
-                    member.userId?.nickname || member.userId?.username ||
-                    member.nickname ||
-                    rawId.slice(-4) || `멤버 ${idx + 1}`;
-                  const isThisHost = roomData.hostId === rawId || roomData.hostId === member.userId?._id;
+                  // 멤버 정보 추출 (백엔드에서 populate됨)
+                  const userId = member.userId?._id || member.userId || '';
+                  const nickname = member.userId?.nickname || member.nickname || member.userId?.username || `멤버${idx + 1}`;
+                  const isThisHost = roomData.hostId === userId || roomData.hostId === member.userId?._id;
+
                   return (
                     <div key={idx} className="member-item">
-                      <div className="member-avatar">{nickname[0]}</div>
+                      <div className="member-avatar">{nickname[0]?.toUpperCase()}</div>
                       <div className="member-info">
                         <span className="member-name">{nickname}</span>
                         {isThisHost && <span className="member-host-badge">👑 방장</span>}
