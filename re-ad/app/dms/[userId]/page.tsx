@@ -89,13 +89,10 @@ export default function ChatPage() {
       if (res.ok) {
         const data = await res.json();
         const msgs = Array.isArray(data) ? data : (data.messages || []);
-
-        // 중복 제거 (낙관적 업데이트 메시지 제거)
-        const uniqueMsgs = msgs.filter((m: any) => !m._isOptimistic);
-        setMessages(uniqueMsgs);
+        setMessages(msgs);
 
         // 상대방 닉네임 추출
-        const partnerMsg = uniqueMsgs.find((m: any) =>
+        const partnerMsg = msgs.find((m: any) =>
           (m.senderId?._id || m.senderId) === partnerId ||
           (m.receiverId?._id || m.receiverId) === partnerId
         );
@@ -132,9 +129,8 @@ export default function ChatPage() {
         socket.emit('registerUser', userId);
       });
 
-      // 메시지 수신 리스닝
+      // 메시지 수신 리스닝 (상대방이 보낸 메시지만)
       socket.on('receiveDM', (dm: any) => {
-        // 현재 대화 상대의 메시지만 추가
         const senderId = dm.senderId?._id || dm.senderId;
         if (senderId === partnerId) {
           // 중복 확인: 같은 ID의 메시지가 이미 있으면 스킵
@@ -155,27 +151,17 @@ export default function ChatPage() {
   /* ── 메시지 전송 ── */
   const sendMessage = async () => {
     const text = inputText.trim();
+    // 전송 중이거나 텍스트가 없으면 중단
     if (!text || isSending) return;
 
     const token = getToken();
     if (!token) return;
 
+    // 즉시 플래그 설정 (이중 실행 방지)
     setIsSending(true);
     setInputText('');
 
-    // 낙관적 업데이트 (바로 화면에 표시)
-    const optimistic = {
-      _id: `tmp-${Date.now()}`,
-      content: text,
-      senderId: { _id: myId, nickname: myName },
-      receiverId: partnerId,
-      createdAt: new Date().toISOString(),
-      _isOptimistic: true,
-    };
-    setMessages(prev => [...prev, optimistic]);
-
     try {
-      // REST API로 전송
       const res = await fetch(`${API_BASE_URL}/dms/${partnerId}`, {
         method: 'POST',
         headers: {
@@ -186,30 +172,18 @@ export default function ChatPage() {
       });
 
       if (res.ok) {
-        // 임시 메시지 제거 후 새 메시지로 교체
-        const result = await res.json();
-        setMessages(prev => {
-          // 임시 메시지 제거
-          const filtered = prev.filter(m => m._id !== optimistic._id);
-          // 중복 확인
-          const exists = filtered.some(m => m._id === result._id);
-          if (exists) return filtered;
-          return [...filtered, result];
-        });
+        const savedDM = await res.json();
+        setMessages(prev => [...prev, savedDM]);
 
-        // Socket.io로도 emit (실시간 알림)
         socketRef.current?.emit('sendDM', {
           senderId: myId,
           receiverId: partnerId,
           content: text,
         });
       } else {
-        // 실패 시 낙관적 메시지 제거
-        setMessages(prev => prev.filter(m => m._id !== optimistic._id));
         alert('메시지 전송에 실패했습니다.');
       }
     } catch (err) {
-      setMessages(prev => prev.filter(m => m._id !== optimistic._id));
       alert('서버 통신 오류가 발생했습니다.');
     } finally {
       setIsSending(false);
@@ -336,7 +310,10 @@ export default function ChatPage() {
           />
           <button
             className="chat-send-btn"
-            onClick={sendMessage}
+            onClick={(e) => {
+              e.preventDefault();
+              sendMessage();
+            }}
             disabled={!inputText.trim() || isSending}
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
