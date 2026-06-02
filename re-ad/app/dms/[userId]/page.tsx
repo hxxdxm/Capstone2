@@ -65,13 +65,11 @@ export default function ChatPage() {
     const token = getToken();
     if (!token || !myId) return;
 
-    // 이미 연결되어 있으면 스킵
     if (socketRef.current?.connected) return;
 
     initSocket(token, myId);
 
     return () => {
-      // 페이지 떠날 때 연결 종료
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -91,7 +89,6 @@ export default function ChatPage() {
         const msgs = Array.isArray(data) ? data : (data.messages || []);
         setMessages(msgs);
 
-        // 상대방 닉네임 추출
         const partnerMsg = msgs.find((m: any) =>
           (m.senderId?._id || m.senderId) === partnerId ||
           (m.receiverId?._id || m.receiverId) === partnerId
@@ -115,7 +112,6 @@ export default function ChatPage() {
 
   /* ── Socket.io 초기화 ── */
   const initSocket = (token: string, userId: string) => {
-    // socket.io-client가 설치된 경우에만 연결 시도
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { io } = require('socket.io-client');
@@ -125,15 +121,15 @@ export default function ChatPage() {
       });
 
       socket.on('connect', () => {
-        // 앱 시작 시 꼭 호출: 내 userId 등록
         socket.emit('registerUser', userId);
       });
 
-      // 메시지 수신 리스닝 (상대방이 보낸 메시지만)
+      // 🔴 중복 방지: 기존 리스너가 있다면 먼저 해제
+      socket.off('receiveDM'); 
+
       socket.on('receiveDM', (dm: any) => {
         const senderId = dm.senderId?._id || dm.senderId;
         if (senderId === partnerId) {
-          // 중복 확인: 같은 ID의 메시지가 이미 있으면 스킵
           setMessages(prev => {
             const exists = prev.some(m => m._id === dm._id);
             if (exists) return prev;
@@ -148,18 +144,28 @@ export default function ChatPage() {
     }
   };
 
-  /* ── 메시지 전송 ── */
+  /* ── 메시지 전송 (낙관적 업데이트 적용 완료) ── */
   const sendMessage = async () => {
     const text = inputText.trim();
-    // 전송 중이거나 텍스트가 없으면 중단
     if (!text || isSending) return;
 
     const token = getToken();
     if (!token) return;
 
-    // 즉시 플래그 설정 (이중 실행 방지)
+    // 1. 임시 ID와 메시지 객체 생성 (서버 응답 전)
+    const tempId = `temp-${Date.now()}`;
+    const tempMsg = {
+      _id: tempId,
+      senderId: myId,
+      content: text,
+      createdAt: new Date().toISOString(),
+      _isOptimistic: true, // 가짜 데이터임을 표시
+    };
+
+    // 2. 내 화면에 즉시 렌더링! (버튼 누르자마자 뜸)
+    setMessages(prev => [...prev, tempMsg]);
+    setInputText(''); // 입력창 즉시 비우기
     setIsSending(true);
-    setInputText('');
 
     try {
       const res = await fetch(`${API_BASE_URL}/dms/${partnerId}`, {
@@ -173,17 +179,23 @@ export default function ChatPage() {
 
       if (res.ok) {
         const savedDM = await res.json();
-        setMessages(prev => [...prev, savedDM]);
+        
+        // 3. 통신 성공 시, 임시 메시지를 진짜 DB 메시지로 슬쩍 교체
+        setMessages(prev => prev.map(m => m._id === tempId ? savedDM : m));
 
+        // 4. 소켓으로 상대방에게 알림
         socketRef.current?.emit('sendDM', {
           senderId: myId,
           receiverId: partnerId,
           content: text,
         });
       } else {
+        // 실패 시 방금 올린 임시 메시지 삭제
+        setMessages(prev => prev.filter(m => m._id !== tempId));
         alert('메시지 전송에 실패했습니다.');
       }
     } catch (err) {
+      setMessages(prev => prev.filter(m => m._id !== tempId));
       alert('서버 통신 오류가 발생했습니다.');
     } finally {
       setIsSending(false);
