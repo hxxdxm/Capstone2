@@ -24,6 +24,8 @@ export default function ChatPage() {
 
   const socketRef    = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
 
   /* ── 토큰 / 유저 정보 ── */
@@ -107,6 +109,8 @@ export default function ChatPage() {
       console.error('메시지 로드 실패:', err);
     } finally {
       setIsLoading(false);
+      // 초기 로드 시 맨 아래로 스크롤
+      setTimeout(() => scrollToBottom(), 100);
     }
   };
 
@@ -194,6 +198,23 @@ export default function ChatPage() {
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
   };
 
+  /* ── 맨 아래로 자동 스크롤 ── */
+  const scrollToBottom = (smooth = false) => {
+    messagesContainerRef.current?.scrollTo({
+      top: 999999,
+      behavior: smooth ? 'smooth' : 'auto'
+    });
+  };
+
+  /* ── 스크롤 위치 감지 (위로 올려서 과거 메시지 볼 때 사용) ── */
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      // 맨 아래로부터 100px 이내이면 '맨 아래' 상태
+      isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
+    }
+  };
+
   /* ── 날짜 그룹핑 ── */
   const groupByDate = (msgs: any[]) => {
     const groups: { date: string; msgs: any[] }[] = [];
@@ -217,6 +238,13 @@ export default function ChatPage() {
   const getSenderName = (msg: any) =>
     msg.senderId?.nickname || (isMyMessage(msg) ? myName : partnerName || '상대방');
 
+  // 새 메시지마다 맨 아래 자동 스크롤
+  useEffect(() => {
+    if (messages.length > 0 && isAtBottomRef.current) {
+      scrollToBottom(true);
+    }
+  }, [messages]);
+
   return (
     <div className="chat-page">
       <Header />
@@ -236,7 +264,11 @@ export default function ChatPage() {
         </div>
 
         {/* 메시지 목록 */}
-        <div className="chat-messages">
+        <div
+          className="chat-messages"
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+        >
           {isLoading ? (
             <div className="dm-loading"><div className="spinner" /></div>
           ) : messages.length === 0 ? (

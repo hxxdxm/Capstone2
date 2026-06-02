@@ -23,10 +23,7 @@ export default function RoomDetailPage() {
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [editRoomDesc, setEditRoomDesc] = useState('');
 
-  const [posts, setPosts] = useState<any[]>([
-    { id: 2, author: "독서요정", content: "오늘 주말 모임 너무 즐거웠습니다! 다음 주에 읽을 책 사진 공유해요 📚", media: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600", mediaType: "image", likes: 5, likedByMe: false, comments: [{ id: 1, author: "책벌레", text: "사진 너무 예쁘게 나왔네요!" }], createdAt: new Date(Date.now() - 3600000).toISOString() },
-    { id: 1, author: "방장", content: "환영합니다! 가입하신 분들은 가볍게 인사말 남겨주세요~", media: null, mediaType: null, likes: 12, likedByMe: true, comments: [], createdAt: new Date(Date.now() - 86400000).toISOString() }
-  ]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostMedia, setNewPostMedia] = useState<{ url: string; type: string } | null>(null);
@@ -66,6 +63,30 @@ export default function RoomDetailPage() {
       setIsJoined(data.members?.some((m: any) => m.userId === getMyId() || m.userId?._id === getMyId()));
       setRoomData(data);
       setEditRoomDesc(data.description || data.roomDesc || '');
+
+      // 🎯 게시글 불러오기
+      try {
+        const annotationsRes = await fetch(`${API_BASE_URL}/annotations/${roomId}`);
+        if (annotationsRes.ok) {
+          const annotationsData = await annotationsRes.json();
+          const formattedPosts = annotationsData.map((ann: any) => ({
+            id: ann._id,
+            author: ann.userId?.nickname || '익명',
+            content: ann.quote || ann.content || '',
+            media: ann.imageUrl || null,
+            mediaType: ann.imageUrl ? 'image' : null,
+            likes: ann.likes?.length || 0,
+            likedByMe: ann.likes?.includes(getMyId()) || false,
+            comments: ann.comments || [],
+            createdAt: ann.createdAt,
+            _id: ann._id
+          }));
+          setPosts(formattedPosts);
+        }
+      } catch (err) {
+        console.error('게시글 불러오기 실패:', err);
+      }
+
       setIsLoading(false);
 
       // 멤버 주에서 userId가 순수 ID 문자열일 때 프로필 조회
@@ -161,20 +182,113 @@ export default function RoomDetailPage() {
     if (file) { const url = URL.createObjectURL(file); setNewPostMedia({ url, type: file.type.startsWith('video/') ? 'video' : 'image' }); }
   };
 
-  const handleSubmitPost = (e: React.FormEvent) => {
+  const handleSubmitPost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostContent.trim()) return alert("내용을 입력해주세요.");
-    setPosts([{ id: Date.now(), author: getMyName() || "나", content: newPostContent, media: newPostMedia?.url || null, mediaType: newPostMedia?.type || null, likes: 0, likedByMe: false, comments: [], createdAt: new Date().toISOString() }, ...posts]);
-    setIsWriteModalOpen(false); setNewPostContent(''); setNewPostMedia(null);
+
+    const token = getSafeToken();
+    if (!token) return alert("로그인이 필요합니다.");
+
+    try {
+      const formData = new FormData();
+      formData.append('roomId', roomId);
+      formData.append('bookId', roomId); // 임시로 roomId 사용
+      formData.append('quote', newPostContent);
+      formData.append('annotationType', newPostMedia ? 'PHOTO_MEMO' : 'QUOTE_TEXT');
+
+      // 이미지 파일이 있으면 추가
+      if (newPostMedia?.url && newPostMedia.url.startsWith('blob:')) {
+        const file = await fetch(newPostMedia.url).then(r => r.blob());
+        formData.append('image', file, 'image.jpg');
+      } else if (newPostMedia?.url) {
+        formData.append('imageUrl', newPostMedia.url);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/annotations`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      if (res.ok) {
+        const savedAnnotation = await res.json();
+        const newPost = {
+          id: savedAnnotation.annotation._id,
+          author: getMyName() || "나",
+          content: savedAnnotation.annotation.quote,
+          media: savedAnnotation.annotation.imageUrl || null,
+          mediaType: savedAnnotation.annotation.imageUrl ? 'image' : null,
+          likes: 0,
+          likedByMe: false,
+          comments: [],
+          createdAt: savedAnnotation.annotation.createdAt,
+          _id: savedAnnotation.annotation._id
+        };
+        setPosts([newPost, ...posts]);
+        setIsWriteModalOpen(false);
+        setNewPostContent('');
+        setNewPostMedia(null);
+      } else {
+        alert("게시글 작성에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error('게시글 작성 에러:', err);
+      alert("게시글 작성 중 오류가 발생했습니다.");
+    }
   };
 
-  const handleLike = (postId: number) => setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likedByMe ? p.likes - 1 : p.likes + 1, likedByMe: !p.likedByMe } : p));
+  const handleLike = async (postId: string) => {
+    const token = getSafeToken();
+    if (!token) return alert("로그인이 필요합니다.");
 
-  const handleAddComment = (postId: number) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/annotations/${postId}/like`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setPosts(posts.map(p =>
+          p.id === postId
+            ? { ...p, likes: result.likesCount, likedByMe: result.isLiked }
+            : p
+        ));
+      }
+    } catch (err) {
+      console.error('좋아요 처리 에러:', err);
+    }
+  };
+
+  const handleAddComment = async (postId: string) => {
     const t = commentInputs[postId];
     if (!t?.trim()) return;
-    setPosts(posts.map(p => p.id === postId ? { ...p, comments: [...p.comments, { id: Date.now(), author: getMyName() || "나", text: t }] } : p));
-    setCommentInputs({ ...commentInputs, [postId]: '' });
+
+    const token = getSafeToken();
+    if (!token) return alert("로그인이 필요합니다.");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/annotations/${postId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ content: t })
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setPosts(posts.map(p =>
+          p.id === postId
+            ? { ...p, comments: result.comments || [...p.comments, { id: Date.now(), author: getMyName() || "나", text: t }] }
+            : p
+        ));
+        setCommentInputs({ ...commentInputs, [postId]: '' });
+      }
+    } catch (err) {
+      console.error('댓글 작성 에러:', err);
+    }
   };
 
   const handleChatScroll = () => {
