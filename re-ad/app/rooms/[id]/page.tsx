@@ -27,7 +27,7 @@ export default function RoomDetailPage() {
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostMedia, setNewPostMedia] = useState<{ url: string; type: string } | null>(null);
-  const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
+  const [commentInputs, setCommentInputs] = useState<{ [key: string]: string }>({});
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [chats, setChats] = useState<any[]>([]);
