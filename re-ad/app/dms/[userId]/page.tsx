@@ -151,62 +151,22 @@ export default function ChatPage() {
     }
   };
 
-  /* ── 메시지 전송 (낙관적 업데이트 적용 완료) ── */
+  /* ── 메시지 전송 (Socket.io만 사용) ── */
   const sendMessage = async () => {
     const text = inputText.trim();
     if (!text || isSending) return;
 
-    const token = getToken();
-    if (!token) return;
-
-    // 1. 임시 ID와 메시지 객체 생성 (서버 응답 전)
-    const tempId = `temp-${Date.now()}`;
-    const tempMsg = {
-      _id: tempId,
-      senderId: myId,
-      content: text,
-      createdAt: new Date().toISOString(),
-      _isOptimistic: true, // 가짜 데이터임을 표시
-    };
-
-    // 2. 내 화면에 즉시 렌더링! (버튼 누르자마자 뜸)
-    setMessages(prev => [...prev, tempMsg]);
-    setInputText(''); // 입력창 즉시 비우기
     setIsSending(true);
+    setInputText('');
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/dms/${partnerId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ content: text })
-      });
+    // Socket.io로만 전송 (백엔드가 DB 저장 + receiveDM 브로드캐스트 처리)
+    socketRef.current?.emit('sendDM', {
+      senderId: myId,
+      receiverId: partnerId,
+      content: text,
+    });
 
-      if (res.ok) {
-        const savedDM = await res.json();
-        
-        // 3. 통신 성공 시, 임시 메시지를 진짜 DB 메시지로 슬쩍 교체
-        setMessages(prev => prev.map(m => m._id === tempId ? savedDM : m));
-
-        // 4. 소켓으로 상대방에게 알림
-        socketRef.current?.emit('sendDM', {
-          senderId: myId,
-          receiverId: partnerId,
-          content: text,
-        });
-      } else {
-        // 실패 시 방금 올린 임시 메시지 삭제
-        setMessages(prev => prev.filter(m => m._id !== tempId));
-        alert('메시지 전송에 실패했습니다.');
-      }
-    } catch (err) {
-      setMessages(prev => prev.filter(m => m._id !== tempId));
-      alert('서버 통신 오류가 발생했습니다.');
-    } finally {
-      setIsSending(false);
-    }
+    setIsSending(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
