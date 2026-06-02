@@ -50,16 +50,37 @@ export default function ChatPage() {
     setMyId(id);
     setMyName(name);
 
-    fetchMessages(token);
-    initSocket(token, id);
+    fetchMessages(token, id);
 
     return () => {
-      socketRef.current?.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
-  }, [partnerId]);
+  }, [partnerId, router]);
+
+  /* ── Socket.io 초기화 (한 번만) ── */
+  useEffect(() => {
+    const token = getToken();
+    if (!token || !myId) return;
+
+    // 이미 연결되어 있으면 스킵
+    if (socketRef.current?.connected) return;
+
+    initSocket(token, myId);
+
+    return () => {
+      // 페이지 떠날 때 연결 종료
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [myId]);
 
   /* ── REST: 기존 대화 불러오기 ── */
-  const fetchMessages = async (token: string) => {
+  const fetchMessages = async (token: string, userId: string) => {
     setIsLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/dms/${partnerId}`, {
@@ -68,10 +89,13 @@ export default function ChatPage() {
       if (res.ok) {
         const data = await res.json();
         const msgs = Array.isArray(data) ? data : (data.messages || []);
-        setMessages(msgs);
+
+        // 중복 제거 (낙관적 업데이트 메시지 제거)
+        const uniqueMsgs = msgs.filter(m => !m._isOptimistic);
+        setMessages(uniqueMsgs);
 
         // 상대방 닉네임 추출
-        const partnerMsg = msgs.find((m: any) =>
+        const partnerMsg = uniqueMsgs.find((m: any) =>
           (m.senderId?._id || m.senderId) === partnerId ||
           (m.receiverId?._id || m.receiverId) === partnerId
         );
@@ -113,7 +137,12 @@ export default function ChatPage() {
         // 현재 대화 상대의 메시지만 추가
         const senderId = dm.senderId?._id || dm.senderId;
         if (senderId === partnerId) {
-          setMessages(prev => [...prev, dm]);
+          // 중복 확인: 같은 ID의 메시지가 이미 있으면 스킵
+          setMessages(prev => {
+            const exists = prev.some(m => m._id === dm._id);
+            if (exists) return prev;
+            return [...prev, dm];
+          });
         }
       });
 
@@ -157,6 +186,17 @@ export default function ChatPage() {
       });
 
       if (res.ok) {
+        // 임시 메시지 제거 후 새 메시지로 교체
+        const result = await res.json();
+        setMessages(prev => {
+          // 임시 메시지 제거
+          const filtered = prev.filter(m => m._id !== optimistic._id);
+          // 중복 확인
+          const exists = filtered.some(m => m._id === result._id);
+          if (exists) return filtered;
+          return [...filtered, result];
+        });
+
         // Socket.io로도 emit (실시간 알림)
         socketRef.current?.emit('sendDM', {
           senderId: myId,
