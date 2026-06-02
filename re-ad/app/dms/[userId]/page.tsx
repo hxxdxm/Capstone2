@@ -91,7 +91,7 @@ export default function ChatPage() {
         const msgs = Array.isArray(data) ? data : (data.messages || []);
 
         // 중복 제거 (낙관적 업데이트 메시지 제거)
-        const uniqueMsgs = msgs.filter(m => !m._isOptimistic);
+        const uniqueMsgs = msgs.filter((m: any) => !m._isOptimistic);
         setMessages(uniqueMsgs);
 
         // 상대방 닉네임 추출
