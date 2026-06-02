@@ -127,9 +127,16 @@ export default function ChatPage() {
       // 🔴 중복 방지: 기존 리스너가 있다면 먼저 해제
       socket.off('receiveDM'); 
 
+      // ── Socket.io 초기화 내부 ──
       socket.on('receiveDM', (dm: any) => {
         const senderId = dm.senderId?._id || dm.senderId;
-        if (senderId === partnerId) {
+        const receiverId = dm.receiverId?._id || dm.receiverId;
+      
+        // 상대방이 나에게 보냈거나, 내가 상대방에게 보낸(방금 내가 친) 메시지라면 띄우기!
+        if (
+          (senderId === partnerId && receiverId === myId) ||
+          (senderId === myId && receiverId === partnerId)
+        ) {
           setMessages(prev => {
             const exists = prev.some(m => m._id === dm._id);
             if (exists) return prev;
