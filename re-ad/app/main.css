@@ -577,7 +577,7 @@ s {
 .ranking-aside {
   position: sticky;
   top: 96px;
-  align-self: flex-start;
+  align-self: start;
 }
 
 .ranking-card {

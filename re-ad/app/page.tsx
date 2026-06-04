@@ -6,6 +6,14 @@ import Header from '@/components/Header'; // ⭐️ 공통 헤더 임포트
 import './main.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
+const IMAGE_BASE_URL = 'http://43.202.179.130:3000';
+
+// /uploads/... 경로에 서버 주소 붙이기
+const resolveImageUrl = (url: string | undefined | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith('data:') || url.startsWith('http')) return url;
+  return `${IMAGE_BASE_URL}${url}`;
+};
 
 export default function MainPage() {
   const [exhibitions, setExhibitions] = useState<any[]>([]);
@@ -234,8 +242,8 @@ export default function MainPage() {
                 handmedowns.map((item) => (
                   <Link href="/handmedowns" key={item._id} className="handmedown-card">
                     <div className="hm-card-img-wrap">
-                      {item.image ? (
-                        <img src={item.image} alt={item.bookTitle} className="hm-card-img" />
+                      {resolveImageUrl(item.bookThumbnail) ? (
+                        <img src={resolveImageUrl(item.bookThumbnail)!} alt={item.bookTitle} className="hm-card-img" />
                       ) : (
                         <div className="hm-card-no-img">NO IMG</div>
                       )}
