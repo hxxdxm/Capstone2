@@ -6,8 +6,8 @@ import Header from '@/components/Header';
 import './annotations.css';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : 'http://13.124.191.57:5000/api';
-// 📍 이미지 파일은 별도 서버(3000 포트)에서 서빙됨
-const IMAGE_BASE_URL = 'http://43.202.179.130:3000';
+// 📍 이미지는 API 서버(5000 포트)의 /uploads 폴더에서 서빙
+const IMAGE_BASE_URL = 'http://13.124.191.57:5000';
 
 // base64, 절대URL, /uploads 상대경로 모두 처리
 const resolveImageUrl = (url: string | undefined | null): string | null => {

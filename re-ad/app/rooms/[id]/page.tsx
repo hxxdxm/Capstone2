@@ -8,6 +8,14 @@ import './room-detail.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
 const SOCKET_URL = 'http://13.124.191.57:5000';
+const IMAGE_BASE_URL = 'http://13.124.191.57:5000';
+
+// /uploads/... 상대경로에 서버 주소 붙이기
+const resolveImageUrl = (url: string | undefined | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith('data:') || url.startsWith('http')) return url;
+  return `${IMAGE_BASE_URL}${url}`;
+};
 
 export default function RoomDetailPage() {
   const router = useRouter();
@@ -57,7 +65,7 @@ export default function RoomDetailPage() {
 
   const fetchRoomDetail = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
+      const res = await fetch(`${API_BASE_URL}/rooms/${roomId}?populate=true`);
       const data = await res.json();
       if (!res.ok) throw new Error("방 정보 로드 실패");
       setIsJoined(data.members?.some((m: any) => m.userId === getMyId() || m.userId?._id === getMyId()));
@@ -73,7 +81,7 @@ export default function RoomDetailPage() {
             id: ann._id,
             author: ann.userId?.nickname || '익명',
             content: ann.quote || ann.content || '',
-            media: ann.imageUrl || null,
+            media: resolveImageUrl(ann.imageUrl) || null,
             mediaType: ann.imageUrl ? 'image' : null,
             likes: ann.likes?.length || 0,
             likedByMe: ann.likes?.includes(getMyId()) || false,
@@ -222,7 +230,7 @@ export default function RoomDetailPage() {
           id: savedAnnotation.annotation._id,
           author: getMyName() || "나",
           content: savedAnnotation.annotation.quote,
-          media: savedAnnotation.annotation.imageUrl || null,
+          media: resolveImageUrl(savedAnnotation.annotation.imageUrl) || null,
           mediaType: savedAnnotation.annotation.imageUrl ? 'image' : null,
           likes: 0,
           likedByMe: false,
