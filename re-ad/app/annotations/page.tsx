@@ -94,16 +94,18 @@ export default function ExhibitionPage() {
           }
           const imageUrl = apiItem.imageUrl || apiItem.image_url;
 
-          // 도서명: 사용자가 직접 입력한 값 우선 → bookId populate된 값 폴백
+          // 도서명: 커스텀(직접입력) 우선 → bookId populate 폴백
           const bookTitle =
+            apiItem.customBookTitle ||
             apiItem.bookTitle ||
             apiItem.book_title ||
             apiItem.bookId?.title ||
             apiItem.title ||
             '';
 
-          // 작가명: 사용자가 직접 입력한 값 우선 → bookId populate된 값 폴백
+          // 작가명: 커스텀(직접입력) 우선 → bookId populate 폴백
           const bookAuthor =
+            apiItem.customBookAuthor ||
             apiItem.bookAuthor ||
             apiItem.book_author ||
             apiItem.bookId?.author ||
@@ -152,6 +154,9 @@ export default function ExhibitionPage() {
 
     const formData = new FormData();
     formData.append('quote', newPost.quote);
+    // 직접 입력 도서명/작가명: 백엔드 커스텀 필드와 표준 필드 둘 다 전송
+    formData.append('customBookTitle', newPost.book);
+    formData.append('customBookAuthor', newPost.author);
     formData.append('bookTitle', newPost.book);
     formData.append('bookAuthor', newPost.author);
     formData.append('color', newPost.style);
