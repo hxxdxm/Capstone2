@@ -48,6 +48,10 @@ export default function ExhibitionPage() {
   const commentListRef = useRef<HTMLDivElement>(null);
   const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null); // ← 점3개 메뉴 상태
 
+  // 게시글 수정 모달
+  const [editModal, setEditModal] = useState<{ open: boolean; post: any | null }>({ open: false, post: null });
+  const [editForm, setEditForm] = useState({ quote: '', book: '', author: '' });
+
   /* ── 공통 유틸 ── */
   const getToken = () => {
     if (typeof window === 'undefined') return null;
@@ -376,6 +380,38 @@ export default function ExhibitionPage() {
     }
   };
 
+  /* ── 게시글 수정 ── */
+  const openEditModal = (item: any) => {
+    setEditForm({ quote: item.quote || '', book: item.book || '', author: item.author || '' });
+    setEditModal({ open: true, post: item });
+    setOpenMenuPostId(null);
+  };
+
+  const submitEditPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editForm.quote.trim()) return alert('문장 내용을 입력해주세요.');
+    const token = getToken();
+    if (!token || !editModal.post) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/annotations/${editModal.post.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ quote: editForm.quote, bookTitle: editForm.book, bookAuthor: editForm.author })
+      });
+      if (res.ok) {
+        setPosts(prev => prev.map(p =>
+          p.id === editModal.post.id
+            ? { ...p, quote: editForm.quote, book: editForm.book || p.book, author: editForm.author || p.author }
+            : p
+        ));
+        setEditModal({ open: false, post: null });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || '수정에 실패했습니다.');
+      }
+    } catch { alert('서버 통신 오류'); }
+  };
+
   /* ── 시간 포맷 ── */
   const formatTime = (dateStr: string) => {
     if (!dateStr) return '';
@@ -497,6 +533,15 @@ export default function ExhibitionPage() {
                             {isMenuOpen && (
                               <div className="anno-menu-dropdown">
                                 <button
+                                  className="anno-menu-item edit"
+                                  onClick={() => openEditModal(item)}
+                                >
+                                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  수정하기
+                                </button>
+                                <button
                                   className="anno-menu-item delete"
                                   onClick={() => deletePost(item.id)}
                                 >
@@ -594,6 +639,55 @@ export default function ExhibitionPage() {
               </div>
 
               <button type="submit" className="anno-submit-btn">전시하기</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 게시글 수정 모달 */}
+      {editModal.open && (
+        <div className="anno-modal-backdrop" onClick={() => setEditModal({ open: false, post: null })}>
+          <div className="anno-modal" onClick={e => e.stopPropagation()}>
+            <div className="anno-modal-header">
+              <h3 className="anno-modal-title">문장 수정하기</h3>
+              <button onClick={() => setEditModal({ open: false, post: null })} className="anno-modal-close">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={submitEditPost} className="anno-modal-form">
+              <div>
+                <label className="anno-form-label">기억하고 싶은 문장</label>
+                <textarea
+                  placeholder="문장을 수정하세요."
+                  rows={3}
+                  value={editForm.quote}
+                  onChange={e => setEditForm({ ...editForm, quote: e.target.value })}
+                  className="anno-form-textarea"
+                />
+              </div>
+              <div className="anno-form-row">
+                <div>
+                  <label className="anno-form-label">책 제목</label>
+                  <input
+                    type="text"
+                    value={editForm.book}
+                    onChange={e => setEditForm({ ...editForm, book: e.target.value })}
+                    className="anno-form-input"
+                  />
+                </div>
+                <div>
+                  <label className="anno-form-label">저자</label>
+                  <input
+                    type="text"
+                    value={editForm.author}
+                    onChange={e => setEditForm({ ...editForm, author: e.target.value })}
+                    className="anno-form-input"
+                  />
+                </div>
+              </div>
+              <button type="submit" className="anno-submit-btn" disabled={!editForm.quote.trim()}>저장하기</button>
             </form>
           </div>
         </div>

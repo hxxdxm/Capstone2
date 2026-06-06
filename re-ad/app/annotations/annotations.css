@@ -588,3 +588,12 @@
 .anno-menu-item.delete:hover {
   background: rgba(217,79,79,0.08);
 }
+.anno-menu-item.edit {
+  color: #5A4A36;
+}
+.anno-menu-item.edit:hover {
+  background: rgba(59,50,36,0.06);
+}
+.anno-menu-item + .anno-menu-item {
+  border-top: 1px solid #EDE7DA;
+}
