@@ -457,7 +457,8 @@ export default function MyPage() {
             <div className="mypage-card-title">월간 독서량 추이 <span className="mypage-card-subtitle">Unit: Page</span></div>
             <div className="chart-wrapper">
               {stats?.monthlyStats ? (() => {
-                const entries = Object.entries(stats.monthlyStats) as [string, number][];
+                const entries = (Object.entries(stats.monthlyStats) as [string, number][])
+                  .sort(([a], [b]) => a.localeCompare(b)); // 오래된 달(왼쪽) → 최신 달(오른쪽)
                 const maxPages = Math.max(...entries.map(([, p]) => p as number), 1);
                 const BAR_MAX_HEIGHT = 160;
                 const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
@@ -470,24 +471,36 @@ export default function MyPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="chart-bars-area">
-                      <div className="chart-grid-lines">
-                        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
-                          <div key={ratio} className="chart-grid-line" style={{ bottom: `${ratio * 100}%` }} />
-                        ))}
+                    {/* 막대 + 레이블 묶음 */}
+                    <div className="chart-main">
+                      <div className="chart-bars-area">
+                        <div className="chart-grid-lines">
+                          {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+                            <div key={ratio} className="chart-grid-line" style={{ bottom: `${ratio * 100}%` }} />
+                          ))}
+                        </div>
+                        {entries.map(([month, pages], idx) => {
+                          const barHeight = Math.max(Math.round(((pages as number) / maxPages) * BAR_MAX_HEIGHT), (pages as number) > 0 ? 4 : 2);
+                          const monthNum = month.split('-')[1];
+                          const isCurrentMonth = monthNum === currentMonth;
+                          return (
+                            <div key={idx} className="chart-bar-group">
+                              <span className="chart-tooltip">{pages as number}p</span>
+                              <div className={`chart-bar ${isCurrentMonth ? 'current' : ''}`} style={{ height: `${barHeight}px` }} />
+                            </div>
+                          );
+                        })}
                       </div>
-                      {entries.map(([month, pages], idx) => {
-                        const barHeight = Math.max(Math.round(((pages as number) / maxPages) * BAR_MAX_HEIGHT), (pages as number) > 0 ? 4 : 2);
-                        const monthNum = month.split('-')[1];
-                        const isCurrentMonth = monthNum === currentMonth;
-                        return (
-                          <div key={idx} className="chart-bar-group">
-                            <span className="chart-tooltip">{pages as number}p</span>
-                            <div className={`chart-bar ${isCurrentMonth ? 'current' : ''}`} style={{ height: `${barHeight}px` }} />
-                            <span className={`chart-label ${isCurrentMonth ? 'current' : ''}`}>{monthNum}월</span>
-                          </div>
-                        );
-                      })}
+                      {/* 월 레이블 행 — 막대 아래 한 줄로 정렬 */}
+                      <div className="chart-labels-row">
+                        {entries.map(([month], idx) => {
+                          const monthNum = month.split('-')[1];
+                          const isCurrentMonth = monthNum === currentMonth;
+                          return (
+                            <span key={idx} className={`chart-label ${isCurrentMonth ? 'current' : ''}`}>{monthNum}월</span>
+                          );
+                        })}
+                      </div>
                     </div>
                   </>
                 );
