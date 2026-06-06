@@ -37,6 +37,14 @@ export default function RoomDetailPage() {
   const [newPostMedia, setNewPostMedia] = useState<{ url: string; type: string } | null>(null);
   const [commentInputs, setCommentInputs] = useState<{ [key: string]: string }>({});
 
+  // 게시글 수정 모달
+  const [isEditPostModalOpen, setIsEditPostModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [editPostContent, setEditPostContent] = useState('');
+
+  // 3점 메뉴 (게시글별)
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null);
+
   const [socket, setSocket] = useState<Socket | null>(null);
   const [chats, setChats] = useState<any[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
@@ -77,17 +85,20 @@ export default function RoomDetailPage() {
         const annotationsRes = await fetch(`${API_BASE_URL}/annotations/${roomId}`);
         if (annotationsRes.ok) {
           const annotationsData = await annotationsRes.json();
+          const myId = getMyId();
           const formattedPosts = annotationsData.map((ann: any) => ({
             id: ann._id,
+            authorId: ann.userId?._id || ann.userId || '',
             author: ann.userId?.nickname || '익명',
             content: ann.quote || ann.content || '',
             media: resolveImageUrl(ann.imageUrl) || null,
             mediaType: ann.imageUrl ? 'image' : null,
             likes: ann.likes?.length || 0,
-            likedByMe: ann.likes?.includes(getMyId()) || false,
+            likedByMe: ann.likes?.includes(myId) || false,
             // 🌟 DB에서 가져온 기존 댓글들도 프론트 형식에 맞게 변환해 줍니다!
             comments: (ann.comments || []).map((c: any) => ({
               id: c._id || c.id,
+              userId: c.userId?._id || c.userId || '',
               author: c.userId?.nickname || c.nickname || c.author || '익명',
               text: c.content || c.text || '',
               content: c.content || c.text || ''
@@ -274,6 +285,73 @@ export default function RoomDetailPage() {
     }
   };
 
+  // 🗑️ 게시글 삭제
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
+    const token = getSafeToken();
+    if (!token) return alert('로그인이 필요합니다.');
+    try {
+      const res = await fetch(`${API_BASE_URL}/annotations/${postId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setPosts(posts.filter(p => p.id !== postId));
+        setOpenMenuPostId(null);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || '삭제에 실패했습니다.');
+      }
+    } catch { alert('서버 연결 실패'); }
+  };
+
+  // ✏️ 게시글 수정 제출
+  const handleSubmitEditPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editPostContent.trim()) return alert('내용을 입력해주세요.');
+    const token = getSafeToken();
+    if (!token) return alert('로그인이 필요합니다.');
+    try {
+      const res = await fetch(`${API_BASE_URL}/annotations/${editingPost.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ quote: editPostContent })
+      });
+      if (res.ok) {
+        setPosts(posts.map(p => p.id === editingPost.id ? { ...p, content: editPostContent } : p));
+        setIsEditPostModalOpen(false);
+        setEditingPost(null);
+        setEditPostContent('');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || '수정에 실패했습니다.');
+      }
+    } catch { alert('서버 연결 실패'); }
+  };
+
+  // 🗑️ 댓글 삭제
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
+    const token = getSafeToken();
+    if (!token) return alert('로그인이 필요합니다.');
+    try {
+      const res = await fetch(`${API_BASE_URL}/annotations/${postId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setPosts(posts.map(p =>
+          p.id === postId
+            ? { ...p, comments: p.comments.filter((c: any) => c.id !== commentId) }
+            : p
+        ));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || '댓글 삭제에 실패했습니다.');
+      }
+    } catch { alert('서버 연결 실패'); }
+  };
+
   const handleAddComment = async (postId: string) => {
     const t = commentInputs[postId];
     if (!t?.trim()) return;
@@ -351,7 +429,14 @@ export default function RoomDetailPage() {
     return () => { s.disconnect(); };
   }, [isJoined, activeTab, roomId]);
 
-  useEffect(() => { if (chats.length > 0 && isAtBottomRef.current) scrollToBottom(true); }, [chats]);
+  useEffect(() => { if (chats.length > 0 && isAtBottomRef.current) scrollToBottom(true); }, [chats]);  // 메뉴 외부 클릭 시 닫기
+  React.useEffect(() => {
+    if (!openMenuPostId) return;
+    const handler = () => setOpenMenuPostId(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [openMenuPostId]);
+
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -473,14 +558,47 @@ export default function RoomDetailPage() {
                   <span className="feed-write-placeholder">멤버들과 나누고 싶은 이야기를 적어보세요.</span>
                   <span className="feed-write-btn">게시글 쓰기 +</span>
                 </div>
-                {posts.map(post => (
+                {posts.map(post => {
+                  const isMyPost = post.authorId && post.authorId === getMyId();
+                  return (
                   <article key={post.id} className="feed-post-card">
                     <div className="feed-post-header">
                       <div className="feed-post-avatar">{post.author.charAt(0)}</div>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <div className="feed-post-author">{post.author}</div>
                         <div className="feed-post-time">{new Date(post.createdAt).toLocaleString()}</div>
                       </div>
+                      {/* 본인 게시글 3점 메뉴 */}
+                      {isMyPost && (
+                        <div className="post-menu-wrap">
+                          <button
+                            className="post-menu-trigger"
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuPostId(openMenuPostId === post.id ? null : post.id); }}
+                            title="더 보기"
+                          >
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+                              <circle cx="10" cy="4" r="1.5"/>
+                              <circle cx="10" cy="10" r="1.5"/>
+                              <circle cx="10" cy="16" r="1.5"/>
+                            </svg>
+                          </button>
+                          {openMenuPostId === post.id && (
+                            <div className="post-menu-dropdown" onClick={e => e.stopPropagation()}>
+                              <button className="post-menu-item" onClick={() => {
+                                setEditingPost(post);
+                                setEditPostContent(post.content);
+                                setIsEditPostModalOpen(true);
+                                setOpenMenuPostId(null);
+                              }}>
+                                ✏️ 수정하기
+                              </button>
+                              <button className="post-menu-item danger" onClick={() => handleDeletePost(post.id)}>
+                                🗑️ 삭제하기
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <p className="feed-post-content">{post.content}</p>
                     {post.media && (
@@ -499,6 +617,7 @@ export default function RoomDetailPage() {
                         // 🌟 안전 장치: author가 없으면 닉네임이나 '익명'을 대신 사용!
                         const commentAuthor = c.author || c.userId?.nickname || c.nickname || '익명';
                         const commentText = c.text || c.content || '';
+                        const isMyComment = c.userId && c.userId === getMyId();
 
                           return (
                             <div key={c.id || idx} className="feed-comment">
@@ -507,6 +626,18 @@ export default function RoomDetailPage() {
                                 <span className="feed-comment-author">{commentAuthor}</span>
                                 <span className="feed-comment-text">{commentText}</span>
                               </div>
+                              {/* 본인 댓글 삭제 버튼 */}
+                              {isMyComment && c.id && (
+                                <button
+                                  className="comment-delete-btn"
+                                  onClick={() => handleDeleteComment(post.id, c.id)}
+                                  title="댓글 삭제"
+                                >
+                                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
                             </div>
                           );
                         })}
@@ -518,7 +649,8 @@ export default function RoomDetailPage() {
                       </div>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -659,6 +791,32 @@ export default function RoomDetailPage() {
               ) : (
                 <p style={{ textAlign: 'center', color: '#8A7A60', fontSize: '13px', padding: '20px 0' }}>멤버 정보를 불러올 수 없습니다.</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 게시글 수정 모달 ── */}
+      {isEditPostModalOpen && editingPost && (
+        <div className="feed-modal-backdrop" onClick={() => { setIsEditPostModalOpen(false); setEditingPost(null); }}>
+          <div className="feed-modal" onClick={e => e.stopPropagation()}>
+            <div className="feed-modal-header">
+              <span className="feed-modal-title">게시물 수정</span>
+              <button className="feed-modal-close" onClick={() => { setIsEditPostModalOpen(false); setEditingPost(null); }}>✕</button>
+            </div>
+            <div className="feed-modal-body">
+              <form onSubmit={handleSubmitEditPost}>
+                <textarea
+                  className="feed-modal-textarea"
+                  placeholder="내용을 수정하세요."
+                  value={editPostContent}
+                  onChange={e => setEditPostContent(e.target.value)}
+                />
+                <div className="feed-modal-footer">
+                  <div />
+                  <button type="submit" className="feed-modal-submit" disabled={!editPostContent.trim()}>저장하기</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

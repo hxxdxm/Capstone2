@@ -455,17 +455,43 @@ export default function MyPage() {
 
           <section className="mypage-card">
             <div className="mypage-card-title">월간 독서량 추이 <span className="mypage-card-subtitle">Unit: Page</span></div>
-            <div className="chart-container">
-              {stats?.monthlyStats ? Object.entries(stats.monthlyStats).map(([month, pages]: [string, any], idx) => {
-                const heightPercent = Math.min((pages / 500) * 100, 100);
+            <div className="chart-wrapper">
+              {stats?.monthlyStats ? (() => {
+                const entries = Object.entries(stats.monthlyStats) as [string, number][];
+                const maxPages = Math.max(...entries.map(([, p]) => p as number), 1);
+                const BAR_MAX_HEIGHT = 160;
+                const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
                 return (
-                  <div key={idx} className="chart-bar-group">
-                    <span className="chart-tooltip">{pages}p</span>
-                    <div className="chart-bar" style={{ height: `${heightPercent}%` }}></div>
-                    <span className="chart-label">{month.split('-')[1]}월</span>
-                  </div>
+                  <>
+                    <div className="chart-y-axis">
+                      {[1, 0.75, 0.5, 0.25, 0].map((ratio) => (
+                        <div key={ratio} className="chart-y-tick">
+                          <span>{Math.round(maxPages * ratio)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="chart-bars-area">
+                      <div className="chart-grid-lines">
+                        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+                          <div key={ratio} className="chart-grid-line" style={{ bottom: `${ratio * 100}%` }} />
+                        ))}
+                      </div>
+                      {entries.map(([month, pages], idx) => {
+                        const barHeight = Math.max(Math.round(((pages as number) / maxPages) * BAR_MAX_HEIGHT), (pages as number) > 0 ? 4 : 2);
+                        const monthNum = month.split('-')[1];
+                        const isCurrentMonth = monthNum === currentMonth;
+                        return (
+                          <div key={idx} className="chart-bar-group">
+                            <span className="chart-tooltip">{pages as number}p</span>
+                            <div className={`chart-bar ${isCurrentMonth ? 'current' : ''}`} style={{ height: `${barHeight}px` }} />
+                            <span className={`chart-label ${isCurrentMonth ? 'current' : ''}`}>{monthNum}월</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 );
-              }) : (
+              })() : (
                 <div style={{ width: '100%', textAlign: 'center', color: '#8A7A60', fontSize: '13px' }}>통계 데이터가 없습니다.</div>
               )}
             </div>

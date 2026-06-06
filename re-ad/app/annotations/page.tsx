@@ -90,19 +90,19 @@ export default function ExhibitionPage() {
           }
           const imageUrl = apiItem.imageUrl || apiItem.image_url;
 
-          // 도서명: bookId가 populate된 객체 → bookTitle 필드 → 직접 title 필드
+          // 도서명: 사용자가 직접 입력한 값 우선 → bookId populate된 값 폴백
           const bookTitle =
-            apiItem.bookId?.title ||
             apiItem.bookTitle ||
             apiItem.book_title ||
+            apiItem.bookId?.title ||
             apiItem.title ||
             '';
 
-          // 작가명: bookId가 populate된 객체 → bookAuthor 필드 → 직접 author 필드
+          // 작가명: 사용자가 직접 입력한 값 우선 → bookId populate된 값 폴백
           const bookAuthor =
-            apiItem.bookId?.author ||
             apiItem.bookAuthor ||
             apiItem.book_author ||
+            apiItem.bookId?.author ||
             apiItem.author ||
             '';
 
