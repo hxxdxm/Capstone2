@@ -36,6 +36,7 @@ export default function MyPage() {
 
   const [receipt, setReceipt] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  const [myLogs, setMyLogs] = useState<any[]>([]);
   const [readingLevel, setReadingLevel] = useState('');
   const [mbtiResult, setMbtiResult] = useState<any>(null);
   const [isMbtiModalOpen, setIsMbtiModalOpen] = useState(false);
@@ -78,6 +79,11 @@ export default function MyPage() {
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(err => console.error("통계 로드 실패:", err));
+
+    fetch(`${API_BASE_URL}/reading-logs/my`, { headers })
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setMyLogs(data); })
+      .catch(err => console.error("독서 노트 로드 실패:", err));
   };
 
   useEffect(() => {
@@ -536,6 +542,53 @@ export default function MyPage() {
             <div className="mbti-empty">
               <p style={{ color: '#8A7A60', fontSize: '13px', marginBottom: '10px' }}>아직 독서 성향 테스트를 하지 않으셨어요.<br />나의 독서 MBTI를 알아보세요!</p>
               <button className="btn-mbti-start" onClick={() => { setMbtiAnswers([]); setIsMbtiModalOpen(true); }}>테스트 시작하기</button>
+            </div>
+          )}
+        </section>
+
+        {/* 나의 독서 노트 */}
+        <section className="mypage-card">
+          <div className="mypage-card-title">
+            나의 독서 노트 <span className="mypage-card-subtitle">{myLogs.length} Records</span>
+          </div>
+          {myLogs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>📓</div>
+              <p style={{ color: '#8A7A60', fontSize: '14px', marginBottom: '20px' }}>아직 작성한 독서 감상평이 없습니다.</p>
+              <Link href="/record" className="btn-record">독서 기록하러 가기</Link>
+            </div>
+          ) : (
+            <div className="log-list">
+              {myLogs.map((log) => (
+                <div key={log._id} className="log-card">
+                  <div className="log-header">
+                    <span className="log-date">{log.date}</span>
+                    <span className="log-status-badge">
+                      {log.status === 'COMPLETED' ? '✅ 완독' : log.status === 'READING' ? '📖 읽는 중' : log.status === 'PAUSED' ? '⏸️ 멈춤' : log.status}
+                    </span>
+                  </div>
+                  <div className="log-book-info">
+                    {log.bookId?.cover ? (
+                      <img src={log.bookId.cover} alt="표지" className="log-cover" />
+                    ) : (
+                      <div className="log-cover-placeholder">NO IMG</div>
+                    )}
+                    <div className="log-book-text">
+                      <div className="log-title">{log.bookId?.title || '알 수 없는 도서'}</div>
+                      <div className="log-author">{log.bookId?.author || '작자 미상'}</div>
+                      <div className="log-pages">읽은 페이지: {log.readPages}p</div>
+                    </div>
+                  </div>
+                  <div className="log-rating">
+                    {'⭐'.repeat(log.rating || 0)}{'☆'.repeat(5 - (log.rating || 0))}
+                  </div>
+                  {log.review && (
+                    <div className="log-review">
+                      {log.review}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </section>
