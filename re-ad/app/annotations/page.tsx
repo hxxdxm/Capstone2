@@ -120,7 +120,7 @@ export default function ExhibitionPage() {
             quote: apiItem.quote || apiItem.content,
             book: bookTitle || '도서',
             author: bookAuthor || '작자미상',
-            user: apiItem.userId?.nickname || apiItem.userId?.username || '익명',
+            user: apiItem.userId?.nickname || apiItem.userId?.username || '(알 수 없음)',
             likes: apiItem.likes?.length || 0,
             commentCount: apiItem.comments?.length || 0,
             bg: apiItem.color || 'bg-white text-gray-900 border-gray-200'
@@ -230,7 +230,7 @@ export default function ExhibitionPage() {
         const comments = (found?.comments || []).map((c: any) => ({
           id: c._id,
           content: c.content,
-          author: c.userId?.nickname || '익명',
+          author: c.userId?.nickname || c.userId?.username || '(알 수 없음)',
           authorId: c.userId?._id || c.userId,
           createdAt: c.createdAt,
         }));

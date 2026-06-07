@@ -8,7 +8,7 @@ export default function Footer() {
   return (
     <footer className="footer-wrap">
       <div className="footer-inner">
-        
+
         {/* 좌측 브랜드 정보 */}
         <div className="footer-brand">
           <Link href="/" style={{ textDecoration: 'none' }}>
@@ -37,7 +37,7 @@ export default function Footer() {
           <div className="footer-col">
             <h3 className="footer-col-title">Project</h3>
             <span className="footer-link">2026 Capstone Design</span>
-            <span className="footer-link">Team: 이음 (re-ad)</span>
+            <span className="footer-link">Team: 교환독서</span>
             <a href="https://github.com/hxxdxm/Capstone2" target="_blank" rel="noopener noreferrer" className="footer-link">GitHub Repository</a>
           </div>
         </div>
@@ -48,13 +48,13 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-bottom">
           <div className="footer-copyright">
-            © 2026 이음(re-ad). All rights reserved. 
-            <span style={{ margin: '0 8px', color: '#D9CDB8' }}>|</span> 
+            © 2026 이음(re-ad). All rights reserved.
+            <span style={{ margin: '0 8px', color: '#D9CDB8' }}>|</span>
             <Link href="#" className="footer-link" style={{ fontSize: '12px', color: '#8A7A60' }}>이용약관</Link>
-            <span style={{ margin: '0 8px', color: '#D9CDB8' }}>|</span> 
+            <span style={{ margin: '0 8px', color: '#D9CDB8' }}>|</span>
             <Link href="#" className="footer-link" style={{ fontSize: '12px', color: '#8A7A60', fontWeight: '700' }}>개인정보처리방침</Link>
           </div>
-          
+
           <div className="footer-socials">
             <a href="#" className="footer-social-link" aria-label="Instagram">
               <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">

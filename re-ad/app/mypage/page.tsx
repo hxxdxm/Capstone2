@@ -80,7 +80,8 @@ export default function MyPage() {
       .then(data => setStats(data))
       .catch(err => console.error("통계 로드 실패:", err));
 
-    fetch(`${API_BASE_URL}/reading-logs/my`, { headers })
+    // ✅ 감상평(review)이 있는 기록만 뽑아주는 전용 엔드포인트 사용
+    fetch(`${API_BASE_URL}/reading-logs/my-notes`, { headers })
       .then(res => res.json())
       .then(data => { if (Array.isArray(data)) setMyLogs(data); })
       .catch(err => console.error("독서 노트 로드 실패:", err));

@@ -89,7 +89,8 @@ export default function RoomDetailPage() {
           const formattedPosts = annotationsData.map((ann: any) => ({
             id: ann._id,
             authorId: ann.userId?._id || ann.userId || '',
-            author: ann.userId?.nickname || '익명',
+            // ✅ 탈퇴 유저 방어: userId가 null이어도 안전하게 폴백
+            author: ann.userId?.nickname || ann.userId?.username || '(알 수 없음)',
             content: ann.quote || ann.content || '',
             media: resolveImageUrl(ann.imageUrl) || null,
             mediaType: ann.imageUrl ? 'image' : null,
@@ -99,7 +100,8 @@ export default function RoomDetailPage() {
             comments: (ann.comments || []).map((c: any) => ({
               id: c._id || c.id,
               userId: c.userId?._id || c.userId || '',
-              author: c.userId?.nickname || c.nickname || c.author || '익명',
+              // ✅ 탈퇴 유저 방어: 댓글 작성자 nickname null 안전 처리
+              author: c.userId?.nickname || c.userId?.username || c.nickname || c.author || '(알 수 없음)',
               text: c.content || c.text || '',
               content: c.content || c.text || ''
             })),
@@ -670,7 +672,8 @@ export default function RoomDetailPage() {
                     </div>
                   ) : chats.map((chat, idx) => {
                     const isMe = chat.userId?._id === getMyId() || chat.userId === getMyId();
-                    const nickname = chat.userId?.nickname || chat.userId?.username || '멤버';
+                    // ✅ 탈퇴 유저 방어: 채팅 작성자 nickname null 안전 처리
+                    const nickname = chat.userId?.nickname || chat.userId?.username || '(알 수 없음)';
 
                     const currentDate = new Date(chat.createdAt || Date.now()).toLocaleDateString();
                     const previousDate = idx > 0 ? new Date(chats[idx - 1].createdAt || Date.now()).toLocaleDateString() : null;
