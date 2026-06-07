@@ -113,6 +113,7 @@ export default function RecordPage() {
             const logBody: any = {
                 userId: getUserId(token),
                 readPages,
+                date: readDate, // ✅ 사용자가 달력에서 선택한 날짜 전송 (없으면 백엔드가 오늘로 처리)
                 status: recordData.status,
                 rating: recordData.rating,
                 review: recordData.review,
