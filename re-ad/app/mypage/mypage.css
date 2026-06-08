@@ -421,9 +421,28 @@
   justify-content: center;
   flex-shrink: 0;
   box-shadow: inset 0 -4px 12px rgba(0,0,0,0.1);
+  overflow: hidden;         /* 박스 밖으로 절대 나가지 않음 */
+  padding: 8px;             /* 내부 여백 확보 */
+  box-sizing: border-box;
 }
-.mbti-badge strong {  font-size: 32px; font-weight: 900; }
-.mbti-badge span { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-top: 4px; opacity: 0.8; }
+.mbti-badge strong {
+  /* 글자 수에 따라 폰트가 자동으로 줄어듦: 최소 14px ~ 최대 28px */
+  font-size: clamp(14px, 4vw, 28px);
+  font-weight: 900;
+  text-align: center;
+  word-break: keep-all;     /* 한국어 단어 단위로 줄바꿈 */
+  overflow-wrap: break-word;
+  line-height: 1.2;
+  width: 100%;
+}
+.mbti-badge span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+  opacity: 0.8;
+  white-space: nowrap;
+}
 .mbti-desc h4 {  font-size: 18px; font-weight: 700; margin-bottom: 8px; }
 .mbti-desc p { font-size: 13px; color: #5A4A36; line-height: 1.6; }
 .btn-mbti-retry {

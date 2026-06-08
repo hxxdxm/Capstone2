@@ -67,12 +67,23 @@ export default function OtherUserProfilePage() {
       const profileRes = await fetch(`${API_BASE_URL}/users/${targetUserId}/profile`, { headers });
       if (profileRes.ok) {
         const raw = await profileRes.json();
-        // 백엔드 응답: { user: { ...userFields, readingMbti }, collections: [...] }
-        // user 객체가 중첩된 경우와 flat한 경우 모두 대응
+        // 🔍 디버그: 실제 응답 구조 확인 (개발용)
+        console.log('📦 프로필 API 응답:', JSON.stringify(raw, null, 2));
+
+        // 백엔드 응답 구조가 다양할 수 있으므로 모든 경우 대응:
+        // 1) { user: { nickname, readingMbti, ... }, collections: [...] }
+        // 2) { nickname, readingMbti, ..., collections: [...] }  (flat)
+        // 3) { data: { user: {...}, collections: [...] } }
+        const root = raw.data || raw;
+        const userFields = root.user || root;
         const merged = {
-          ...(raw.user || raw),       // user 객체 필드를 최상위로 펼침
-          collections: raw.collections || raw.quotes || [],  // 수집 문장
+          ...userFields,
+          // readingMbti: user 중첩이든 flat이든 모두 커버
+          readingMbti: userFields.readingMbti || root.readingMbti || raw.readingMbti || '',
+          // collections: 가능한 모든 키 이름 시도
+          collections: root.collections || root.quotes || raw.collections || raw.quotes || [],
         };
+        console.log('✅ merged profileData:', merged);
         setProfileData(merged);
       } else {
         alert("존재하지 않는 유저입니다.");
@@ -241,6 +252,22 @@ export default function OtherUserProfilePage() {
             </div>
           )}
         </section>
+
+        {/* ── 독서 MBTI ── */}
+        {readingMbti && (
+          <section className="profile-mbti-section">
+            <div className="profile-section-label">독서 성향 (MBTI)</div>
+            <div className="profile-mbti-display">
+              <div className="profile-mbti-box">
+                <strong>{readingMbti}</strong>
+                <span>독서 유형</span>
+              </div>
+              <p className="profile-mbti-desc">
+                {displayName}님의 독서 유형은 <strong>{readingMbti}</strong>입니다.
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* ── 컬렉션 ── */}
         <section className="profile-collection">
