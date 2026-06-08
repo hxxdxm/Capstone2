@@ -66,7 +66,14 @@ export default function OtherUserProfilePage() {
     try {
       const profileRes = await fetch(`${API_BASE_URL}/users/${targetUserId}/profile`, { headers });
       if (profileRes.ok) {
-        setProfileData(await profileRes.json());
+        const raw = await profileRes.json();
+        // 백엔드 응답: { user: { ...userFields, readingMbti }, collections: [...] }
+        // user 객체가 중첩된 경우와 flat한 경우 모두 대응
+        const merged = {
+          ...(raw.user || raw),       // user 객체 필드를 최상위로 펼침
+          collections: raw.collections || raw.quotes || [],  // 수집 문장
+        };
+        setProfileData(merged);
       } else {
         alert("존재하지 않는 유저입니다.");
         router.push('/');
@@ -170,9 +177,13 @@ export default function OtherUserProfilePage() {
     profileData.nickname ||
     profileData.username ||
     profileData.name ||
-    profileData.user?.nickname ||
-    profileData.user?.username ||
     '알 수 없음';
+
+  // 📍 MBTI: 백엔드 user.readingMbti (merged 후엔 profileData.readingMbti)
+  const readingMbti = profileData.readingMbti || '';
+
+  // 📍 수집 문장: 백엔드 collections 배열
+  const collections: any[] = Array.isArray(profileData.collections) ? profileData.collections : [];
 
   const avatarChar = displayName !== '알 수 없음' ? displayName[0] : '👤';
 
@@ -190,9 +201,9 @@ export default function OtherUserProfilePage() {
             <div>
               <div className="profile-name-row">
                 <span className="profile-name">{displayName}</span>
-                {profileData.readingMbti && (
+                {readingMbti && (
                   <span className="profile-mbti-badge">
-                    {profileData.readingMbti}
+                    {readingMbti}
                   </span>
                 )}
               </div>
@@ -236,25 +247,40 @@ export default function OtherUserProfilePage() {
           <div className="profile-collection-header">
             <h3 className="profile-collection-title">Collection</h3>
             <span className="profile-collection-count">
-              {profileData.quotes?.length || 0} Quotes
+              {collections.length} Quotes
             </span>
           </div>
 
-          {profileData.quotes && profileData.quotes.length > 0 ? (
+          {collections.length > 0 ? (
             <div className="profile-quotes-grid">
-              {profileData.quotes.map((q: any) => (
-                <div key={q._id} className="profile-quote-card">
-                  <div>
-                    <div className="profile-quote-mark">"</div>
-                    <p className="profile-quote-text">
-                      {q.quote || q.content}
+              {collections.map((q: any) => {
+                // 도서명: 직접입력 우선 → bookId populate 폴백
+                const bookTitle =
+                  q.customBookTitle ||
+                  q.bookTitle ||
+                  q.bookId?.title ||
+                  '';
+                // 저자명: 직접입력 우선 → bookId populate 폴백
+                const bookAuthor =
+                  q.customBookAuthor ||
+                  q.bookAuthor ||
+                  q.bookId?.author ||
+                  '';
+                return (
+                  <div key={q._id} className="profile-quote-card">
+                    <div>
+                      <div className="profile-quote-mark">"</div>
+                      <p className="profile-quote-text">
+                        {q.quote || q.content}
+                      </p>
+                    </div>
+                    <p className="profile-quote-book">
+                      {bookTitle || '제목 없음'}
+                      {bookAuthor && <span style={{ color: '#A08060', marginLeft: '6px', fontSize: '0.85em' }}>— {bookAuthor}</span>}
                     </p>
                   </div>
-                  <p className="profile-quote-book">
-                    {q.bookId?.title || q.bookTitle || 'Unknown Book'}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="profile-empty-collection">
