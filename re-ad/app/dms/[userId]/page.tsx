@@ -180,10 +180,7 @@ export default function ChatPage() {
     }
   };
 
-  // 새 메시지마다 맨 아래 스크롤
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+
 
   /* ── 시간 포맷 ── */
   const formatTime = (dateStr: string) => {
