@@ -555,6 +555,27 @@
   border-bottom: 1px dashed #EDE7DA;
   padding-bottom: 8px;
 }
+.btn-action-log {
+  background: transparent;
+  border: none;
+  color: #D9CDB8;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+.btn-action-log:hover {
+  background: #F2EDE4;
+  color: #3B3224;
+}
+.btn-action-log[title="기록 삭제"]:hover {
+  color: #E87C7C;
+}
 .log-date {
   font-size: 11px;
   color: #8A7A60;

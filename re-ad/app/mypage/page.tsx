@@ -42,6 +42,11 @@ export default function MyPage() {
   const [isMbtiModalOpen, setIsMbtiModalOpen] = useState(false);
   const [mbtiAnswers, setMbtiAnswers] = useState<number[]>([]);
 
+  // 독서 노트 수정 모달 상태
+  const [isEditLogModalOpen, setIsEditLogModalOpen] = useState(false);
+  const [editLogData, setEditLogData] = useState<any>(null);
+  const [editLogFile, setEditLogFile] = useState<File | null>(null);
+  const [isSavingLog, setIsSavingLog] = useState(false);
   // 팔로워/팔로잉 목록 모달
   const [followModal, setFollowModal] = useState<{
     open: boolean;
@@ -344,6 +349,94 @@ export default function MyPage() {
     }
   };
 
+  const handleDeleteLog = async (logId: string) => {
+    const token = getSafeToken();
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    if (!window.confirm("정말 이 독서 기록을 삭제하시겠습니까? (삭제 후 복구할 수 없습니다)")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/reading-logs/${logId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        alert("독서 기록이 성공적으로 삭제되었습니다.");
+        // 화면에서 즉시 제거
+        setMyLogs(prev => prev.filter(log => log._id !== logId));
+        // 영수증 데이터도 새로고침하기 위해 fetchReadingData() 재호출
+        if (token) fetchReadingData(token);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(`삭제 실패: ${data.message || '서버 오류가 발생했습니다.'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("서버와 통신할 수 없습니다.");
+    }
+  };
+
+  const openEditLogModal = (log: any) => {
+    setEditLogData({
+      _id: log._id,
+      date: log.date,
+      readPages: log.readPages,
+      status: log.status,
+      rating: log.rating,
+      review: log.review
+    });
+    setEditLogFile(null);
+    setIsEditLogModalOpen(true);
+  };
+
+  const handleEditLogSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = getSafeToken();
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    setIsSavingLog(true);
+    try {
+      const formData = new FormData();
+      formData.append('date', editLogData.date);
+      formData.append('readPages', String(editLogData.readPages));
+      formData.append('status', editLogData.status);
+      formData.append('rating', String(editLogData.rating));
+      formData.append('review', editLogData.review);
+      if (editLogFile) {
+        formData.append('coverImage', editLogFile);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/reading-logs/${editLogData._id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }, // FormData는 Content-Type을 수동으로 설정하지 않음
+        body: formData
+      });
+
+      if (res.ok) {
+        alert("독서 기록이 수정되었습니다.");
+        setIsEditLogModalOpen(false);
+        if (token) fetchReadingData(token); // 목록 및 통계 새로고침
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(`수정 실패: ${data.message || '서버 오류가 발생했습니다.'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("서버와 통신할 수 없습니다.");
+    } finally {
+      setIsSavingLog(false);
+    }
+  };
+
   return (
     <div className="mypage-container">
       <Header />
@@ -560,36 +653,83 @@ export default function MyPage() {
             </div>
           ) : (
             <div className="log-list">
-              {myLogs.map((log) => (
-                <div key={log._id} className="log-card">
-                  <div className="log-header">
-                    <span className="log-date">{log.date}</span>
-                    <span className="log-status-badge">
-                      {log.status === 'COMPLETED' ? '✅ 완독' : log.status === 'READING' ? '📖 읽는 중' : log.status === 'PAUSED' ? '⏸️ 멈춤' : log.status}
-                    </span>
-                  </div>
-                  <div className="log-book-info">
-                    {log.bookId?.cover ? (
-                      <img src={log.bookId.cover} alt="표지" className="log-cover" />
-                    ) : (
-                      <div className="log-cover-placeholder">NO IMG</div>
+              {myLogs.map((log, logIdx) => {
+                // 📸 표지: 백엔드가 반환하는 다양한 필드명 모두 시도
+                const book = log.bookId;
+                const coverUrl =
+                  book?.cover ||
+                  book?.thumbnail ||
+                  book?.coverImage ||
+                  book?.image ||
+                  log.cover ||
+                  log.coverImage ||
+                  '';
+                // 🔍 디버그: 첫 항목 구조 출력 (개발용)
+                if (logIdx === 0) {
+                  console.log('📖 독서 노트 API 응답 (첫 항목):', JSON.stringify(log, null, 2));
+                  console.log('📸 coverUrl 결과:', coverUrl);
+                }
+                return (
+                  <div key={log._id} className="log-card">
+                    <div className="log-header">
+                      <span className="log-date">{log.date}</span>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span className="log-status-badge">
+                          {log.status === 'COMPLETED' ? '✅ 완독' : log.status === 'READING' ? '📖 읽는 중' : log.status === 'PAUSED' ? '⏸️ 멈춤' : log.status}
+                        </span>
+                        <button
+                          onClick={() => openEditLogModal(log)}
+                          className="btn-action-log"
+                          title="기록 수정"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLog(log._id)}
+                          className="btn-action-log"
+                          title="기록 삭제"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                    <div className="log-book-info">
+                      {coverUrl ? (
+                        <img
+                          src={coverUrl}
+                          alt="표지"
+                          className="log-cover"
+                          onError={(e) => {
+                            const img = e.currentTarget as HTMLImageElement;
+                            img.style.display = 'none';
+                            const ph = img.nextElementSibling as HTMLElement;
+                            if (ph) ph.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="log-cover-placeholder"
+                        style={{ display: coverUrl ? 'none' : 'flex' }}
+                      >
+                        📖
+                      </div>
+                      <div className="log-book-text">
+                        <div className="log-title">{book?.title || log.title || '알 수 없는 도서'}</div>
+                        <div className="log-author">{book?.author || log.author || '작자 미상'}</div>
+                        <div className="log-pages">읽은 페이지: {log.readPages}p</div>
+                      </div>
+                    </div>
+                    <div className="log-rating">
+                      {'⭐'.repeat(log.rating || 0)}{'☆'.repeat(5 - (log.rating || 0))}
+                    </div>
+                    {log.review && (
+                      <div className="log-review">
+                        {log.review}
+                      </div>
                     )}
-                    <div className="log-book-text">
-                      <div className="log-title">{log.bookId?.title || '알 수 없는 도서'}</div>
-                      <div className="log-author">{log.bookId?.author || '작자 미상'}</div>
-                      <div className="log-pages">읽은 페이지: {log.readPages}p</div>
-                    </div>
                   </div>
-                  <div className="log-rating">
-                    {'⭐'.repeat(log.rating || 0)}{'☆'.repeat(5 - (log.rating || 0))}
-                  </div>
-                  {log.review && (
-                    <div className="log-review">
-                      {log.review}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
@@ -883,6 +1023,98 @@ export default function MyPage() {
                   );
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── 독서 노트 수정 모달 ── */}
+      {isEditLogModalOpen && editLogData && (
+        <div className="mypage-modal-backdrop" onClick={() => setIsEditLogModalOpen(false)}>
+          <div className="mypage-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="mypage-modal-header">
+              <h3>독서 노트 수정</h3>
+              <button className="mypage-modal-close" onClick={() => setIsEditLogModalOpen(false)}>✕</button>
+            </div>
+            <div className="mypage-modal-body">
+              <form onSubmit={handleEditLogSubmit}>
+                <div className="mypage-form-group" style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label className="mypage-form-label">독서 상태</label>
+                    <select
+                      className="mypage-form-input"
+                      value={editLogData.status}
+                      onChange={(e) => setEditLogData({ ...editLogData, status: e.target.value })}
+                    >
+                      <option value="READING">📖 읽는 중</option>
+                      <option value="COMPLETED">✅ 완독</option>
+                      <option value="PAUSED">⏸️ 잠시 멈춤</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label className="mypage-form-label">독서 날짜</label>
+                    <input
+                      type="date"
+                      className="mypage-form-input"
+                      value={editLogData.date}
+                      onChange={(e) => setEditLogData({ ...editLogData, date: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="mypage-form-group" style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label className="mypage-form-label">읽은 페이지</label>
+                    <input
+                      type="number"
+                      className="mypage-form-input"
+                      value={editLogData.readPages}
+                      onChange={(e) => setEditLogData({ ...editLogData, readPages: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label className="mypage-form-label">별점</label>
+                    <select
+                      className="mypage-form-input"
+                      value={editLogData.rating}
+                      onChange={(e) => setEditLogData({ ...editLogData, rating: Number(e.target.value) })}
+                    >
+                      <option value={5}>⭐⭐⭐⭐⭐</option>
+                      <option value={4}>⭐⭐⭐⭐</option>
+                      <option value={3}>⭐⭐⭐</option>
+                      <option value={2}>⭐⭐</option>
+                      <option value={1}>⭐</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mypage-form-group">
+                  <label className="mypage-form-label">나의 감상</label>
+                  <textarea
+                    className="mypage-form-input"
+                    rows={4}
+                    value={editLogData.review}
+                    onChange={(e) => setEditLogData({ ...editLogData, review: e.target.value })}
+                  />
+                </div>
+
+                <div className="mypage-form-group">
+                  <label className="mypage-form-label">표지 사진 변경 (선택)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="mypage-form-input"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setEditLogFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                </div>
+
+                <button type="submit" className="btn-submit" disabled={isSavingLog}>
+                  {isSavingLog ? '저장 중...' : '수정 완료'}
+                </button>
+              </form>
             </div>
           </div>
         </div>
