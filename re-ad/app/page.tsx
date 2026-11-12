@@ -255,7 +255,7 @@ export default function MainPage() {
                       ) : (
                         <div className="hm-card-no-img">NO IMG</div>
                       )}
-                      <span className="hm-trade-badge">{item.tradeType === 'SELL' ? '판매' : '나눔'}</span>
+                      <span className="hm-trade-badge">{item.tradeType === 'EXCHANGE' ? '교환' : '나눔'}</span>
                     </div>
                     <div className="hm-card-info">
                       <h4 className="hm-card-title">{item.bookTitle}</h4>
