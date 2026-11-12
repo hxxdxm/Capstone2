@@ -41,7 +41,7 @@
 | 구분 | 담당 | 저장소 |
 |---|---|---|
 | 팀장 · Frontend · UI/UX | **김하민 (본인)** | 현재 저장소 |
-| Backend · API | 장영우 [@523810](https://github.com/523810) | [hxxdxm/Capstone2-backend](https://github.com/hxxdxm/Capstone2-backend) (원본: [523810/Capston2](https://github.com/523810/Capston2)) |
+| Backend · API | 장영우 [@523810](https://github.com/523810) | [hxxdxm/Capstone2_backend](https://github.com/hxxdxm/Capstone2_backend) (원본: [523810/Capston2](https://github.com/523810/Capston2)) |
 
 <br>
 
@@ -155,6 +155,7 @@ re-ad/                      # 프론트엔드 프로젝트 폴더
   const bookTitle  = item.customBookTitle  || item.bookId?.title  || '';
   const bookAuthor = item.customBookAuthor || item.bookId?.author || '작자미상';
   ```
+- **재발 방지**: 같은 계산이 메인·마이페이지 등 여러 화면에 복사되어 있어 **한 곳만 고치고 나머지는 놓친 상태**였음을 이후 발견. 도서 정보를 꺼내는 규칙을 공통 함수 `lib/book.ts`(`getBookTitle`, `getBookAuthor`) 한 곳으로 모으고 4개 화면이 이를 사용하도록 리팩터링
 - **배운 점**: 프론트·백엔드 분업에서는 **필드 이름 하나가 곧 약속**이다. 이후 백엔드 담당자와 요청·응답 예시(JSON)를 먼저 공유하고 개발하는 방식으로 바꿨다.
 
 ### 2. DM 메시지가 두 번씩 표시되는 문제
@@ -177,7 +178,7 @@ npm install
 npm run dev     # http://localhost:3000
 ```
 
-> 백엔드 서버 실행 방법은 [백엔드 저장소](https://github.com/hxxdxm/Capstone2-backend)를 참고하세요.
+> 백엔드 서버 실행 방법은 [백엔드 저장소](https://github.com/hxxdxm/Capstone2_backend)를 참고하세요.
 
 <br>
 
