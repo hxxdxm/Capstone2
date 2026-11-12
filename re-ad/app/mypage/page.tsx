@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import Header from '@/components/Header';
+import { getBookTitle, getBookAuthor } from '@/lib/book'; // 도서명/작가명 공통 함수
 import './mypage.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
@@ -760,8 +761,8 @@ export default function MyPage() {
                     <div className="collection-quote-text">{q.quote || q.content}</div>
                   </div>
                   <div>
-                    <div className="collection-book-title">{q.bookId?.title || q.bookTitle || 'Unknown Book'}</div>
-                    <button className="btn-share" onClick={() => openExportModal(q.quote || q.content, q.bookId?.title || q.bookTitle || '책', q.author || q.authorName || q.bookId?.author || '작자 미상')}>
+                    <div className="collection-book-title">{getBookTitle(q) || 'Unknown Book'}</div>
+                    <button className="btn-share" onClick={() => openExportModal(q.quote || q.content, getBookTitle(q) || '책', getBookAuthor(q) || '작자 미상')}>
                       <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                       이미지로 공유하기
                     </button>

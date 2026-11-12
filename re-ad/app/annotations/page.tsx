@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import { getBookTitle, getBookAuthor } from '@/lib/book'; // 도서명/작가명 공통 함수
 import './annotations.css';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : 'http://13.124.191.57:5000/api';
@@ -94,23 +95,9 @@ export default function ExhibitionPage() {
           }
           const imageUrl = apiItem.imageUrl || apiItem.image_url;
 
-          // 도서명: 커스텀(직접입력) 우선 → bookId populate 폴백
-          const bookTitle =
-            apiItem.customBookTitle ||
-            apiItem.bookTitle ||
-            apiItem.book_title ||
-            apiItem.bookId?.title ||
-            apiItem.title ||
-            '';
-
-          // 작가명: 커스텀(직접입력) 우선 → bookId populate 폴백
-          const bookAuthor =
-            apiItem.customBookAuthor ||
-            apiItem.bookAuthor ||
-            apiItem.book_author ||
-            apiItem.bookId?.author ||
-            apiItem.author ||
-            '';
+          // 도서명/작가명: 직접 입력 우선 → 검색한 책 정보 (규칙은 lib/book.ts에서 관리)
+          const bookTitle = getBookTitle(apiItem);
+          const bookAuthor = getBookAuthor(apiItem);
 
           return {
             id: apiItem._id,

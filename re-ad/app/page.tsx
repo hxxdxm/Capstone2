@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header'; // ⭐️ 공통 헤더 임포트
+import { getBookTitle } from '@/lib/book'; // 도서명 꺼내기 공통 함수
 import './main.css';
 
 const API_BASE_URL = 'http://13.124.191.57:5000/api';
@@ -124,7 +125,7 @@ export default function MainPage() {
                     <div className="trending-card-body">
                       <p className="trending-card-quote">&ldquo;{item.quote}&rdquo;</p>
                       <div className="trending-card-meta">
-                        <span className="trending-card-book">{item.bookId?.title || '도서'}</span>
+                        <span className="trending-card-book">{getBookTitle(item) || '도서'}</span>
                         <span className="trending-card-dot">·</span>
                         <span className="trending-card-author">{item.userId?.nickname || '작자미상'}</span>
                         {item.likes?.length > 0 && (
@@ -161,7 +162,7 @@ export default function MainPage() {
                     </div>
                     <div className="exhibition-meta">
                       <span className="exhibition-meta-text">
-                        {item.bookId?.title || '도서'} | {item.userId?.nickname || '작자미상'}
+                        {getBookTitle(item) || '도서'} | {item.userId?.nickname || '작자미상'}
                       </span>
                       <span className="exhibition-meta-icon">📖</span>
                     </div>
