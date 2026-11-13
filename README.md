@@ -1,216 +1,203 @@
-<!-- GitHub Profile README | hxxdxm/hxxdxm -->
 <div align="center">
 
-<img src="assets/header.svg" width="100%" alt="김하민 Hamin Kim · Vision AI · Data Quality · Web Service"/>
+# 📚 이음
 
-<br/>
+**독서의 여운을 타인과 잇다**
 
-[![About](https://img.shields.io/badge/About_Me-5E8E47?style=for-the-badge)](#-about-me)
-[![Impact](https://img.shields.io/badge/Impact-7FA36A?style=for-the-badge)](#-impact-at-a-glance)
-[![Projects](https://img.shields.io/badge/Projects-9CC57F?style=for-the-badge)](#-projects)
-[![Stack](https://img.shields.io/badge/Tech_Stack-8DB86F?style=for-the-badge)](#-tech-stack)
-[![Contact](https://img.shields.io/badge/Contact-C9A86A?style=for-the-badge)](#-contact)
+독서 MBTI로 내 취향을 찾고, 같은 책을 읽는 사람들과 실시간으로 이야기하고,
+다 읽은 책은 다른 사람에게 물려주는 선순환 독서 플랫폼
+
+2026학년도 춘계 졸업작품 · TEAM 교환독서 · 2026.03 ~ 2026.06
+
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=flat-square&logo=socketdotio&logoColor=white)
 
 </div>
 
-<br/>
-
-## 🌱 About Me
-
-> **모델의 점수에서 멈추지 않고, 그 점수를 믿을 수 있는 데이터 기준부터 사람이 쓰는 서비스 화면까지 연결합니다.**
-
-<table>
-<tr>
-<td width="33%" valign="top">
-
-**🔍 Vision AI & Data Quality**
-
-라벨 기준서 작성 → 교차검수 → 데이터 분할 → 모델 학습 · 오류 분석까지, ‘**정답지가 맞는가**’부터 확인합니다.
-
-</td>
-<td width="33%" valign="top">
-
-**⚙️ Model to Service**
-
-Fine-tuning한 모델을 **FastAPI · Celery · Docker**로 서비스하고, **Next.js** 웹 화면으로 사용자에게 연결합니다.
-
-</td>
-<td width="33%" valign="top">
-
-**📝 Evidence & Sharing**
-
-실험 기록, 오류 분석표, README, 발표자료로 **다른 사람이 이해하고 검증할 수 있는 결과**를 남깁니다.
-
-</td>
-</tr>
-</table>
-
-<br/>
-
-## 📊 Impact at a Glance
-
-<img src="assets/impact.svg" width="100%" alt="Test 정확도 98.4% · 이물 사진 900장 교차검수 · 프론트엔드 16개 화면 · NET 챌린지 본선 진출"/>
-
-<sub>※ 각 수치는 아래 프로젝트 README에 기록된 결과입니다. 조각김치 프로젝트의 수치는 5인 팀 공동 성과입니다.</sub>
-
-<br/>
-
-## 🚀 Projects
-
-### `01` 🌱 Plant Disease Vision API
-
-**콩잎 사진 한 장으로 잎의 질병을 분류하는 AI 웹 서비스** &nbsp; [![repo](https://img.shields.io/badge/Repository-181717?style=flat-square&logo=github)](https://github.com/hxxdxm/plant-disease-vision-api)
-
-<table>
-<tr><td width="96" nowrap><b>문제</b></td><td>제공된 기준 코드로 학습하면 Test 정확도가 71.9%에 그치고, <b>병든 잎 13장을 정상으로 놓쳤습니다.</b> 모델을 실제 요청으로 받을 서비스 구조도 필요했습니다.</td></tr>
-<tr><td width="96" nowrap><b>수행</b></td><td><code>ResNet-18</code>을 <b>각진잎반점병 · 녹병 · 정상</b> 3클래스로 Fine-tuning · 제공 코드의 약점 4가지를 <b>변수 하나씩 바꾸는 실험</b>으로 확인 · Validation으로 모델을 고른 뒤 Test는 단 1회 평가</td></tr>
-<tr><td width="96" nowrap><b>결과</b></td><td>Test 정확도 <b>71.9% → 98.4%</b> · 병든 잎 놓침 <b>13장 → 0장</b> · 이미지 변형 8종 평균 정확도 95.7%</td></tr>
-<tr><td width="96" nowrap><b>서비스</b></td><td>FastAPI 동기 API · Redis 캐시 · Celery 비동기 작업 · PostgreSQL 기록을 <b>Docker Compose 4개 서비스</b>로 구성</td></tr>
-<tr><td width="96" nowrap><b>기술</b></td><td><code>PyTorch</code> <code>Transformers</code> <code>FastAPI</code> <code>Celery</code> <code>Redis</code> <code>PostgreSQL</code> <code>Docker</code></td></tr>
-</table>
-
-### `02` 🥬 조각김치 이물 검출 · 5인 팀
-
-**라벨 검수 도구 제작부터 YOLO 검출 모델 학습 · 검증까지 한 사이클 완성** &nbsp; [![repo](https://img.shields.io/badge/Repository-181717?style=flat-square&logo=github)](https://github.com/hxxdxm/kimchi-foreign-object-detection)
-
-<table>
-<tr><td width="96" nowrap><b>문제</b></td><td>식품 공장 이물 사진 900장 중 <b>52%의 라벨이 수정이 필요할 만큼 기준이 흔들려</b> 있었고, 같은 촬영 세션의 사진이 학습 · 검증 데이터에 섞여 있었습니다.</td></tr>
-<tr><td width="96" nowrap><b>내 역할</b></td><td>LLM을 활용해 <b>라벨링 프로그램 1.0 초안</b> 작성 → 팀과 v4.1까지 발전<br/><b>Class · BBox 라벨 기준서</b> 작성, 250장 1차 검수 (애매한 경우 REVIEW로 보내 교차검수)<br/>세션 단위 <b>데이터 재분할</b> · 산출물 11개 최종 점검</td></tr>
-<tr><td width="96" nowrap><b>오류 분석</b></td><td>'나뭇가지' 예측 38건 중 20건을 직접 확인 → <b>16건이 김치 줄기 · 배추 그림자 착각</b>임을 오류 분석표로 정리</td></tr>
-<tr><td width="96" nowrap><b>결과 (팀)</b></td><td>900 / 900 교차검수 PASS · Val mAP50 <b>0.62 → 0.76</b> · AI 후보 라벨 72% 그대로 승인</td></tr>
-<tr><td width="96" nowrap><b>기술</b></td><td><code>Python</code> <code>tkinter</code> <code>YOLO11n</code> <code>Ultralytics</code> <code>Figma</code></td></tr>
-</table>
-
-### `03` 📚 이음 - 독서 커뮤니티 · 졸업작품 · 팀장
-
-**독서 MBTI로 취향을 찾고, 같은 책을 읽는 사람과 모임 · 채팅으로 이어지는 서비스** &nbsp; [![repo](https://img.shields.io/badge/Repository-181717?style=flat-square&logo=github)](https://github.com/hxxdxm/Capstone2)
-
-<table>
-<tr><td width="96" nowrap><b>문제</b></td><td>혼자 하는 독서를 <b>취향이 맞는 사람과 연결</b>하고, 감상과 문장을 나눌 공간이 필요했습니다.</td></tr>
-<tr><td width="96" nowrap><b>내 역할</b></td><td>2인 팀 <b>팀장</b> · 서비스 기획 · UI/UX 설계 · <b>프론트엔드 16개 화면</b> 구현 (모임방 채팅, DM, 필사 전시회, 마이페이지 등)</td></tr>
-<tr><td width="96" nowrap><b>개선</b></td><td>졸업 후 저장소를 다시 실행해 <b>빌드 오류(누락된 의존성)와 화면 버그</b>를 찾아 수정, 4개 화면에 흩어진 로직을 공통 함수로 정리</td></tr>
-<tr><td width="96" nowrap><b>기술</b></td><td><code>Next.js</code> <code>React</code> <code>TypeScript</code> <code>Socket.io</code></td></tr>
-</table>
+![메인 화면](docs/images/01_main.png)
 
 <details>
-<summary><b>🗂️ 그 밖의 활동 펼치기 · CrossSafe · TrueHue</b></summary>
-
-<br/>
-
-| 프로젝트 | 내용 | 역할 · 상태 |
-| :--- | :--- | :--- |
-| **CrossSafe** | 교차로에서 우회전 차량의 일시정지 여부를 인식하는 시스템 · NET 챌린지 캠프 시즌10 | 자료조사 · 발표자료 제작 · **본선 진출** |
-| **TrueHue** | 색각이상자를 위한 색 탐지 프로그램 (2인 팀) | Figma 화면 설계 · **진행 중** |
-
+<summary>📌 졸업작품 발표회 포스터 보기</summary>
+<br>
+<img src="docs/images/poster.png" width="600" alt="졸업작품 포스터">
 </details>
 
-<br/>
+<br>
 
-## 🎯 What I Do
+## 🙋 내 역할
 
-| 영역 | 해 본 것 |
-| :--- | :--- |
-| **🔍 Vision AI** | 이미지 분류 Fine-tuning (ResNet-18), 객체 검출 (YOLO11n), 실패 사례 · 오검출 원인 분석 |
-| **🧹 Data Quality** | Class · BBox 라벨 기준서, 1차 검수 · 교차검수 규칙, 촬영 세션 단위 데이터 분할 |
-| **⚙️ Model Serving** | FastAPI · Redis 캐시 · Celery 비동기 작업 · PostgreSQL 기록 · Docker Compose |
-| **🖥️ Web Frontend** | Next.js · React 화면 구현, 실시간 채팅 UI, Figma 화면 설계 |
-| **📈 Data Analysis** | R · SPSS · Excel 통계 분석 (신뢰구간 · 가설검정 · 다변량분석) |
-| **📝 Documentation** | README · 트러블슈팅 · 오류 분석표 · 발표자료 · 팀 산출물 점검 |
+> **팀장 · 프론트엔드 · UI/UX 디자인** (2인 팀 프로젝트: 프론트엔드 1명 / 백엔드 1명)
 
-<br/>
+- 팀장으로서 서비스 기획과 일정 관리, 화면 설계(UI/UX)를 맡음
+- Next.js App Router 기반 **16개 페이지, 약 7,000줄** 단독 설계·구현 (커밋 140개)
+- **Socket.io 클라이언트**로 모임방 그룹 채팅과 1:1 DM 실시간 UI 구현
+- **JWT 토큰 기반 인증 흐름** 구현: 로그인 유지(localStorage) / 세션 로그인(sessionStorage) 분기, 요청 헤더에 Bearer 토큰 첨부
+- 회원가입·이메일 OTP 인증·비밀번호 재설정 등 인증 관련 화면 전체 구현
+- 백엔드 REST API 연동 및 화면 단위 에러·로딩 처리
 
-## 🔄 How I Work
+| 구분 | 담당 | 저장소 |
+|---|---|---|
+| 팀장 · Frontend · UI/UX | **김하민 (본인)** | 현재 저장소 |
+| Backend · API | 장영우 [@523810](https://github.com/523810) | [hxxdxm/Capstone2_backend](https://github.com/hxxdxm/Capstone2_backend) (원본: [523810/Capston2](https://github.com/523810/Capston2)) |
+
+<br>
+
+## ✨ 주요 기능
+
+| 기능 | 설명 | 페이지 |
+|---|---|---|
+| 🧠 **독서 MBTI** | 테스트 결과로 독서 성향을 분석하고 장르별 맞춤 도서 추천 | `/mypage` |
+| 💬 **모임방 & 실시간 채팅** | 온·오프라인 모임방 생성, 초대 링크로 입장, Socket.io 그룹 채팅 | `/rooms`, `/rooms/[id]` |
+| ✉️ **1:1 DM** | 다른 사용자 프로필에서 바로 실시간 개인 메시지 | `/dms`, `/dms/[userId]` |
+| 👥 **팔로우·팔로잉** | 관심 있는 사용자를 팔로우해 독서 소식 구독 | `/profile/[id]`, `/search` |
+| 🌡️ **독서 기록 & 독서 온도** | 읽은 페이지·완독 수를 기록하면 36.5°C에서 시작하는 '독서 온도'가 올라가는 게이미피케이션 | `/record` |
+| ✍️ **필사 전시회** | 감명 깊은 문장을 사진과 함께 피드로 공유, 좋아요(스크랩) | `/annotations` |
+| 🎁 **책 물려주기** | 다 읽은 책을 '나눔' 또는 '교환'으로 등록하는 게시판 | `/handmedowns` |
+| 🔍 **도서 검색 & 랭킹** | 카카오 도서 검색 API, 알라딘 장르별 베스트셀러 랭킹 | `/search`, `/ranking` |
+| 🔐 **회원 인증** | 회원가입, 이메일 OTP 인증, 이메일 찾기, 비밀번호 재설정 | `/signup`, `/login` 외 |
+
+### 📸 화면 미리보기
+
+> 배포 서버가 종료되어, 실제 프론트엔드 코드를 로컬에서 실행하고 **예시 데이터**를 넣어 촬영한 화면입니다.
+
+| 독서 모임방 | 모임방 실시간 채팅 |
+|:---:|:---:|
+| <img src="docs/images/02_rooms.png" width="420"> | <img src="docs/images/03_room_chat.png" width="420"> |
+| **모임방 피드** | **필사 전시회** |
+| <img src="docs/images/04_room_feed.png" width="420"> | <img src="docs/images/05_annotations.png" width="420"> |
+| **팔로우 · 프로필** | **도서 랭킹** |
+| <img src="docs/images/07_profile_follow.png" width="420"> | <img src="docs/images/08_ranking.png" width="420"> |
+| **책 물려주기** | **마이페이지 (독서 영수증 · 월간 그래프 · MBTI)** |
+| <img src="docs/images/09_handmedowns.png" width="420"> | <img src="docs/images/06_mypage.png" width="420"> |
+
+<br>
+
+## 🏗️ 시스템 구성도
 
 ```mermaid
 flowchart LR
-    A["01 · 기준 정하기<br/>문제 · 성공 기준<br/>라벨 기준서"]
-    B["02 · 데이터 점검<br/>검수 · 교차검수<br/>세션 단위 분할"]
-    C["03 · 모델 실험<br/>Baseline<br/>변수 하나씩 개선"]
-    D["04 · 평가<br/>Validation으로 선택<br/>Test는 단 1회"]
-    E["05 · 서비스화<br/>API · 웹 화면<br/>Docker"]
-    F["06 · 기록 · 공유<br/>오류 분석 · README<br/>발표"]
-    A --> B --> C --> D --> E --> F
-    F -. 오류 분석으로 다시 개선 .-> B
+    U[👤 사용자] --> FE
 
-    classDef step fill:#F3F7EE,stroke:#7FA36A,stroke-width:2px,color:#24361C;
-    classDef key fill:#5E8E47,stroke:#3F7A2B,stroke-width:2px,color:#FFFFFF;
-    class A,B,C,E,F step;
-    class D key;
+    subgraph FE[Frontend · 본인 담당]
+        N[Next.js 16<br/>React 19 · TypeScript]
+    end
+
+    subgraph BE[Backend · 팀원 담당]
+        E[Node.js · Express 5]
+        S[Socket.io 서버]
+    end
+
+    N -- REST API + JWT --> E
+    N <-- WebSocket --> S
+    E --> DB[(MongoDB Atlas)]
+    E --> K[카카오 도서 API]
+    E --> A[알라딘 Open API]
+    E --> M[SendGrid 메일]
+
+    subgraph AWS[AWS EC2 · PM2]
+        BE
+    end
 ```
 
-<sub>점수가 올랐다는 사실보다 **왜 올랐는지 설명할 수 있는 것**을 더 중요하게 생각합니다.</sub>
+<br>
 
-<br/>
-
-## 🛠 Tech Stack
-
-<div align="center">
-
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
-![YOLO](https://img.shields.io/badge/YOLO11-111F68?style=flat-square&logo=yolo&logoColor=white)
-![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=flat-square&logo=opencv&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
-![Figma](https://img.shields.io/badge/Figma-F24E1E?style=flat-square&logo=figma&logoColor=white)
-
-</div>
-
-<details>
-<summary><b>전체 기술 스택 펼치기 · Language / AI / Backend / Web / Data</b></summary>
-
-<br/>
+## 🛠️ 기술 스택
 
 | 분야 | 기술 |
-| :--- | :--- |
-| **Language** | Python, C, C++, JavaScript, TypeScript, R |
-| **AI / Vision** | PyTorch, Hugging Face Transformers, YOLO11 (Ultralytics), OpenCV |
-| **Backend / Infra** | FastAPI, Celery, Redis, PostgreSQL, Docker, Docker Compose, Nginx, Kubernetes, Linux |
-| **Web / Frontend** | HTML5, CSS3, Next.js, React, Socket.io |
-| **Data** | R, SPSS, Excel |
-| **Collaboration** | Git, GitHub, Figma |
+|---|---|
+| Framework | Next.js 16 (App Router), React 19 |
+| Language | TypeScript |
+| Styling | Tailwind CSS 4, 페이지별 CSS |
+| 실시간 통신 | socket.io-client |
+| 인증 | JWT (Bearer Token) |
+| 협업 | Git, GitHub |
 
-</details>
+<br>
 
-<br/>
+## 📁 폴더 구조
 
-## 🎓 Education & Activities
+```
+re-ad/                      # 프론트엔드 프로젝트 폴더
+├── app/                    # Next.js App Router (폴더 = URL 경로)
+│   ├── page.tsx            # 메인
+│   ├── login/ signup/      # 로그인, 회원가입
+│   ├── find-email/ reset-password/
+│   ├── rooms/              # 모임방 목록
+│   │   └── [id]/           # 모임방 상세 + 실시간 채팅
+│   ├── dms/                # DM 목록
+│   │   └── [userId]/       # 1:1 실시간 DM
+│   ├── record/             # 독서 기록, 독서 온도
+│   ├── annotations/        # 필사 전시
+│   ├── handmedowns/        # 책 물려주기 (+ [id] 상세)
+│   ├── search/ ranking/    # 도서 검색, 베스트셀러 랭킹
+│   ├── mypage/             # 마이페이지, 독서 MBTI
+│   └── profile/[id]/       # 다른 사용자 프로필
+└── components/             # Header, Footer, UserWidget 공통 컴포넌트
+```
 
-| 기간 | 내용 | |
-| :--- | :--- | :---: |
-| 2023 – | **컴퓨터공학** 전공 | 🎓 |
-| 2023.06 – 2023.11 | **K-디지털 챌린지 : NET 챌린지 캠프 시즌10** (과학기술정보통신부 주최) · CrossSafe | 🏆 본선 진출 |
-| 2024 – | **빅데이터분석 융합전공** (부전공 18학점) | 📈 |
-| 2026.06 | 춘계 졸업작품발표회 · 이음 (팀장 · 프론트엔드) | 🎤 발표 |
-| 2026.07 – 2027.02 | 현장 데이터 기반 Vision AI & 산업분야 Vertical AI 융합 전문가 양성 과정 | 🌱 수강 중 |
+<br>
 
-<details>
-<summary><b>빅데이터분석 융합전공 수강 과목 보기</b></summary>
+## 🔥 트러블슈팅
 
-<br/>
+### 1. 직접 입력한 도서명·작가명이 '작자미상'으로 표시되는 문제
 
-| 과목 | 도구 · 내용 |
-| :--- | :--- |
-| 빅데이터마이닝 | `Excel` 신뢰구간 · 필요한 표본 크기 · 가설검정 |
-| 빅데이터프로그래밍 | `R` |
-| 다변량분석 | `SPSS` |
-| 빅데이터마케팅 · 빅데이터시각화디자인 · 빅데이터개론 | 데이터 해석 · 시각화 |
+- **문제**: 필사 글을 쓸 때 책을 검색하지 않고 도서명·작가명을 **직접 입력**하면, 등록 후 카드에 '작자미상'과 빈 도서명이 표시됨
+- **원인**: 프론트와 백엔드의 데이터 약속이 어긋나 있었음
+  - **보낼 때(POST)**: 백엔드는 직접 입력값을 `customBookTitle`, `customBookAuthor` 필드로 받는데, 프론트가 이 필드를 보내지 않음 → 빈 값으로 저장
+  - **그릴 때(GET)**: 화면 코드가 검색으로 연결된 책 정보(`bookId.title`)만 읽고 `customBookTitle`은 확인하지 않음 → 값이 없으니 기본값 '작자미상' 표시
+- **해결**:
+  - 글 작성 시 `FormData`에 `customBookTitle`, `customBookAuthor`를 함께 전송
+  - 화면 표시 우선순위를 **직접 입력값 → 검색한 책 정보 → 기본값** 순서로 변경
+  ```ts
+  const bookTitle  = item.customBookTitle  || item.bookId?.title  || '';
+  const bookAuthor = item.customBookAuthor || item.bookId?.author || '작자미상';
+  ```
+- **재발 방지**: 같은 계산이 메인·마이페이지 등 여러 화면에 복사되어 있어 **한 곳만 고치고 나머지는 놓친 상태**였음을 이후 발견. 도서 정보를 꺼내는 규칙을 공통 함수 `lib/book.ts`(`getBookTitle`, `getBookAuthor`) 한 곳으로 모으고 4개 화면이 이를 사용하도록 리팩터링
+- **배운 점**: 프론트·백엔드 분업에서는 **필드 이름 하나가 곧 약속**이다. 이후 백엔드 담당자와 요청·응답 예시(JSON)를 먼저 공유하고 개발하는 방식으로 바꿨다.
 
-</details>
+### 2. DM 메시지가 두 번씩 표시되는 문제
 
-<br/>
+- **문제**: DM 화면에 다시 들어오거나 화면이 다시 그려지면 같은 메시지가 중복으로 표시됨
+- **원인**: 컴포넌트가 다시 렌더링될 때마다 `socket.on('receiveDM')` 이벤트 리스너가 계속 추가로 등록됨
+- **해결**:
+  - 리스너 등록 전에 `socket.off('receiveDM')`로 기존 리스너 제거
+  - `useRef`로 소켓 인스턴스를 하나만 유지하고, 이미 연결되어 있으면 새로 연결하지 않음
+  - 페이지를 떠날 때 `useEffect` cleanup에서 `disconnect()` 호출
+- **배운 점**: React 렌더링 주기와 소켓 연결 수명은 따로 관리해야 한다
 
-## 📬 Contact
+<br>
 
-<div align="center">
+## 🚀 실행 방법
 
-[![GitHub](https://img.shields.io/badge/GitHub-hxxdxm-181717?style=for-the-badge&logo=github)](https://github.com/hxxdxm)
-[![Email](https://img.shields.io/badge/Email-1004hamine@naver.com-5E8E47?style=for-the-badge&logo=naver&logoColor=white)](mailto:1004hamine@naver.com)
+```bash
+cd re-ad
+npm install
+npm run dev     # http://localhost:3000
+```
 
-<br/>
+> 백엔드 서버 실행 방법은 [백엔드 저장소](https://github.com/hxxdxm/Capstone2_backend)를 참고하세요.
 
-<sub>Set the standard · Check the data · Build the model · Serve the result · Share the evidence</sub>
+<br>
 
-</div>
+## 💭 회고
+
+**👍 잘한 점**
+- 기획 단계에서 정한 핵심 기능(모임방·실시간 채팅·DM·필사 전시·물려주기·독서 기록·랭킹·인증)을
+  빠짐없이 화면으로 구현했습니다.
+- 백엔드 담당자와 API 응답 형태를 맞춰 가며 16개 페이지를 끝까지 연결했습니다.
+
+**🤔 아쉬운 점**
+- 서버 주소와 요청 로직이 클라이언트 코드에 그대로 노출되어 있습니다. 브라우저 개발자 도구만
+  열어도 API 서버 주소를 확인할 수 있는 구조였습니다.
+- 독서 MBTI, 독서 온도처럼 이음만의 차별화 기능이 있었지만 화면에서 충분히 부각하지 못했습니다.
+  결과적으로 "게시판 + 실시간 채팅"처럼 보일 수 있는 구성이 되었습니다.
+
+**🚀 개선하고 싶은 점**
+- API 주소를 환경변수로 분리하고, Next.js Route Handler를 프록시로 두어 실제 서버 주소를
+  클라이언트에서 숨기기
+- 공통 fetch 함수를 만들어 인증 헤더 처리와 에러 처리를 한 곳으로 통합하기
+- 독서 MBTI 결과를 모임방·도서 추천과 연결해, 취향이 맞는 사람과 책을 이어주는 서비스
+  정체성을 강화하기
