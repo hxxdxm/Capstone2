@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="340" viewBox="0 0 1200 340" role="img" aria-label="김하민 Hamin Kim · Vision AI · Data Quality · Web Service">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F3F7EE"/>
+      <stop offset="0.55" stop-color="#E6F0DF"/>
+      <stop offset="1" stop-color="#D5E6CC"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.35" r="0.55">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9CC57F"/>
+      <stop offset="1" stop-color="#5E8E47"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#7FA36A" opacity="0.18"/>
+    </pattern>
+    <clipPath id="card"><rect width="1200" height="340" rx="28"/></clipPath>
+    <style>
+      .ko { font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif; }
+      .en { font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+      .bbox { stroke-dasharray: 10 7; animation: march 1.6s linear infinite; }
+      .scan { animation: scan 3.2s ease-in-out infinite; }
+      .float { animation: float 5s ease-in-out infinite; transform-origin: 945px 170px; }
+      @keyframes march { to { stroke-dashoffset: -34; } }
+      @keyframes scan { 0%,100% { transform: translateY(0); opacity: .0; } 15% { opacity: .55; } 50% { transform: translateY(170px); opacity: .55; } 85% { opacity: 0; } }
+      @keyframes float { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-8px) rotate(-3deg); } }
+    </style>
+  </defs>
+
+  <g clip-path="url(#card)">
+    <rect width="1200" height="340" fill="url(#bg)"/>
+    <rect width="1200" height="340" fill="url(#dots)"/>
+    <rect width="1200" height="340" fill="url(#glow)"/>
+    <circle cx="1130" cy="330" r="150" fill="#C3DBB5" opacity="0.45"/>
+    <circle cx="70" cy="-20" r="110" fill="#FFFFFF" opacity="0.5"/>
+  </g>
+
+  <!-- 왼쪽: 소개 텍스트 -->
+  <text x="76" y="92" class="en" font-size="17" font-weight="700" letter-spacing="4" fill="#6E9459">HELLO, I'M</text>
+  <text x="74" y="156" class="ko" font-size="58" font-weight="800" fill="#24361C">김하민</text>
+  <text x="276" y="156" class="en" font-size="34" font-weight="600" fill="#4E6E3F">Hamin Kim</text>
+
+  <!-- 역할 칩 -->
+  <g class="en" font-size="15" font-weight="700">
+    <rect x="76" y="182" width="118" height="34" rx="17" fill="#5E8E47"/>
+    <text x="135" y="204" text-anchor="middle" fill="#FFFFFF">Vision AI</text>
+    <rect x="204" y="182" width="136" height="34" rx="17" fill="#FFFFFF" stroke="#9CC57F" stroke-width="1.5"/>
+    <text x="272" y="204" text-anchor="middle" fill="#4E6E3F">Data Quality</text>
+    <rect x="350" y="182" width="132" height="34" rx="17" fill="#FFFFFF" stroke="#9CC57F" stroke-width="1.5"/>
+    <text x="416" y="204" text-anchor="middle" fill="#4E6E3F">Web Service</text>
+  </g>
+
+  <text x="76" y="262" class="ko" font-size="21" font-weight="600" fill="#2F4526">데이터의 기준을 세우고, 결과를 근거로 증명합니다.</text>
+  <text x="76" y="292" class="ko" font-size="16" fill="#5C7650">라벨 검수 · 모델 학습 · API 서빙 · 웹 화면까지 한 사이클을 끝까지 완성하는 개발자</text>
+
+  <!-- 오른쪽: 비전 AI 바운딩 박스 모티프 -->
+  <g>
+    <rect x="800" y="58" width="300" height="230" rx="22" fill="#FFFFFF" opacity="0.72" stroke="#FFFFFF"/>
+    <!-- 잎사귀 -->
+    <g class="float">
+      <path d="M945 95 C 1015 110, 1035 190, 960 255 C 885 205, 880 125, 945 95 Z" fill="url(#leaf)"/>
+      <path d="M948 112 C 952 160, 955 205, 960 248" stroke="#EAF4E2" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M951 150 L 985 135 M953 180 L 990 170 M955 205 L 925 185 M950 132 L 925 122" stroke="#EAF4E2" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- 스캔 라인 -->
+    <rect class="scan" x="868" y="86" width="160" height="3" rx="1.5" fill="#7FB35E"/>
+    <!-- 바운딩 박스 -->
+    <rect class="bbox" x="866" y="84" width="164" height="182" rx="6" fill="none" stroke="#3F7A2B" stroke-width="3"/>
+    <rect x="866" y="56" width="164" height="28" rx="6" fill="#3F7A2B"/>
+    <text x="948" y="76" text-anchor="middle" class="en" font-size="15" font-weight="700" fill="#FFFFFF">healthy · 0.98</text>
+    <!-- 모서리 표시 -->
+    <g stroke="#24361C" stroke-width="4" stroke-linecap="round" fill="none">
+      <path d="M858 108 V 76 H 890"/><path d="M1006 76 H 1038 V 108"/>
+      <path d="M858 242 V 274 H 890"/><path d="M1006 274 H 1038 V 242"/>
+    </g>
+  </g>
+</svg>
